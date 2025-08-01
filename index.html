@@ -2414,50 +2414,56 @@ loading-site no-js">
 			</div>
 			<style>
 				.hotline-label,
-.hotline-sub {
-	position: absolute;
-	top: 10px;
-	left: 110px;
-	transform: translateX(-50%);
-	background: #e74c3c;
-	color: #fff;
-	font-size: 13px;
-	padding: 4px 10px;
-	border-radius: 6px;
-	white-space: nowrap;
-	opacity: 1;
-	visibility: visible;
-	transition: all 0.3s ease;
-	z-index: 2;
-	animation: ring 2s infinite;
-}
+				.hotline-sub {
+					position: absolute;
+					top: 10px;
+					left: 110px;
+					transform: translateX(-50%);
+					background: #e74c3c;
+					color: #fff;
+					font-size: 13px;
+					padding: 4px 10px;
+					border-radius: 6px;
+					white-space: nowrap;
+					opacity: 1;
+					visibility: visible;
+					transition: all 0.3s ease;
+					z-index: 2;
+					animation: ring 2s infinite;
+				}
 
-.hotline-sub {
-	top: 40px; /* đặt thấp hơn 1 chút */
-	background: #c0392b;
-	font-size: 12px;
-}
+				.hotline-sub {
+					top: 40px;
+					/* đặt thấp hơn 1 chút */
+					background: #c0392b;
+					font-size: 12px;
+				}
 
-@keyframes ring {
-	0% {
-		transform: translateX(-50%) rotate(0deg);
-	}
-	10% {
-		transform: translateX(-50%) rotate(5deg);
-	}
-	20% {
-		transform: translateX(-50%) rotate(-5deg);
-	}
-	30% {
-		transform: translateX(-50%) rotate(5deg);
-	}
-	40% {
-		transform: translateX(-50%) rotate(-5deg);
-	}
-	50% {
-		transform: translateX(-50%) rotate(0deg);
-	}
-}
+				@keyframes ring {
+					0% {
+						transform: translateX(-50%) rotate(0deg);
+					}
+
+					10% {
+						transform: translateX(-50%) rotate(5deg);
+					}
+
+					20% {
+						transform: translateX(-50%) rotate(-5deg);
+					}
+
+					30% {
+						transform: translateX(-50%) rotate(5deg);
+					}
+
+					40% {
+						transform: translateX(-50%) rotate(-5deg);
+					}
+
+					50% {
+						transform: translateX(-50%) rotate(0deg);
+					}
+				}
 			</style>
 			<!-- end phone -->
 
@@ -2550,7 +2556,7 @@ loading-site no-js">
 		#phone-vr-1 .phone-vr-circle-fill-1 {
 			opacity: 0.7;
 			box-shadow: 0 0 0 0 #590b0b;
-			 animation: ring 2s infinite;
+			animation: ring 2s infinite;
 		}
 
 
