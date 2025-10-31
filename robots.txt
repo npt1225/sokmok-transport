@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sokmoktransport.com/sitemap_index.xml
