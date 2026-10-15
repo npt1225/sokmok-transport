@@ -5685,12 +5685,45 @@
             if (!SB_ON) return;
             try { fetch(SB_URL + '/functions/v1/tg-bot/notify', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ event }, data)) }).catch(() => { }) } catch (e) { }
         }
+        /* So sánh dữ liệu trước/sau mỗi lần lưu để báo Telegram: thêm / sửa / xóa đơn hàng và khoản thu */
+        let TG_BASE = null;
+        const tgStrip = (k, v) => (k === 'bill' || k === 'ht2') ? undefined : v;
+        function tgSnap() { try { const o = {}; for (const [m, d] of Object.entries(S.months || {})) o[m] = { r: (d.rows || []).map(r => JSON.stringify(r, tgStrip)), p: (d.pays || []).map(p => JSON.stringify(p, tgStrip)) }; return o } catch (e) { return null } }
+        function tgRebase() { TG_BASE = tgSnap() }
+        function tgDiff(A, B) {
+            const out = [], sub = (a, b) => { const c = {}; b.forEach(x => c[x] = (c[x] || 0) + 1); const r = []; a.forEach(x => { if (c[x] > 0) c[x]--; else r.push(x) }); return r };
+            for (const m of Object.keys(B)) for (const t of ['r', 'p']) {
+                const old = (A[m] || { r: [], p: [] })[t], now = B[m][t], del = sub(old, now), add = sub(now, old), key = t === 'r' ? 'k' : 'w';
+                const used = new Set();
+                for (const a of add) {
+                    const na = JSON.parse(a); let k = del.findIndex((x, i) => !used.has(i) && (JSON.parse(x)[key] || '') === (na[key] || ''));
+                    if (k < 0 && add.length === 1 && del.length === 1) k = 0;
+                    if (k >= 0) { used.add(k); out.push({ a: 'edit', t, m, n: na, o: JSON.parse(del[k]) }) } else out.push({ a: 'add', t, m, n: na })
+                }
+                del.forEach((x, i) => { if (!used.has(i)) out.push({ a: 'del', t, m, o: JSON.parse(x) }) })
+            }
+            for (const m of Object.keys(A)) if (!B[m]) for (const t of ['r', 'p']) A[m][t].forEach(x => out.push({ a: 'del', t, m, o: JSON.parse(x) }));
+            return out
+        }
         function tgData() {
-            if (!me || Date.now() - TG_LAST < 120000) return; TG_LAST = Date.now();
+            if (!me) return;
             try {
-                const rows = S.rows || []; let total = 0, unpaid = 0; for (const r of rows) { const v = fee(r); total += v; if (pd(r) === 'no') unpaid += v }
-                tgNotify('data', { user: me.u, month: S.cur, count: rows.length, total: Math.round(total), unpaid: Math.round(unpaid) })
+                const cur = tgSnap(), base = TG_BASE; TG_BASE = cur;
+                if (!base || !cur) return;
+                const L = tgDiff(base, cur); if (!L.length) return;
+                tgNotify('change', { user: me.u, month: S.cur, n: L.length, items: L.slice(0, 8) })
             } catch (e) { }
+        }
+        /* Gửi ảnh phiếu giao nhận (canvas #bc) lên Telegram */
+        function tgBill(d, manual) {
+            if (!SB_ON) { if (manual) toast('err', 'Chưa kết nối máy chủ.'); return }
+            try {
+                const c = $('bc'); if (!c || !d) return;
+                const img = c.toDataURL('image/jpeg', 0.85).split(',')[1];
+                fetch(SB_URL + '/functions/v1/tg-bot/bill', { method: 'POST', keepalive: false, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: me ? me.u : '', no: d.no, dt: d.dt || '', s: d.s && d.s.n || '', r: d.r && d.r.n || '', img }) })
+                    .then(r => { if (manual) toast(r.ok ? 'ok' : 'err', r.ok ? 'Đã gửi phiếu ' + d.no + ' lên Telegram.' : 'Gửi Telegram không thành công (HTTP ' + r.status + ').') })
+                    .catch(() => { if (manual) toast('err', 'Gửi Telegram không thành công. Kiểm tra mạng rồi thử lại.') })
+            } catch (e) { if (manual) toast('err', 'Không gửi được phiếu lên Telegram.') }
         }
         const TOK = { report: 'Đã lưu thành công lên máy chủ.', users: 'Đã lưu danh sách tài khoản thành công.', pending: 'Đã gửi yêu cầu lên máy chủ thành công.' };
         async function sbPullKeys(keys, setRev) {
@@ -6203,7 +6236,8 @@
                     T(n(r.kg) ? r2(r.kg) + 'kg' : n(r.m3) ? r2(r.m3) + 'm³' + (n(r.pm3) ? ' × ' + r2(r.pm3) + '$' : '') : '', 1425, y, 36, 'center', 440); T(dm(r.d), 1910, y, 36, 'center', 440)
                 });
                 T(r2(q) + ' kiện', 403, 1383, 34, 'left', 240); T(kg ? r2(kg) + 'kg' : m3 ? r2(m3) + 'm³' : '', 62, 1527, 34, 'left', 260);
-                T(d.v && d.v !== '0' ? d.v + ' VND' : '', 755, 1387, 44, 'left', 505); T(ru(d.u) ? ru(d.u) + ' USD' : '', 755, 1506, 44, 'left', 505)
+                T(d.v && d.v !== '0' ? d.v + ' VND' : '', 755, 1387, 44, 'left', 505); T(ru(d.u) ? ru(d.u) + ' USD' : '', 755, 1506, 44, 'left', 505);
+                if (saved) tgBill(d)
             };
             let o = $('bvw');
             if (!o) {
@@ -6579,7 +6613,7 @@
                     if (!R.report || keepLocal) save();           /* lần đầu: đưa dữ liệu hiện có lên máy chủ */
                     if (!R.users || fix) saveU();
                     if (!R.pending) savePend();
-                    pullSet();
+                    pullSet(); tgRebase();
                     try { localStorage.setItem(KEY, JSON.stringify({ rate: S.rate, kg: S.kg, cur: S.cur, months: S.months, cfg: S.cfg })); localStorage.setItem(UK, JSON.stringify(U)); localStorage.setItem(PK, JSON.stringify(PEND)) } catch (e) { }
                 } catch (e) {
                     $('ld').classList.add('bad'); $('ldt').textContent = 'Không kết nối được máy chủ dữ liệu (' + e.message + '). Kiểm tra mạng rồi tải lại trang.'; $('ldr').classList.remove('hid'); return
@@ -6602,7 +6636,7 @@
             try {
                 const R = await sbPullKeys(['report', 'users', 'pending'], false), rv = R.__rev; let ch = false;
                 const newer = k => R[k] !== undefined && rv[k] > (SB_REV[k] || 0) && !SB_T[k];
-                if (newer('report') && R.report.months) { const cur = S.cur; S.rate = R.report.rate || S.rate; S.kg = R.report.kg || S.kg; S.months = R.report.months; S.cfg = R.report.cfg || S.cfg; mig(); setMonth(S.months[cur] ? cur : Object.keys(S.months).sort().pop()); SB_REV.report = rv.report; saveLocal(); ch = true }
+                if (newer('report') && R.report.months) { const cur = S.cur; S.rate = R.report.rate || S.rate; S.kg = R.report.kg || S.kg; S.months = R.report.months; S.cfg = R.report.cfg || S.cfg; mig(); setMonth(S.months[cur] ? cur : Object.keys(S.months).sort().pop()); SB_REV.report = rv.report; saveLocal(); tgRebase(); ch = true }
                 if (newer('users') && Array.isArray(R.users)) { U = R.users; SB_REV.users = rv.users; try { localStorage.setItem(UK, JSON.stringify(U)) } catch (e) { } ch = true }
                 if (newer('pending') && Array.isArray(R.pending)) { PEND = R.pending; SB_REV.pending = rv.pending; try { localStorage.setItem(PK, JSON.stringify(PEND)) } catch (e) { } ch = true }
                 if (ch) all()
