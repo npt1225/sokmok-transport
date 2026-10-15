@@ -5419,16 +5419,33 @@
         const SB_URL = 'https://splommvvzkurfvsueape.supabase.co';   // ví dụ: 'https://abcdxyz.supabase.co'
         const SB_KEY = 'sb_publishable_4o-CM3FtU_IvGn_7xvb__A_H50ls_j4';   // anon / publishable key (Project Settings → API)
         const SB_ON = !!(SB_URL && SB_KEY);
-        let SB_READY = false, SB_DEAD = false; const SB_REV = {}, SB_T = {}, SB_Q = {};
+        let SB_READY = false, SB_DEAD = false, SB_ERR = '', TOAST_ON = false; const SB_REV = {}, SB_T = {}, SB_Q = {};
         const sbH = x => Object.assign({ apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, x || {});
         async function sbPull() {
             const r = await fetch(SB_URL + '/rest/v1/app_state?select=key,value,rev', { headers: sbH() });
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const o = {}; for (const x of await r.json()) { o[x.key] = x.value; SB_REV[x.key] = x.rev } return o
         }
+        /* Popup thông báo: xanh = lưu thành công, đỏ = lỗi (bấm vào để tắt) */
+        function toast(type, msg) {
+            if (!TOAST_ON) return;
+            let box = document.getElementById('tstbox');
+            if (!box) { box = document.createElement('div'); box.id = 'tstbox'; box.setAttribute('aria-live', 'polite'); box.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;display:grid;gap:8px;width:min(92vw,440px);pointer-events:none'; document.body.appendChild(box) }
+            const ok = type === 'ok', t = document.createElement('div');
+            t.style.cssText = 'pointer-events:auto;padding:12px 14px;border-radius:12px;color:#fff;font:600 14px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer;background:' + (ok ? '#15803d' : '#c8102e');
+            t.textContent = (ok ? '✔ ' : '✖ ') + msg; t.onclick = () => t.remove(); box.appendChild(t);
+            while (box.children.length > 3) box.firstChild.remove();
+            setTimeout(() => t.remove(), ok ? 2600 : 9000)
+        }
+        const TOK = { report: 'Đã lưu thành công lên máy chủ.', users: 'Đã lưu danh sách tài khoản thành công.', pending: 'Đã gửi yêu cầu lên máy chủ thành công.' };
+        async function sbPullKeys(keys, setRev) {
+            const r = await fetch(SB_URL + '/rest/v1/app_state?select=key,value,rev&key=in.(' + keys.join(',') + ')', { headers: sbH() });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const o = {}, rv = {}; for (const x of await r.json()) { o[x.key] = x.value; rv[x.key] = x.rev; if (setRev !== false) SB_REV[x.key] = x.rev } o.__rev = rv; return o
+        }
         /* Chỉ tải dữ liệu từ máy chủ lần đầu trong ngày trên mỗi thiết bị; các lần mở sau trong ngày dùng bản đã lưu trên máy (vẫn lưu lên máy chủ như thường) */
         const PULLK = 'bc-pull', dayKey = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate() };
-        const pullGet = () => { try { const o = JSON.parse(localStorage.getItem(PULLK)); return o && o.d === dayKey() && o.rev ? o : null } catch (e) { return null } };
+        const pullGet = () => null; /* luôn tải mới từ máy chủ mỗi lần mở trang (trước đây chỉ tải 1 lần/ngày nên thấy số liệu cũ) */
         const pullSet = () => { try { localStorage.setItem(PULLK, JSON.stringify({ d: dayKey(), rev: SB_REV })) } catch (e) { } };
         const pullClear = () => { try { localStorage.removeItem(PULLK) } catch (e) { } };
         const SB_G = {};
@@ -5441,12 +5458,12 @@
                 if (r.status === 409) return keep ? 0 : sbConflict();
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 const rows = await r.json(); if (!rows.length) return keep ? 0 : sbConflict();
-                SB_REV[key] = rows[0].rev; pullSet(); stamp()
-            } catch (e) { stamp(true, 'Chưa lưu được lên máy chủ (' + e.message + '). Số liệu vẫn nằm trong trình duyệt này, hãy kiểm tra mạng rồi sửa lại một ô để lưu lại.') }
+                SB_REV[key] = rows[0].rev; pullSet(); stamp(); try { localStorage.removeItem('bc-dirty-' + key) } catch (e) { } toast('ok', TOK[key] || 'Đã lưu thành công.'); return true
+            } catch (e) { SB_ERR = e.message; toast('err', 'Lưu KHÔNG thành công (' + e.message + '). Số liệu vẫn còn trên máy này, hãy kiểm tra mạng rồi sửa lại một ô để lưu lại.'); stamp(true, 'Chưa lưu được lên máy chủ (' + e.message + '). Số liệu vẫn nằm trong trình duyệt này, hãy kiểm tra mạng rồi sửa lại một ô để lưu lại.'); return false }
         }
         function sbPush(key, get) {
-            if (!SB_READY || SB_DEAD) return;
-            SB_G[key] = get; clearTimeout(SB_T[key]); stamp(false, 'Đang lưu lên máy chủ…');
+            if (!SB_READY || SB_DEAD) { toast('err', 'CHƯA lưu được lên máy chủ' + (SB_DEAD ? ' (dữ liệu đã bị người khác thay đổi hoặc lưu lỗi trước đó). Hãy tải lại trang rồi nhập lại.' : ' (chưa kết nối máy chủ). Hãy tải lại trang.')); return }
+            SB_G[key] = get; try { localStorage.setItem('bc-dirty-' + key, '1') } catch (e) { } clearTimeout(SB_T[key]); stamp(false, 'Đang lưu lên máy chủ…');
             SB_T[key] = setTimeout(() => { SB_T[key] = 0; SB_Q[key] = (SB_Q[key] || Promise.resolve()).then(() => sbSend(key)) }, 500)
         }
         /* đóng/tải lại trang khi còn thay đổi chưa gửi: gửi ngay, không chờ */
@@ -5454,7 +5471,7 @@
         addEventListener('pagehide', sbFlush);
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') sbFlush() });
         function sbConflict() {
-            SB_DEAD = true; pullClear(); stamp(true, 'Người khác vừa cập nhật dữ liệu. Thay đổi vừa rồi CHƯA được lưu lên máy chủ, hãy tải lại trang.');
+            SB_DEAD = true; pullClear(); toast('err', 'CHƯA lưu: người khác vừa cập nhật dữ liệu. Hãy tải lại trang rồi nhập lại.'); stamp(true, 'Người khác vừa cập nhật dữ liệu. Thay đổi vừa rồi CHƯA được lưu lên máy chủ, hãy tải lại trang.');
             setTimeout(() => { if (confirm('Người khác vừa cập nhật dữ liệu trên máy chủ.\nTải lại trang để lấy bản mới nhất? (thay đổi vừa rồi của bạn sẽ mất)')) location.reload() }, 50)
         }
         const seed = () => ({
@@ -5489,7 +5506,7 @@
         setMonth(S.months[S.cur] ? S.cur : Object.keys(S.months).sort().pop());
         const save = () => {
             let ok = true; try { localStorage.setItem(KEY, JSON.stringify({ rate: S.rate, kg: S.kg, cur: S.cur, months: S.months, cfg: S.cfg })) } catch (e) { ok = false }
-            if (SB_ON) sbPush('report', () => ({ rate: S.rate, kg: S.kg, months: S.months, cfg: S.cfg })); else stamp(!ok)
+            if (SB_ON) sbPush('report', () => ({ rate: S.rate, kg: S.kg, months: S.months, cfg: S.cfg })); else { stamp(!ok); toast(ok ? 'ok' : 'err', ok ? 'Đã lưu thành công.' : 'Không lưu được: trình duyệt đang chặn bộ nhớ.') }
         };
         const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify({ rate: S.rate, kg: S.kg, cur: S.cur, months: S.months, cfg: S.cfg })) } catch (e) { } };
         function stamp(bad, msg) {
@@ -6123,7 +6140,20 @@
             if (u.length < 3 || /\s/.test(u)) { e.textContent = 'Tên đăng nhập từ 3 ký tự, không có khoảng trắng.'; return }
             if (p.length < 6) { e.textContent = 'Mật khẩu cần từ 6 ký tự.'; return }
             if (U.some(a => a.u === u) || PEND.some(a => a.u === u)) { e.textContent = 'Tên đăng nhập này đã được dùng hoặc đang chờ duyệt.'; return }
-            const sl = salt(); PEND.push({ u, s: sl, h: await hash(p, sl), note: $('ln').value.trim(), t: Date.now() }); savePend();
+            const sl = salt(), rec = { u, s: sl, h: await hash(p, sl), note: $('ln').value.trim(), t: Date.now() };
+            $('lb').disabled = true; e.className = 'err'; e.textContent = 'Đang gửi yêu cầu…';
+            try {
+                if (SB_ON) {
+                    const R = await sbPullKeys(['users', 'pending']); if (Array.isArray(R.users)) U = R.users; if (Array.isArray(R.pending)) PEND = R.pending;
+                    if (U.some(a => a.u === u) || PEND.some(a => a.u === u)) { e.textContent = 'Tên đăng nhập này đã được dùng hoặc đang chờ duyệt.'; return }
+                }
+                PEND.push(rec); try { localStorage.setItem(PK, JSON.stringify(PEND)) } catch (x) { }
+                if (SB_ON) {
+                    SB_G.pending = () => PEND; SB_ERR = '';
+                    const ok = await sbSend('pending');
+                    if (!ok) { PEND.splice(PEND.indexOf(rec), 1); try { localStorage.setItem(PK, JSON.stringify(PEND)) } catch (x) { } e.textContent = 'CHƯA gửi được yêu cầu lên máy chủ' + (SB_ERR ? ' (' + SB_ERR + ')' : '') + '. Hãy tải lại trang rồi đăng ký lại.'; return }
+                }
+            } catch (x) { e.textContent = 'Không kết nối được máy chủ (' + x.message + '). Hãy kiểm tra mạng rồi thử lại.'; return } finally { $('lb').disabled = false }
             setMode('login'); $('lu').value = u; $('le').className = 'err ok'; $('le').textContent = 'Đã gửi yêu cầu. Chờ quản trị viên duyệt rồi mới đăng nhập được.'
         }
         function enter(x) {
@@ -6138,6 +6168,7 @@
                 if (p.length < 6) { $('le').textContent = 'Mật khẩu cần từ 6 ký tự.'; return }
                 const sl = salt(); U.push({ u, s: sl, h: await hash(p, sl), r: 'admin' }); saveU(); enter(U[0]); return
             }
+            if (SB_ON) { try { const R = await sbPullKeys(['users', 'pending']); if (Array.isArray(R.users)) U = R.users; if (Array.isArray(R.pending)) PEND = R.pending } catch (x) { } }
             const x = U.find(a => a.u === u); if (!x && PEND.some(a => a.u === u)) { $('le').textContent = 'Tài khoản này đang chờ quản trị duyệt.'; return }
             const hv = await hash(p, x ? x.s : ''); if (!x || (hv !== x.h && hv !== x.h2)) { $('le').textContent = 'Sai tài khoản hoặc mật khẩu.'; return }
             enter(x)
@@ -6265,7 +6296,9 @@
             if (SB_ON && !cached) {
                 try {
                     const R = await sbPull();
-                    if (R.report && R.report.months) {
+                    let keepLocal = false; try { keepLocal = localStorage.getItem('bc-dirty-report') === '1' } catch (e) { }
+                    if (keepLocal && R.report && R.report.months) keepLocal = confirm('Lần trước có thay đổi (ví dụ khoản thu) CHƯA lưu được lên máy chủ.\n\nOK = giữ số liệu trên máy này và lưu lên máy chủ\nHủy = lấy số liệu từ máy chủ (thay đổi chưa lưu sẽ mất)');
+                    if (R.report && R.report.months && !keepLocal) {
                         const cur = S.cur; S.rate = R.report.rate || S.rate; S.kg = R.report.kg || S.kg; S.months = R.report.months; S.cfg = R.report.cfg || S.cfg; mig();
                         setMonth(S.months[cur] ? cur : Object.keys(S.months).sort().pop())
                     }
@@ -6274,7 +6307,7 @@
                     const i = U.findIndex(a => a.u === 'admin'); let fix = false;
                     if (i < 0) { U.unshift(OWN); fix = true } else if (U[i].r !== 'owner') { U[i].r = 'owner'; fix = true }
                     SB_READY = true;
-                    if (!R.report) save();           /* lần đầu: đưa dữ liệu hiện có lên máy chủ */
+                    if (!R.report || keepLocal) save();           /* lần đầu: đưa dữ liệu hiện có lên máy chủ */
                     if (!R.users || fix) saveU();
                     if (!R.pending) savePend();
                     pullSet();
@@ -6286,12 +6319,27 @@
 
 
 
-            ldHide();
+            ldHide(); TOAST_ON = true;
             let stale = false; try { stale = Date.now() - (+localStorage.getItem('bc-act') || 0) > 5 * 60 * 1000 } catch (e) { }
             if (me && stale) { me = null; try { localStorage.removeItem('bc-me') } catch (e) { } }
             if (me && U.some(a => a.u === me.u && a.r === me.r)) enter(me); else showLogin();
         }
         boot();
+        async function sbSync() {
+            if (!SB_ON || !SB_READY || SB_DEAD || !me || $('app').classList.contains('hid')) return;
+            if (Object.values(SB_T).some(Boolean)) return;
+            const a = document.activeElement; if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
+            if (!$('md').classList.contains('hid')) return;
+            try {
+                const R = await sbPullKeys(['report', 'users', 'pending'], false), rv = R.__rev; let ch = false;
+                const newer = k => R[k] !== undefined && rv[k] > (SB_REV[k] || 0) && !SB_T[k];
+                if (newer('report') && R.report.months) { const cur = S.cur; S.rate = R.report.rate || S.rate; S.kg = R.report.kg || S.kg; S.months = R.report.months; S.cfg = R.report.cfg || S.cfg; mig(); setMonth(S.months[cur] ? cur : Object.keys(S.months).sort().pop()); SB_REV.report = rv.report; saveLocal(); ch = true }
+                if (newer('users') && Array.isArray(R.users)) { U = R.users; SB_REV.users = rv.users; try { localStorage.setItem(UK, JSON.stringify(U)) } catch (e) { } ch = true }
+                if (newer('pending') && Array.isArray(R.pending)) { PEND = R.pending; SB_REV.pending = rv.pending; try { localStorage.setItem(PK, JSON.stringify(PEND)) } catch (e) { } ch = true }
+                if (ch) all()
+            } catch (e) { }
+        }
+        setInterval(sbSync, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) sbSync() });
 
         /* ================= XUẤT EXCEL BÁO CÁO THÁNG ================= */
         const XL_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
