@@ -5679,6 +5679,19 @@
             while (box.children.length > 3) box.firstChild.remove();
             setTimeout(() => t.remove(), ok ? 2600 : 9000)
         }
+        /* Telegram: chỉ gửi SỰ KIỆN tới Edge Function "tg-bot"; token bot nằm trên máy chủ, không nằm trong trang */
+        let TG_LAST = 0, TG_FAIL = 0;
+        function tgNotify(event, data) {
+            if (!SB_ON) return;
+            try { fetch(SB_URL + '/functions/v1/tg-bot/notify', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ event }, data)) }).catch(() => { }) } catch (e) { }
+        }
+        function tgData() {
+            if (!me || Date.now() - TG_LAST < 120000) return; TG_LAST = Date.now();
+            try {
+                const rows = S.rows || []; let total = 0, unpaid = 0; for (const r of rows) { const v = fee(r); total += v; if (pd(r) === 'no') unpaid += v }
+                tgNotify('data', { user: me.u, month: S.cur, count: rows.length, total: Math.round(total), unpaid: Math.round(unpaid) })
+            } catch (e) { }
+        }
         const TOK = { report: 'Đã lưu thành công lên máy chủ.', users: 'Đã lưu danh sách tài khoản thành công.', pending: 'Đã gửi yêu cầu lên máy chủ thành công.' };
         async function sbPullKeys(keys, setRev) {
             const r = await fetch(SB_URL + '/rest/v1/app_state?select=key,value,rev&key=in.(' + keys.join(',') + ')', { headers: sbH() });
@@ -5700,7 +5713,7 @@
                 if (r.status === 409) return keep ? 0 : sbConflict();
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 const rows = await r.json(); if (!rows.length) return keep ? 0 : sbConflict();
-                SB_REV[key] = rows[0].rev; pullSet(); stamp(); try { localStorage.removeItem('bc-dirty-' + key) } catch (e) { } toast('ok', TOK[key] || 'Đã lưu thành công.'); return true
+                SB_REV[key] = rows[0].rev; pullSet(); stamp(); try { localStorage.removeItem('bc-dirty-' + key) } catch (e) { } toast('ok', TOK[key] || 'Đã lưu thành công.'); if (key === 'report') tgData(); return true
             } catch (e) { SB_ERR = e.message; toast('err', 'Lưu KHÔNG thành công (' + e.message + '). Số liệu vẫn còn trên máy này, hãy kiểm tra mạng rồi sửa lại một ô để lưu lại.'); stamp(true, 'Chưa lưu được lên máy chủ (' + e.message + '). Số liệu vẫn nằm trong trình duyệt này, hãy kiểm tra mạng rồi sửa lại một ô để lưu lại.'); return false }
         }
         function sbPush(key, get) {
@@ -6396,12 +6409,13 @@
                     if (!ok) { PEND.splice(PEND.indexOf(rec), 1); try { localStorage.setItem(PK, JSON.stringify(PEND)) } catch (x) { } e.textContent = 'CHƯA gửi được yêu cầu lên máy chủ' + (SB_ERR ? ' (' + SB_ERR + ')' : '') + '. Hãy tải lại trang rồi đăng ký lại.'; return }
                 }
             } catch (x) { e.textContent = 'Không kết nối được máy chủ (' + x.message + '). Hãy kiểm tra mạng rồi thử lại.'; return } finally { $('lb').disabled = false }
+            tgNotify('register', { user: u });
             setMode('login'); $('lu').value = u; $('le').className = 'err ok'; $('le').textContent = 'Đã gửi yêu cầu. Chờ quản trị viên duyệt rồi mới đăng nhập được.'
         }
         function enter(x, fresh) {
             me = { u: x.u, r: x.r }; try { localStorage.setItem('bc-me', JSON.stringify(me)) } catch (e) { } lastAct = Date.now(); try { localStorage.setItem('bc-act', String(lastAct)) } catch (e) { } setTimeout(dailyBackup, 3000);
             $('lg').classList.add('hid'); $('app').classList.remove('hid'); $('lp').value = '';
-            $('who').textContent = me.u + ' (' + (RL[me.r] || '') + ')'; all(); if (fresh) welcome(x)
+            $('who').textContent = me.u + ' (' + (RL[me.r] || '') + ')'; all(); if (fresh) { welcome(x); TG_FAIL = 0; tgNotify('login', { user: x.u, role: RL[x.r] || '' }) }
         }
         /* Thông báo chào mừng sau khi đăng nhập thành công */
         function welcome(x) {
@@ -6425,7 +6439,7 @@
             }
             if (SB_ON) { try { const R = await sbPullKeys(['users', 'pending']); if (Array.isArray(R.users)) U = R.users; if (Array.isArray(R.pending)) PEND = R.pending } catch (x) { } }
             const x = U.find(a => a.u === u); if (!x && PEND.some(a => a.u === u)) { $('le').textContent = 'Tài khoản này đang chờ quản trị duyệt.'; return }
-            const hv = await hash(p, x ? x.s : ''); if (!x || (hv !== x.h && hv !== x.h2)) { $('le').textContent = 'Sai tài khoản hoặc mật khẩu.'; return }
+            const hv = await hash(p, x ? x.s : ''); if (!x || (hv !== x.h && hv !== x.h2)) { $('le').textContent = 'Sai tài khoản hoặc mật khẩu.'; if (++TG_FAIL >= 3) tgNotify('loginfail', { user: u, count: TG_FAIL }); return }
             enter(x, true)
         };
         $('out').onclick = () => { me = null; try { localStorage.removeItem('bc-me') } catch (e) { } $('lu').value = ''; showLogin() };
