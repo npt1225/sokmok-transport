@@ -2957,6 +2957,9 @@
                     $('ld').classList.add('bad'); $('ldt').textContent = 'Không kết nối được máy chủ dữ liệu (' + e.message + '). Kiểm tra mạng rồi tải lại trang.'; $('ldr').classList.remove('hid'); return
                 }
             }
+
+
+            
             ldHide();
             let stale = false; try { stale = Date.now() - (+localStorage.getItem('bc-act') || 0) > 5 * 60 * 1000 } catch (e) { }
             if (me && stale) { me = null; try { localStorage.removeItem('bc-me') } catch (e) { } }
