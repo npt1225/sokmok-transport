@@ -4910,6 +4910,248 @@
                 font-size: 12px
             }
         }
+    
+        /* ===== Animation trang chủ (bổ sung) ===== */
+        .hero>.hsh {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .16) 50%, transparent 62%);
+            transform: translateX(-120%)
+        }
+
+        .k {
+            transition: transform .28s cubic-bezier(.2, .8, .2, 1), box-shadow .28s ease, border-color .28s ease
+        }
+
+        .k::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .28) 50%, transparent 65%);
+            transform: translateX(-130%)
+        }
+
+        .k b {
+            display: inline-block
+        }
+
+        .tabs button {
+            transition: background .25s ease, color .25s ease, box-shadow .25s ease, border-color .25s ease, transform .18s ease
+        }
+
+        .tabs button:active {
+            transform: scale(.95)
+        }
+
+        .hq span {
+            transition: transform .25s ease, border-color .25s ease
+        }
+
+        .hq span:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, .4)
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .hero>.hsh {
+                animation: hsweep 7s 1.6s ease-in-out infinite
+            }
+
+            .hq span {
+                animation: heroin .6s cubic-bezier(.2, .8, .2, 1) both
+            }
+
+            .hq span:nth-child(1) {
+                animation-delay: .5s
+            }
+
+            .hq span:nth-child(2) {
+                animation-delay: .62s
+            }
+
+            .hq span:nth-child(3) {
+                animation-delay: .74s
+            }
+
+            .hq span:nth-child(n+4) {
+                animation-delay: .86s
+            }
+
+            .k:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 18px 30px -16px color-mix(in srgb, var(--ac, #1f7ae0) 60%, transparent)
+            }
+
+            .k:hover::after {
+                animation: kshine .9s ease
+            }
+
+            .tp.play .k {
+                animation: kin .7s cubic-bezier(.2, .8, .2, 1) both;
+                animation-delay: calc(var(--i, 0) * 65ms + .1s)
+            }
+
+            .tp.play .k::before {
+                animation: kbar .7s cubic-bezier(.2, .8, .2, 1) both;
+                animation-delay: calc(var(--i, 0) * 65ms + .3s);
+                transform-origin: top
+            }
+
+            .tp.play .k::after {
+                animation: kshine 1.1s ease both;
+                animation-delay: calc(var(--i, 0) * 65ms + .6s)
+            }
+
+            .tp.play>section {
+                animation: secin .6s cubic-bezier(.2, .8, .2, 1) both
+            }
+
+            .tp.play>section:nth-of-type(2) {
+                animation-delay: .18s
+            }
+
+            .tp.play>section:nth-of-type(n+3) {
+                animation-delay: .3s
+            }
+
+            .tp.play section>h2::before {
+                animation: kbar .6s .25s cubic-bezier(.2, .8, .2, 1) both;
+                transform-origin: top
+            }
+
+            .k.flash {
+                animation: kflash 1s ease
+            }
+
+            .ch.pl rect {
+                transform-box: fill-box;
+                transform-origin: 50% 100%;
+                animation: barup .8s cubic-bezier(.2, .9, .25, 1) both;
+                animation-delay: calc(var(--i, 0) * 38ms + .15s)
+            }
+
+            .ch.pl text {
+                animation: ldfade .7s .2s ease both
+            }
+
+            .ch rect {
+                transition: filter .2s ease
+            }
+
+            .ch rect:hover {
+                filter: brightness(1.18) saturate(1.2)
+            }
+        }
+
+        @keyframes hsweep {
+            0% {
+                transform: translateX(-120%)
+            }
+
+            22%,
+            100% {
+                transform: translateX(120%)
+            }
+        }
+
+        @keyframes kin {
+            from {
+                opacity: 0;
+                transform: translateY(26px) scale(.95)
+            }
+        }
+
+        @keyframes kbar {
+            from {
+                transform: scaleY(0)
+            }
+        }
+
+        @keyframes kshine {
+            to {
+                transform: translateX(130%)
+            }
+        }
+
+        @keyframes secin {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+        }
+
+        @keyframes barup {
+            from {
+                transform: scaleY(0);
+                opacity: .4
+            }
+        }
+
+        @keyframes kflash {
+            35% {
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac, #1f7ae0) 45%, transparent)
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .hero>.hsh,
+            .k::after {
+                display: none
+            }
+        }
+        /* ===== Hiệu ứng động bổ sung ===== */
+        @media (prefers-reduced-motion:no-preference) {
+            @keyframes fxUp { from { opacity: 0; transform: translateY(18px) scale(.97) } to { opacity: 1; transform: none } }
+            @keyframes fxRow { from { opacity: 0; transform: translateX(-12px) } to { opacity: 1; transform: none } }
+            @keyframes fxPop { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.12) } 100% { transform: scale(1); opacity: 1 } }
+            @keyframes fxShine { to { transform: translateX(120%) skewX(-20deg) } }
+            @keyframes fxWave { 0%,60%,100% { transform: rotate(0) } 15% { transform: rotate(16deg) } 30% { transform: rotate(-10deg) } 45% { transform: rotate(14deg) } }
+            @keyframes fxBar { from { transform: scaleX(1) } to { transform: scaleX(0) } }
+            @keyframes fxFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+            @keyframes fxConf { 0% { transform: translate(0,0) rotate(0); opacity: 1 } 100% { transform: translate(var(--dx),var(--dy)) rotate(var(--rt)); opacity: 0 } }
+            @keyframes fxGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(200,16,46,.35) } 50% { box-shadow: 0 0 0 8px rgba(200,16,46,0) } }
+            #lg:not(.hid) #lf { animation: fxUp .7s cubic-bezier(.2,.8,.2,1) both }
+            #lg:not(.hid) button[type=submit], #lb { position: relative; overflow: hidden }
+            #lb::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transform: skewX(-20deg); animation: fxShine 3.2s ease-in-out infinite }
+            #lg input:focus { transform: translateY(-1px) }
+            #app:not(.hid) .hero { animation: fxUp .6s cubic-bezier(.2,.8,.2,1) both }
+            #app:not(.hid) .tabs { animation: fxUp .6s .08s cubic-bezier(.2,.8,.2,1) both }
+            .tp:not(.hid) .cards > * { animation: fxUp .55s cubic-bezier(.2,.8,.2,1) both }
+            .tp:not(.hid) .cards > *:nth-child(1) { animation-delay: .05s }
+            .tp:not(.hid) .cards > *:nth-child(2) { animation-delay: .12s }
+            .tp:not(.hid) .cards > *:nth-child(3) { animation-delay: .19s }
+            .tp:not(.hid) .cards > *:nth-child(4) { animation-delay: .26s }
+            .tp:not(.hid) .cards > *:nth-child(5) { animation-delay: .33s }
+            .tp:not(.hid) .cards > *:nth-child(n+6) { animation-delay: .4s }
+            .k { transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s }
+            .k:hover { transform: translateY(-5px); box-shadow: 0 14px 30px rgba(0,0,0,.14) }
+            .tp:not(.hid) tbody tr { animation: fxRow .45s ease both }
+            .tp:not(.hid) tbody tr:nth-child(1) { animation-delay: .04s }
+            .tp:not(.hid) tbody tr:nth-child(2) { animation-delay: .08s }
+            .tp:not(.hid) tbody tr:nth-child(3) { animation-delay: .12s }
+            .tp:not(.hid) tbody tr:nth-child(4) { animation-delay: .16s }
+            .tp:not(.hid) tbody tr:nth-child(5) { animation-delay: .2s }
+            .tp:not(.hid) tbody tr:nth-child(n+6) { animation-delay: .24s }
+            tbody tr { transition: background-color .15s }
+            .tabs button { transition: transform .18s, background-color .18s, color .18s, box-shadow .18s }
+            .tabs button:hover { transform: translateY(-2px) }
+            .tabs button.on { animation: fxPop .4s ease both }
+            button:not(:disabled):hover { filter: brightness(1.05) }
+        }
+        #wlc { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 100000; width: min(92vw, 400px); pointer-events: none }
+        #wlc .wc { position: relative; overflow: hidden; pointer-events: auto; cursor: pointer; display: flex; gap: 12px; align-items: center; padding: 14px 16px 16px; border-radius: 16px; color: #fff; background: linear-gradient(135deg, #c8102e, #8f0b21); box-shadow: 0 14px 36px rgba(0,0,0,.35); font: 600 14px/1.4 system-ui, sans-serif; animation: fxDrop .55s cubic-bezier(.2,1.2,.3,1) both }
+        @keyframes fxDrop { from { opacity: 0; transform: translateY(-40px) scale(.9) } to { opacity: 1; transform: none } }
+        #wlc .wc.bye { transition: opacity .4s, transform .4s; opacity: 0; transform: translateY(-24px) }
+        #wlc .we { font-size: 30px; display: inline-block; transform-origin: 70% 70%; animation: fxWave 1.8s .4s ease-in-out 2 }
+        #wlc b { display: block; font-size: 16px }
+        #wlc small { opacity: .9; font-weight: 500 }
+        #wlc .wp { position: absolute; left: 0; bottom: 0; height: 4px; width: 100%; background: rgba(255,255,255,.75); transform-origin: left; animation: fxBar 4s linear forwards }
+        #wlc .cf { position: absolute; left: 36px; top: 50%; width: 8px; height: 8px; border-radius: 2px; animation: fxConf 1.1s ease-out forwards; pointer-events: none }
+        @media (prefers-reduced-motion:reduce) { #wlc .wc, #wlc .we, #wlc .cf { animation: none } }
     </style>
 </head>
 
@@ -6156,22 +6398,35 @@
             } catch (x) { e.textContent = 'Không kết nối được máy chủ (' + x.message + '). Hãy kiểm tra mạng rồi thử lại.'; return } finally { $('lb').disabled = false }
             setMode('login'); $('lu').value = u; $('le').className = 'err ok'; $('le').textContent = 'Đã gửi yêu cầu. Chờ quản trị viên duyệt rồi mới đăng nhập được.'
         }
-        function enter(x) {
+        function enter(x, fresh) {
             me = { u: x.u, r: x.r }; try { localStorage.setItem('bc-me', JSON.stringify(me)) } catch (e) { } lastAct = Date.now(); try { localStorage.setItem('bc-act', String(lastAct)) } catch (e) { } setTimeout(dailyBackup, 3000);
             $('lg').classList.add('hid'); $('app').classList.remove('hid'); $('lp').value = '';
-            $('who').textContent = me.u + ' (' + (RL[me.r] || '') + ')'; all()
+            $('who').textContent = me.u + ' (' + (RL[me.r] || '') + ')'; all(); if (fresh) welcome(x)
+        }
+        /* Thông báo chào mừng sau khi đăng nhập thành công */
+        function welcome(x) {
+            const old = document.getElementById('wlc'); if (old) old.remove();
+            const h = new Date().getHours(), g = h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Chào buổi trưa' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+            const box = document.createElement('div'); box.id = 'wlc'; box.setAttribute('role', 'status'); box.setAttribute('aria-live', 'polite');
+            const c = document.createElement('div'); c.className = 'wc';
+            c.innerHTML = '<span class="we">👋</span><div><b>' + g + ', ' + esc(x.u) + '!</b><small>Đăng nhập thành công · ' + esc(RL[x.r] || '') + '</small></div><i class="wp"></i>';
+            const cols = ['#fde047', '#fff', '#60a5fa', '#34d399', '#f472b6'];
+            for (let i = 0; i < 18; i++) { const p = document.createElement('i'); p.className = 'cf'; p.style.background = cols[i % 5]; p.style.setProperty('--dx', (Math.random() * 360 - 60) + 'px'); p.style.setProperty('--dy', (Math.random() * 90 - 45) + 'px'); p.style.setProperty('--rt', (Math.random() * 720 - 360) + 'deg'); p.style.animationDelay = (Math.random() * .25) + 's'; c.appendChild(p) }
+            box.appendChild(c); document.body.appendChild(box);
+            const bye = () => { c.classList.add('bye'); setTimeout(() => box.remove(), 450) };
+            c.onclick = bye; setTimeout(bye, 4000)
         }
         $('lf').onsubmit = async e => {
             e.preventDefault(); const u = $('lu').value.trim().toLowerCase(), p = $('lp').value;
             if (regMode) { await register(u, p); return }
             if (!U.length) {
                 if (p.length < 6) { $('le').textContent = 'Mật khẩu cần từ 6 ký tự.'; return }
-                const sl = salt(); U.push({ u, s: sl, h: await hash(p, sl), r: 'admin' }); saveU(); enter(U[0]); return
+                const sl = salt(); U.push({ u, s: sl, h: await hash(p, sl), r: 'admin' }); saveU(); enter(U[0], true); return
             }
             if (SB_ON) { try { const R = await sbPullKeys(['users', 'pending']); if (Array.isArray(R.users)) U = R.users; if (Array.isArray(R.pending)) PEND = R.pending } catch (x) { } }
             const x = U.find(a => a.u === u); if (!x && PEND.some(a => a.u === u)) { $('le').textContent = 'Tài khoản này đang chờ quản trị duyệt.'; return }
             const hv = await hash(p, x ? x.s : ''); if (!x || (hv !== x.h && hv !== x.h2)) { $('le').textContent = 'Sai tài khoản hoặc mật khẩu.'; return }
-            enter(x)
+            enter(x, true)
         };
         $('out').onclick = () => { me = null; try { localStorage.removeItem('bc-me') } catch (e) { } $('lu').value = ''; showLogin() };
         /* Tự đăng xuất sau 5 phút không thao tác */
@@ -6493,6 +6748,95 @@
             a.download = `Bao-cao-thang-${M}-${yy}.xlsx`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 1500);
         }
         $('xl').onclick = xlExport;
+    
+        /* ===== Animation trang chủ: đếm số, mọc cột, phát lại khi đổi tab ===== */
+        (function () {
+            const RM = matchMedia('(prefers-reduced-motion:reduce)');
+            const RE = /\d[\d.]*(?:,\d+)?/g;
+            const num = s => parseFloat(s.replace(/\./g, '').replace(',', '.'));
+            const dec = s => { const m = s.match(/,(\d+)$/); return m ? m[1].length : 0 };
+            const fmt = (v, d) => v.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
+            const ease = t => 1 - Math.pow(1 - t, 3);
+            const prev = new Map();
+            const hero = document.querySelector('header.hero');
+            if (hero && !hero.querySelector('.hsh')) { const i = document.createElement('i'); i.className = 'hsh'; hero.appendChild(i) }
+
+            function textNodes(el) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), a = []; while (w.nextNode()) a.push(w.currentNode); return a }
+            function vals(b) { const o = []; textNodes(b).forEach(t => (t.nodeValue.match(RE) || []).forEach(x => o.push(num(x)))); return o }
+
+            function count(b, starts) {
+                if (RM.matches) return;
+                if (b.dataset.final) b.innerHTML = b.dataset.final; else b.dataset.final = b.innerHTML;
+                const items = textNodes(b).map(t => { const v = t.nodeValue; const toks = v.match(RE); return toks ? { t, v, parts: v.split(RE), nums: toks.map(num), d: toks.map(dec) } : null }).filter(Boolean);
+                if (!items.length) return;
+                const t0 = performance.now(), D = 950;
+                const step = now => {
+                    if (!b.isConnected) return;
+                    const p = Math.min(1, (now - t0) / D), e = ease(p); let j = 0;
+                    items.forEach(it => {
+                        if (p >= 1) { it.t.nodeValue = it.v; j += it.nums.length; return }
+                        let s = it.parts[0];
+                        it.nums.forEach((x, k) => { const a = starts ? (starts[j] || 0) : 0; s += fmt(a + (x - a) * e, it.d[k]) + it.parts[k + 1]; j++ });
+                        it.t.nodeValue = s
+                    });
+                    if (p < 1) requestAnimationFrame(step)
+                };
+                requestAnimationFrame(step)
+            }
+
+            function cards(box, replay) {
+                const playing = replay || !!box.closest('.tp.play');
+                box.querySelectorAll('.k').forEach((k, i) => {
+                    k.style.setProperty('--i', i);
+                    const b = k.querySelector('b'); if (!b) return;
+                    const key = box.id + i + '|' + ((k.querySelector('small') || {}).textContent || '');
+                    if (b.dataset.final) b.innerHTML = b.dataset.final; else b.dataset.final = b.innerHTML;
+                    const cur = vals(b), old = prev.get(key);
+                    prev.set(key, cur);
+                    if (playing || !old) count(b, null);
+                    else if (old.join() !== cur.join()) { count(b, old); k.classList.remove('flash'); void k.offsetWidth; k.classList.add('flash'); setTimeout(() => k.classList.remove('flash'), 1000) }
+                })
+            }
+
+            function charts(box, force) {
+                const svg = box.querySelector('svg.ch'); if (!svg) return;
+                const rects = svg.querySelectorAll('rect');
+                const sig = Array.from(rects).map(r => r.getAttribute('height')).join();
+                if (!force && box._sig === sig) return;
+                box._sig = sig;
+                rects.forEach((r, i) => r.style.setProperty('--i', i));
+                svg.classList.remove('pl'); void svg.getBoundingClientRect(); svg.classList.add('pl');
+                clearTimeout(box._t); box._t = setTimeout(() => svg.classList.remove('pl'), 2200)
+            }
+
+            function play(tp) {
+                if (RM.matches) return;
+                tp.classList.remove('play'); void tp.offsetWidth; tp.classList.add('play');
+                tp.querySelectorAll('.cards').forEach(c => cards(c, true));
+                tp.querySelectorAll('[id^=ch]').forEach(c => charts(c, true));
+                clearTimeout(tp._t); tp._t = setTimeout(() => tp.classList.remove('play'), 2000)
+            }
+
+            ['cards', 'lcards', 'ncards'].forEach(id => {
+                const el = document.getElementById(id); if (!el) return;
+                new MutationObserver(() => cards(el, false)).observe(el, { childList: true })
+            });
+            ['ch1', 'ch2'].forEach(id => {
+                const el = document.getElementById(id); if (!el) return;
+                new MutationObserver(() => charts(el, false)).observe(el, { childList: true })
+            });
+            const tabObs = new MutationObserver(ms => ms.forEach(m => {
+                const e = m.target; if (e.classList.contains('hid') || (m.oldValue || '').indexOf('hid') < 0) return;
+                if (e.classList.contains('tp')) play(e)
+            }));
+            document.querySelectorAll('.tp').forEach(tp => tabObs.observe(tp, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }));
+            const app = document.getElementById('app');
+            if (app) new MutationObserver(ms => ms.forEach(m => {
+                if (!app.classList.contains('hid') && (m.oldValue || '').indexOf('hid') >= 0) {
+                    const tp = document.querySelector('.tp:not(.hid)'); if (tp) setTimeout(() => play(tp), 60)
+                }
+            })).observe(app, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+        })();
     </script>
 </body>
 
