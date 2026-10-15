@@ -2309,8 +2309,11 @@
                 const R = ix.map(i => S.rows[i]), sm = k => R.reduce((a, r) => a + n(r[k]), 0), un = {};
                 R.forEach(r => { const u = (r.u || '').trim() || 'khác'; un[u] = (un[u] || 0) + n(r.q) });
                 const ub = Object.entries(un).map(([u, v]) => f2(v) + ' ' + u).join(', ');
-                const tv = R.reduce((a, r) => a + fee(r), 0), tu = R.reduce((a, r) => a + (r.by === 'USD' ? n(r.usd) : 0), 0);
-                ft = `<tfoot><tr><td colspan="5">Tổng ${R.length} dòng${ix.length < S.rows.length ? ' (đang lọc)' : ''}${Object.keys(un).length > 1 ? `<div style="font-size:12px;font-weight:400;opacity:.8">${esc(ub)}</div>` : ''}</td><td class="num" title="${esc(ub)}">${f2(sm('q'))}</td><td title="${esc(ub)}">${Object.keys(un).length === 1 ? esc(Object.keys(un)[0]) : ''}</td><td class="num">${f(sm('kg'))}</td><td class="num">${f2(sm('m3'))}</td><td class="num">${f(tv)}</td><td class="num">${f2(tu)}</td><td></td><td class="num">${f(sm('xe'))}</td><td class="num">${f(sm('don'))}</td><td colspan="2"></td></tr></tfoot>`
+                const uo = r => r.by === 'USD' ? n(r.usd) : rt(r) ? fee(r) / rt(r) : 0, PD = R.filter(r => pd(r) === 'yes'), NP = R.filter(r => pd(r) === 'no');
+                const tv = R.reduce((a, r) => a + fee(r), 0), tu = R.reduce((a, r) => a + uo(r), 0);
+                const pv = PD.reduce((a, r) => a + fee(r), 0), pu = PD.reduce((a, r) => a + uo(r), 0), nv = NP.reduce((a, r) => a + fee(r), 0), nu = NP.reduce((a, r) => a + uo(r), 0);
+                const sub = (l, v) => `<div style="font-size:11.5px;font-weight:500;opacity:.85;white-space:nowrap">${l} ${v}</div>`;
+                ft = `<tfoot><tr><td colspan="5">Tổng ${R.length} dòng${ix.length < S.rows.length ? ' (đang lọc)' : ''}${Object.keys(un).length > 1 ? `<div style="font-size:12px;font-weight:400;opacity:.8">${esc(ub)}</div>` : ''}</td><td class="num" title="${esc(ub)}">${f2(sm('q'))}</td><td title="${esc(ub)}">${Object.keys(un).length === 1 ? esc(Object.keys(un)[0]) : ''}</td><td class="num">${f(sm('kg'))}</td><td class="num">${f2(sm('m3'))}</td><td class="num">${f(tv)}${sub('Đã thu', f(pv))}${sub('Chưa thu', f(nv))}</td><td class="num">${f2(tu)}${sub('Đã thu', f2(pu))}${sub('Chưa thu', f2(nu))}</td><td></td><td class="num">${f(sm('xe'))}</td><td class="num">${f(sm('don'))}</td><td colspan="2"></td></tr></tfoot>`
             }
             $('tb').innerHTML = h + '</tbody>' + ft;
             applyRO()
@@ -2439,6 +2442,14 @@
                 pre.textContent = v && r ? `Quy đổi: ${f(v)} VND ≈ ${f2(v / r)} USD (tỷ giá ${f(r)})` : ''
             };
             [by, us, tg, kgi, vn].forEach(e => { e.addEventListener('input', preview); e.addEventListener('change', preview) });
+            const r2 = v => String(Math.round(v * 100) / 100);
+            /* đổi cách tính: giữ nguyên số tiền đang có (kg → VND / USD) để cả VND và USD đều hiện, không bị về 0 */
+            by.addEventListener('change', () => {
+                const rate = n(tg.value) || S.rate, cur = n(vn.value) || n(kgi.value) * S.kg;
+                if (by.value === 'USD' && !n(us.value) && cur && rate) us.value = r2(cur / rate);
+                if (by.value === 'VND' && cur && !n(keep)) keep = String(Math.round(cur))
+            });
+            if (by.value === 'USD' && !n(us.value) && n(kgi.value)) { const rate = n(tg.value) || S.rate; if (rate) us.value = r2(n(kgi.value) * S.kg / rate); sync(); preview() }
             by.addEventListener('change', sync); us.addEventListener('input', sync); kgi.addEventListener('input', sync); tg.addEventListener('input', sync);
             btn.onclick = async () => {
                 btn.disabled = true; const t0 = btn.textContent; btn.textContent = 'Đang lấy...';
