@@ -1582,6 +1582,53 @@
         @keyframes heroin { from { opacity: 0; transform: translateX(-14px) } }
         @keyframes tpin { from { opacity: 0; transform: translateY(6px) } }
 
+        /* ===== Loading nâng cấp: nền xanh đêm, thẻ phát sáng, % tiến độ ===== */
+        #ld { --tx: #fff; --mu: #a9b8cb; --bd: rgba(255, 255, 255, .16); background: radial-gradient(ellipse at 18% 12%, rgba(200, 16, 46, .38), transparent 55%), radial-gradient(ellipse at 85% 90%, rgba(3, 46, 161, .5), transparent 55%), linear-gradient(160deg, #0b1320, #101a2b 60%, #0a0f18) !important; gap: 20px }
+        #ld::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 46px); pointer-events: none }
+        #ld .ldbrand b { font-size: 30px; background: linear-gradient(100deg, #fff 30%, #ffde00 50%, #fff 70%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: ldbr 1s cubic-bezier(.2, .8, .2, 1) both, ldsheen 3.2s linear infinite }
+        #ld .ldbrand span { color: #c9d5e4; letter-spacing: .42em; font-weight: 600 }
+        #ld .ldbrand::after { width: 72px; height: 3px; box-shadow: 0 0 14px rgba(255, 222, 0, .55) }
+        #ld .spn { position: relative; filter: none }
+        #ld .spn svg { border: 3px solid transparent; border-radius: 24px; color: #17212b; background: linear-gradient(#0d1626, #0d1626) padding-box, linear-gradient(135deg, #da251d, #ffde00 50%, #032ea1) border-box; box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .7), 0 0 70px rgba(218, 37, 29, .22), 0 0 90px rgba(3, 46, 161, .28); width: 100%; box-sizing: border-box }
+        #ld .spn svg > text { fill: #e8eef6 }
+        #ld .spn svg > text[opacity] { opacity: .7 }
+        #ld .rt { margin-top: 14px }
+        #ld .ldlane { width: min(440px, 92vw); display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+        #ld .ldlane div { position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #fff; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .14); backdrop-filter: blur(4px) }
+        #ld .ldlane div small { display: block; font-size: 9.5px; font-weight: 500; letter-spacing: .04em; color: #a9b8cb; margin-top: 1px }
+        #ld .ldlane div i { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 14px; color: #0d1626 }
+        #ld .ldlane .go i { background: #ffde00; animation: ldarrR 1.6s ease-in-out infinite }
+        #ld .ldlane .bk i { background: #5aa9ff; animation: ldarrL 1.6s ease-in-out infinite }
+        #ld .ldlane div::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: repeating-linear-gradient(90deg, currentColor 0 8px, transparent 8px 16px); opacity: .5; animation: ldlane 1s linear infinite }
+        #ld .ldlane .go::after { color: #ffde00 } #ld .ldlane .bk::after { color: #5aa9ff; animation-direction: reverse }
+        #ld .ldsv { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; max-width: 92vw; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #a9b8cb }
+        #ld .ldsv span + span::before { content: "•"; margin-right: 14px; color: #ffde00 }
+        #ld.bad .ldlane, #ld.bad .ldsv { display: none }
+        @keyframes ldarrR { 50% { transform: translateX(4px) } }
+        @keyframes ldarrL { 50% { transform: translateX(-4px) } }
+        @keyframes ldlane { to { background-position: 16px 0 } }
+        #ld .rt { height: 8px; background: rgba(255, 255, 255, .14); box-shadow: 0 0 18px rgba(255, 222, 0, .18) }
+        #ld .rt i { box-shadow: 0 0 14px rgba(255, 222, 0, .7) }
+        #ld #ldt { font-size: 16px; font-weight: 600; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .4) }
+        #ld #ldp { font-size: 13px; font-weight: 700; letter-spacing: .18em; color: #ffde00; font-variant-numeric: tabular-nums; margin-top: -10px }
+        #ld.bad #ldp { display: none }
+        @keyframes ldsheen { to { background-position: -220% 0 } }
+
+        /* loading khi lập / mở phiếu giao nhận */
+        #bbusy { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, rgba(16, 26, 39, .78), rgba(10, 16, 26, .92)); backdrop-filter: blur(6px); transition: opacity .3s }
+        #bbusy.out { opacity: 0 }
+        #bbusy .bbc { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 40px; min-width: 280px; border-radius: 20px; background: var(--cd); color: var(--tx); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 40px 90px -20px rgba(0, 0, 0, .65) }
+        #bbusy .bbb { display: flex; flex-direction: column; align-items: center; gap: 4px }
+        #bbusy .bbb b { font-size: 22px; font-weight: 700; letter-spacing: .38em; padding-left: .38em }
+        #bbusy .bbb span { font-size: 12px; letter-spacing: .26em; padding-left: .26em; color: var(--mu) }
+        #bbusy .bbb::after { content: ""; width: 48px; height: 2px; margin-top: 9px; border-radius: 2px; background: linear-gradient(90deg, #da251d, #ffde00, #032ea1) }
+        #bbusy .bbr { width: 220px; height: 5px; border-radius: 5px; background: var(--bd); overflow: hidden }
+        #bbusy .bbr i { display: block; height: 100%; width: 0; border-radius: 5px; background: linear-gradient(90deg, #da251d, #ffde00, #032ea1); animation: bbfill .9s cubic-bezier(.3, .7, .3, 1) forwards }
+        #bbusy p { margin: 0; font-size: 14px; font-weight: 600 }
+        @keyframes bbfill { to { width: 100% } }
+        #ld #ldt { letter-spacing: .02em }
+        #ld .rt i { background: linear-gradient(90deg, #da251d, #ffde00, #032ea1) }
+
         /* ===== Trang chủ: màu sắc, bố cục, tuyến vận chuyển sống động ===== */
         @property --pp { syntax: '<integer>'; inherits: false; initial-value: 0 }
         body { background: radial-gradient(900px 380px at 8% -90px, rgba(200, 16, 46, .09), transparent 70%), radial-gradient(900px 420px at 100% -70px, rgba(47, 124, 192, .11), transparent 70%), var(--bg); background-repeat: no-repeat }
@@ -1903,7 +1950,7 @@
 <text x="24" y="222" font-size="12" font-weight="700" fill="currentColor" text-anchor="start">Việt Nam</text>
 <text x="210" y="222" font-size="10" font-weight="600" fill="currentColor" opacity=".6" text-anchor="middle">Cửa khẩu</text>
 <text x="396" y="222" font-size="12" font-weight="700" fill="currentColor" text-anchor="end">Campuchia</text>
-</svg><div class="rt"><i></i></div></div><p id="ldt">Đang vận chuyển dữ liệu</p><button type="button" class="p hid" id="ldr">Tải lại trang</button></div>
+</svg><div class="rt"><i></i></div></div><div class="ldlane"><div class="go"><i>→</i><span>HÀNG ĐI<small>Việt Nam → Campuchia</small></span></div><div class="bk"><i>←</i><span>HÀNG VỀ<small>Campuchia → Việt Nam</small></span></div></div><p id="ldt">Đang kết nối máy chủ</p><p id="ldp">0%</p><div class="ldsv"><span>Vận chuyển 2 chiều</span><span>Hàng hóa</span><span>Bưu kiện</span><span>Hàng lẻ</span></div><button type="button" class="p hid" id="ldr">Tải lại trang</button></div>
     <div id="lg" class="hid">
         <div class="lgscene" aria-hidden="true">
             <div class="lgglow g1"></div><div class="lgglow g2"></div><div class="lggrid"></div>
@@ -2427,8 +2474,17 @@
         setInterval(autoRate, 30000); setTimeout(autoRate, 3000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) autoRate() });
         /* ---- Phiếu giao nhận ---- */
-        const dcfg = () => ({ no: 599, ct: { 'Anh Nghĩa': { n: 'Nghĩa', p: '0919 068 131', a: 'Công ty XNK Thảo Uyên' }, 'Anh Triết': { n: 'Triết', p: '+855 97 948 3388', a: 'PhnomPenh, Campuchia' } }, rv: { 'Anh Nghĩa': 'Anh Triết', 'Anh Trọng': 'Anh Triết' } });
+        const dcfg = () => ({ no: 599, ct: { 'Anh Nghĩa': { n: 'Nghĩa', p: '0919 068 131', a: 'Công ty XNK Thảo Uyên' }, 'Anh Triết': { n: 'Triết', p: '+855 97 948 3388', a: 'Phnom Penh, Campuchia' } }, rv: { 'Anh Nghĩa': 'Anh Triết', 'Anh Trọng': 'Anh Triết' } });
         const cfg = () => S.cfg || (S.cfg = dcfg());
+        /* Hồ sơ cố định: đơn anh Nghĩa / anh Trọng luôn gửi cho anh Triết (Phnom Penh) */
+        const TRIET = { n: 'Triết', p: '+855 97 948 3388', a: 'Phnom Penh, Campuchia' };
+        const HEANG = { n: 'Mr Heang', p: '077 743 360', a: 'Russian Federation Blvd 110, Toul Kouk, Phnom Penh, Cambodia, 120404' };
+        const FIXS = { 'nghĩa': { n: 'Nghĩa', p: '0919 068 131', a: 'Công ty XNK Thảo Uyên' }, 'trọng': { n: 'Trọng', p: '', a: '' }, 'chả cá': { n: 'Mr. Tú', p: '', a: 'CÔNG TY TNHH MỘT THÀNH VIÊN SANNADLE' } };
+        const FIXR = { 'nghĩa': ['Anh Triết', TRIET], 'trọng': ['Anh Triết', TRIET], 'chả cá': ['Mr Heang', HEANG] };
+        const fixKey = k => { k = (k || '').toLowerCase(); return k.includes('nghĩa') ? 'nghĩa' : k.includes('trọng') ? 'trọng' : k.includes('chả cá') ? 'chả cá' : '' };
+        const fixSender = (k, c) => { const m = fixKey(k); if (!m) return c; const F = FIXS[m]; return { n: F.n, p: F.p, a: F.a || (c && c.a) || '' } };
+        const isTriet = k => (k || '').toLowerCase().includes('triết');
+        const fixRecv = k => { k = (k || '').trim().toLowerCase(); return isTriet(k) ? TRIET : k.includes('heang') ? HEANG : null };
         const bRows = () => Object.keys(S.months).sort().flatMap(m => S.months[m].rows.map((r, i) => ({ r, m, i })));
         const dm = d => d ? d.split('-').reverse().join('-') : '';
         const en = v => Math.round(v).toLocaleString('en-US');
@@ -2538,8 +2594,8 @@
                 d.querySelector('.mx').onclick = () => { d.remove(); tot() }
             };
             mb.oninput = tot; $('bma').onclick = () => { if (mEls().length + boxes().filter(i => i.checked).length < MAX) { addM(); tot() } };
-            const fillS = () => { const k = key(), c = C.ct[k] || { n: strip(k), p: '', a: '' }; $('bsn').value = c.n; $('bsp').value = c.p; $('bsa').value = c.a };
-            const fillR = () => { const k = $('brk').value.trim(), c = C.ct[k] || (k ? { n: strip(k), p: '', a: '' } : { n: '', p: '', a: '' }); $('brn').value = c.n; $('brp').value = c.p; $('bra').value = c.a };
+            const fillS = () => { const k = key(), c = fixSender(k, C.ct[k] || { n: strip(k), p: '', a: '' }); $('bsn').value = c.n; $('bsp').value = c.p; $('bsa').value = c.a };
+            const fillR = () => { const k = $('brk').value.trim(), c = fixRecv(k) || (C.ct[k] || (k ? { n: strip(k), p: '', a: '' } : { n: '', p: '', a: '' })); $('brn').value = c.n; $('brp').value = c.p; $('bra').value = c.a };
             const load = keep => {
                 let c5 = mEls().length;
                 box.innerHTML = rows().map(x => {
@@ -2553,7 +2609,7 @@
                         <span class="bd5"><span class="pill pill-${pd(r)}">${PL[pd(r)]}</span>${r.bill ? `<span class="bdg">${mine ? 'Trong phiếu này' : 'Đã lập ' + esc(r.bill)}</span>` : ''}</span>
                         ${r.note ? `<span class="bd6">${esc(r.note)}</span>` : ''}</label>`
                 }).join('') || `<p class="hint">${key() ? 'Khách này chưa có đơn hàng, bạn có thể nhập dòng hàng tay bên dưới.' : 'Nhập tên khách gửi.'}</p>`;
-                if (!keep && !(first && E)) { fillS(); $('brk').value = C.rv[key()] || ''; fillR() }
+                if (!keep && !(first && E)) { fillS(); $('brk').value = fixKey(key()) ? FIXR[fixKey(key())][0] : (C.rv[key()] || ''); fillR() }
                 first = false; tot()
             };
             const months = [...new Set([...Object.keys(S.months), S.cur])].sort().reverse();
@@ -2586,7 +2642,7 @@
                 const no = $('bno').value.trim(), s = { n: $('bsn').value.trim(), p: $('bsp').value.trim(), a: $('bsa').value.trim() }, rc = { n: $('brn').value.trim(), p: $('brp').value.trim(), a: $('bra').value.trim() }, rk = $('brk').value.trim();
                 if (!no) { $('fe').textContent = 'Nhập số phiếu.'; return }
                 if (billAll().some(b => b.no === no && !(E && b.no === E.no))) { $('fe').textContent = 'Số phiếu ' + no + ' đã có rồi. Hãy đổi sang số khác hoặc xóa phiếu cũ trong «Phiếu đã lập».'; return }
-                C.ct[sk] = s; if (rk) { C.ct[rk] = rc; C.rv[sk] = rk }
+                C.ct[sk] = fixKey(sk) ? fixSender(sk, s) : s; if (rk) { C.ct[rk] = fixRecv(rk) || rc; C.rv[sk] = rk }
                 const m = no.match(/(\d+)\s*$/); if (m && +m[1] > C.no) C.no = +m[1];
                 const bill = { no, dt: $('bdt').value, k: sk, rk, s, r: rc, rows: [...P.map(x => snap(x.r)), ...M.map(snap)], man: M.map(x => ({ by: x.by, m3: x.m3, pm3: x.pm3, desc: x.desc, d: x.d, q: x.q, u: x.u, kg: x.kg })), mo: MO, v: $('bv').value.trim(), u: ru($('bu').value), t: E ? (E.t || Date.now()) : Date.now() };
                 if (E) { A.forEach(x => { if (x.r.bill === E.no) delete x.r.bill }); C.bills = C.bills.filter(b => b.no !== E.no) }
@@ -2595,12 +2651,22 @@
             }
         }
         let bImg;
-        function showBill(d, saved) {
+        function billBusy(msg, ms) {
+            let b = $('bbusy');
+            if (!b) { b = document.createElement('div'); b.id = 'bbusy'; b.className = 'hid'; b.innerHTML = '<div class="bbc"><div class="bbb"><b>SOKMOK</b><span>Transport</span></div><div class="bbr"><i></i></div><p id="bbt"></p></div>'; document.body.appendChild(b) }
+            $('bbt').textContent = msg; b.classList.remove('hid', 'out'); void b.offsetWidth;
+            return new Promise(res => setTimeout(() => { b.classList.add('out'); setTimeout(() => b.classList.add('hid'), 300); res() }, ms))
+        }
+        async function showBill(d, saved) {
+            await billBusy(saved ? 'Đang lập phiếu ' + d.no : 'Đang mở phiếu ' + d.no, 900);
+            return showBill2(d, saved)
+        }
+        function showBill2(d, saved) {
             const draw = () => {
                 const c = $('bc'), x = c.getContext('2d'); c.width = 2212; c.height = 1659; x.drawImage(bImg, 0, 0, 2212, 1659);
                 x.fillStyle = '#1c1f24';
                 const F = sz => x.font = `bold ${sz}px Arial, Helvetica, sans-serif`;
-                const T = (t, px, y, sz, al, mw) => { if (!t) return; F(sz); x.textAlign = al || 'left'; x.fillText(t, px, y, mw) };
+                const T = (t, px, y, sz, al, mw) => { if (!t) return; F(sz); x.textAlign = al || 'left'; x.lineJoin = 'round'; x.lineWidth = 2.6; x.strokeStyle = '#1c1f24'; x.strokeText(t, px, y, mw); x.fillText(t, px, y, mw) };
                 const AD = (t, x1, y1, w1, x2, y2, w2) => { F(36); const ws = (t || '').split(/\s+/).filter(Boolean); let l1 = ''; while (ws.length) { const nx = (l1 ? l1 + ' ' : '') + ws[0]; if (l1 && x.measureText(nx).width > w1) break; l1 = nx; ws.shift() } T(l1, x1, y1, 36, 'left', w1); T(ws.join(' '), x2, y2, 36, 'left', w2) };
                 T(d.no, 1750, 149, 34); T(dm(d.dt), 1750, 283, 34);
                 T(d.s.n, 352, 506, 36, 'left', 430); T(d.s.p, 468, 590, 36, 'left', 315); AD(d.s.a, 362, 667, 420, 65, 748, 720);
@@ -2617,7 +2683,7 @@
             let o = $('bvw');
             if (!o) {
                 o = document.createElement('div'); o.id = 'bvw'; o.className = 'hid'; o.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);overflow:auto;padding:14px;text-align:center';
-                o.innerHTML = '<div class="tb" style="margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="p" id="bpr">In / Lưu PDF</button><button id="bpn">Tải ảnh PNG</button><button id="bls">Phiếu đã lập</button><button id="bcl">Đóng</button><span id="bmsg"></span></div><canvas id="bc" style="max-width:100%;height:auto;background:#fff;border-radius:6px"></canvas>';
+                o.innerHTML = '<div class="tb" style="margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="p" id="bpr">In / Lưu PDF</button><button id="bpn">Tải ảnh PNG</button><button id="bls">Phiếu đã lập</button><button id="bcl">Đóng</button><span id="bmsg"></span></div><canvas id="bc" style="width:max(100%,820px);max-width:none;height:auto;background:#fff;border-radius:6px"></canvas>';
                 document.body.appendChild(o);
                 $('bcl').onclick = () => { o.classList.add('hid'); document.body.classList.remove('pb') };
                 $('bpr').onclick = () => window.print(); $('bls').onclick = () => { o.classList.add('hid'); document.body.classList.remove('pb'); billList() };
@@ -2934,8 +3000,11 @@
         });
         $('tb').addEventListener('click', e => { const tr = e.target.closest('tr[data-row]'); if (tr && !e.target.closest('button')) showRow(+tr.dataset.row) });
         $('pay').addEventListener('click', e => { const tr = e.target.closest('tr[data-prow]'); if (tr && !e.target.closest('button')) showPay(+tr.dataset.prow) });
-        const ldHide = () => { const e = $('ld'); if (e.classList.contains('hid')) return; e.classList.add('out'); setTimeout(() => e.classList.add('hid'), 520) };
+        const ldHide = () => { clearInterval(ldTimer); clearInterval(ldPT); $('ldp').textContent = '100%'; const e = $('ld'); if (e.classList.contains('hid')) return; e.classList.add('out'); setTimeout(() => e.classList.add('hid'), 520) };
         $('ldr').onclick = () => location.reload();
+        let ldPv = 0; const ldPT = setInterval(() => { ldPv += (92 - ldPv) * .06; const e = $('ldp'); if (e) e.textContent = Math.round(ldPv) + '%' }, 120);
+        const LDMSG = ['Đang kết nối máy chủ', 'Đang tải đơn hàng', 'Đang chuẩn bị báo cáo']; let ldi = 0;
+        const ldTimer = setInterval(() => { const e = $('ldt'); if (!e || $('ld').classList.contains('bad') || $('ld').classList.contains('hid')) return; ldi = Math.min(ldi + 1, LDMSG.length - 1); e.textContent = LDMSG[ldi] }, 1600);
         async function boot() {
             if (SB_ON) {
                 try {
