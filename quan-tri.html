@@ -2191,6 +2191,11 @@
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const o = {}; for (const x of await r.json()) { o[x.key] = x.value; SB_REV[x.key] = x.rev } return o
         }
+        /* Chỉ tải dữ liệu từ máy chủ lần đầu trong ngày trên mỗi thiết bị; các lần mở sau trong ngày dùng bản đã lưu trên máy (vẫn lưu lên máy chủ như thường) */
+        const PULLK = 'bc-pull', dayKey = () => { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate() };
+        const pullGet = () => { try { const o = JSON.parse(localStorage.getItem(PULLK)); return o && o.d === dayKey() && o.rev ? o : null } catch (e) { return null } };
+        const pullSet = () => { try { localStorage.setItem(PULLK, JSON.stringify({ d: dayKey(), rev: SB_REV })) } catch (e) { } };
+        const pullClear = () => { try { localStorage.removeItem(PULLK) } catch (e) { } };
         const SB_G = {};
         async function sbSend(key, keep) {
             if (SB_DEAD) return;
@@ -2201,7 +2206,7 @@
                 if (r.status === 409) return keep ? 0 : sbConflict();
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 const rows = await r.json(); if (!rows.length) return keep ? 0 : sbConflict();
-                SB_REV[key] = rows[0].rev; stamp()
+                SB_REV[key] = rows[0].rev; pullSet(); stamp()
             } catch (e) { stamp(true, 'Chưa lưu được lên máy chủ (' + e.message + '). Số liệu vẫn nằm trong trình duyệt này, hãy kiểm tra mạng rồi sửa lại một ô để lưu lại.') }
         }
         function sbPush(key, get) {
@@ -2214,7 +2219,7 @@
         addEventListener('pagehide', sbFlush);
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') sbFlush() });
         function sbConflict() {
-            SB_DEAD = true; stamp(true, 'Người khác vừa cập nhật dữ liệu. Thay đổi vừa rồi CHƯA được lưu lên máy chủ, hãy tải lại trang.');
+            SB_DEAD = true; pullClear(); stamp(true, 'Người khác vừa cập nhật dữ liệu. Thay đổi vừa rồi CHƯA được lưu lên máy chủ, hãy tải lại trang.');
             setTimeout(() => { if (confirm('Người khác vừa cập nhật dữ liệu trên máy chủ.\nTải lại trang để lấy bản mới nhất? (thay đổi vừa rồi của bạn sẽ mất)')) location.reload() }, 50)
         }
         const seed = () => ({
@@ -3007,7 +3012,10 @@
         const LDMSG = ['Đang kết nối máy chủ', 'Đang tải đơn hàng', 'Đang chuẩn bị báo cáo']; let ldi = 0;
         const ldTimer = setInterval(() => { const e = $('ldt'); if (!e || $('ld').classList.contains('bad') || $('ld').classList.contains('hid')) return; ldi = Math.min(ldi + 1, LDMSG.length - 1); e.textContent = LDMSG[ldi] }, 1600);
         async function boot() {
-            if (SB_ON) {
+            const PG = SB_ON ? pullGet() : null;
+            let cached = false;
+            if (PG && S && S.months && U && U.some(a => a.u === 'admin')) { Object.assign(SB_REV, PG.rev); SB_READY = true; cached = true }
+            if (SB_ON && !cached) {
                 try {
                     const R = await sbPull();
                     if (R.report && R.report.months) {
@@ -3022,6 +3030,7 @@
                     if (!R.report) save();           /* lần đầu: đưa dữ liệu hiện có lên máy chủ */
                     if (!R.users || fix) saveU();
                     if (!R.pending) savePend();
+                    pullSet();
                     try { localStorage.setItem(KEY, JSON.stringify({ rate: S.rate, kg: S.kg, cur: S.cur, months: S.months, cfg: S.cfg })); localStorage.setItem(UK, JSON.stringify(U)); localStorage.setItem(PK, JSON.stringify(PEND)) } catch (e) { }
                 } catch (e) {
                     $('ld').classList.add('bad'); $('ldt').textContent = 'Không kết nối được máy chủ dữ liệu (' + e.message + '). Kiểm tra mạng rồi tải lại trang.'; $('ldr').classList.remove('hid'); return
