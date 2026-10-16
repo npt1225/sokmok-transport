@@ -5187,6 +5187,19 @@
             .tabs button.on { box-shadow: 0 6px 16px color-mix(in srgb, var(--pr) 35%, transparent) }
             .ch.pl rect:hover { transform: scaleY(1.04) }
         }
+        /* ===== Sửa tab bị bể chữ trên điện thoại: không cho nút co lại, vuốt ngang được ===== */
+        .tabs { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scroll-snap-type: x proximity; flex-wrap: nowrap }
+        .tabs button { flex: 0 0 auto; min-width: max-content; overflow: visible; text-overflow: clip; white-space: nowrap; scroll-snap-align: center }
+        /* ===== Chọn nhiều người gửi trên 1 phiếu ===== */
+        .schips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px }
+        .schip { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 99px; font-weight: 600; font-size: 14px; min-height: 40px }
+        .schip small { font-weight: 500; color: var(--mu); font-size: 11.5px }
+        .schip::before { content: ""; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bd); flex: none; box-sizing: border-box }
+        .schip.on { background: var(--pr); color: #fff; border-color: var(--pr) }
+        .schip.on small { color: rgba(255,255,255,.85) }
+        .schip.on::before { background: #fff; border-color: #fff; box-shadow: inset 0 0 0 3px var(--pr) }
+        .bwho { display: inline-block; background: rgba(31,95,168,.14); color: var(--pr); border-radius: 99px; padding: 3px 9px; font-size: 11.5px; font-weight: 700; margin-right: 6px }
+        .bsel-hint { font-size: 12px; color: var(--mu); margin-top: 6px }
     </style>
 </head>
 
@@ -6138,8 +6151,8 @@
             md.innerHTML = `<form class="dlg" style="max-width:760px"><h3>${E ? 'Sửa phiếu ' + esc(E.no) : 'Tạo phiếu giao nhận'}</h3>
                 <div class="btabs"><button type="button" data-m="0">Từ đơn hàng</button><button type="button" data-m="1">Nhập tay (không theo đơn hàng)</button></div><div class="fg">
                 <label class="f w" id="bml">Tháng<select id="bmo"></select></label>
-                <label class="f w" id="bsl1">Khách gửi (các khách có đơn trong tháng này)<select id="bss"></select></label>
-                <label class="f w" id="bsl2">Khách gửi (gõ tên hoặc chọn)<input id="bs" list="bkl" autocomplete="off" value="${E && E.mo ? esc(E.k) : ''}"></label>
+                <div class="w" id="bsl1"><div class="bph"><b>Người gửi (bấm chọn 1 hoặc nhiều người)</b><span class="bpc" id="bsc"></span></div><div id="bss" class="schips"></div><div class="bsel-hint">Hiện đơn hàng của tất cả người đã chọn trong tháng này. Trên phiếu sẽ ghi tên các người gửi cách nhau bằng dấu &amp;.</div></div>
+                <label class="f w" id="bsl2">Khách gửi (gõ tên hoặc chọn; nhiều người thì cách nhau dấu phẩy)<input id="bs" list="bkl" autocomplete="off" value="${E && E.mo ? esc((E.ks && E.ks.length ? E.ks : [E.k]).join(', ')) : ''}"></label>
                 <div class="w" id="bpk"><div class="bph"><b>Chọn đơn hàng đưa vào phiếu</b><span class="bpc" id="bcn"></span>
                     <span class="bpb"><button type="button" id="bua">Chọn đơn chưa lập phiếu</button><button type="button" id="bun">Bỏ chọn hết</button></span></div>
                     <div id="bl" class="bpl"></div></div>
@@ -6156,9 +6169,10 @@
                 <div class="act"><button type="button" id="mc">Hủy</button><button class="p">${E ? 'Lưu thay đổi' : 'Tạo phiếu'}</button></div></form>`;
             md.classList.remove('hid'); const close = () => { md.classList.add('hid'); md.innerHTML = '' };
             $('mc').onclick = close; md.onclick = e => { if (e.target === md) close() };
-            const sel = $('bss'), box = $('bl'), mb = $('bm'), MAX = 5; let MO = E && (E.mo || ((E.man || []).length && !A.some(x => x.r.bill === E.no))) ? 1 : 0, first = true;
-            const key = () => (MO ? $('bs').value : sel.value || '').trim();
-            const rows = () => MO ? [] : A.map((x, j) => ({ ...x, j })).filter(x => x.m === $('bmo').value && (x.r.k || '').trim() === key()).sort((a, b) => (b.r.d || '').localeCompare(a.r.d || ''));
+            const sel = $('bss'), box = $('bl'), mb = $('bm'), MAX = 5, SEL = new Set(); let MO = E && (E.mo || ((E.man || []).length && !A.some(x => x.r.bill === E.no))) ? 1 : 0, first = true;
+            const keys = () => MO ? [...new Set($('bs').value.split(/[,;&]/).map(x => x.trim()).filter(Boolean))] : [...SEL];
+            const key = () => keys()[0] || '';
+            const rows = () => { const ks = keys(); return MO ? [] : A.map((x, j) => ({ ...x, j })).filter(x => x.m === $('bmo').value && ks.includes((x.r.k || '').trim())).sort((a, b) => ks.indexOf((a.r.k || '').trim()) - ks.indexOf((b.r.k || '').trim()) || (b.r.d || '').localeCompare(a.r.d || '')) };
             const boxes = () => [...box.querySelectorAll('input[type=checkbox]')];
             const picked = () => rows().filter(x => { const i = box.querySelector(`input[value="${x.j}"]`); return i && i.checked });
             const mEls = () => MO ? [...mb.querySelectorAll('.bmr')] : [];
@@ -6185,7 +6199,8 @@
                 d.querySelector('.mx').onclick = () => { d.remove(); tot() }
             };
             mb.oninput = tot; $('bma').onclick = () => { if (mEls().length + boxes().filter(i => i.checked).length < MAX) { addM(); tot() } };
-            const fillS = () => { const k = key(), c = fixSender(k, C.ct[k] || { n: strip(k), p: '', a: '' }); $('bsn').value = c.n; $('bsp').value = c.p; $('bsa').value = c.a };
+            const fillS = () => { const L = keys().map(k => fixSender(k, C.ct[k] || { n: strip(k), p: '', a: '' })), j = (g, sep) => [...new Set(L.map(g).filter(Boolean))].join(sep); $('bsn').value = j(c => c.n, ' & '); $('bsp').value = j(c => c.p, ' / '); $('bsa').value = j(c => c.a, ' / ') };
+            const rkOf = () => { for (const k of keys()) { const m = fixKey(k), v = m ? FIXR[m][0] : (C.rv[k] || ''); if (v) return v } return '' };
             const fillR = () => { const k = $('brk').value.trim(), c = fixRecv(k) || (C.ct[k] || (k ? { n: strip(k), p: '', a: '' } : { n: '', p: '', a: '' })); $('brn').value = c.n; $('brp').value = c.p; $('bra').value = c.a };
             const load = keep => {
                 let c5 = mEls().length;
@@ -6197,29 +6212,35 @@
                         <span class="bd2"><small>Số lượng</small><b>${f2(r.q)} ${esc(r.u)}</b></span>
                         <span class="bd3"><small>Khối lượng</small><b>${w}</b></span>
                         <span class="bd4"><small>Cước</small><b>${f(bVnd(r))} VND</b>${us ? `<i>≈ ${f2(us)} USD</i>` : ''}</span>
-                        <span class="bd5"><span class="pill pill-${pd(r)}">${PL[pd(r)]}</span>${r.bill ? `<span class="bdg">${mine ? 'Trong phiếu này' : 'Đã lập ' + esc(r.bill)}</span>` : ''}</span>
+                        <span class="bd5">${keys().length > 1 ? `<span class="bwho">${esc(strip((r.k || '').trim()))}</span>` : ''}<span class="pill pill-${pd(r)}">${PL[pd(r)]}</span>${r.bill ? `<span class="bdg">${mine ? 'Trong phiếu này' : 'Đã lập ' + esc(r.bill)}</span>` : ''}</span>
                         ${r.note ? `<span class="bd6">${esc(r.note)}</span>` : ''}</label>`
-                }).join('') || `<p class="hint">${key() ? 'Khách này chưa có đơn hàng, bạn có thể nhập dòng hàng tay bên dưới.' : 'Nhập tên khách gửi.'}</p>`;
-                if (!keep && !(first && E)) { fillS(); $('brk').value = fixKey(key()) ? FIXR[fixKey(key())][0] : (C.rv[key()] || ''); fillR() }
+                }).join('') || `<p class="hint">${key() ? 'Người gửi đã chọn chưa có đơn hàng trong tháng này, bạn có thể dùng tab «Nhập tay».' : 'Hãy chọn người gửi ở trên.'}</p>`;
+                if (!keep && !(first && E)) { fillS(); $('brk').value = rkOf(); fillR() }
                 first = false; tot()
             };
             const months = [...new Set([...Object.keys(S.months), S.cur])].sort().reverse();
             const lm = E ? A.find(x => x.r.bill === E.no) : null;
             $('bmo').innerHTML = months.map(m => `<option value="${m}">${esc(mk(m))}</option>`).join(''); $('bmo').value = lm ? lm.m : S.cur;
+            const paintChips = () => { sel.querySelectorAll('.schip').forEach(b => b.classList.toggle('on', SEL.has(b.dataset.k))); $('bsc').textContent = SEL.size ? 'Đã chọn ' + SEL.size + ' người' : '' };
             const fillNames = pref => {
-                const nm = [...new Set(A.filter(x => x.m === $('bmo').value).map(x => (x.r.k || '').trim()).filter(Boolean))].sort();
-                if (pref && !nm.includes(pref)) nm.push(pref);
-                sel.innerHTML = nm.map(x => `<option>${esc(x)}</option>`).join('') || '<option value="">(tháng này chưa có đơn hàng)</option>';
-                if (pref) sel.value = pref
+                const mo = $('bmo').value, cnt = {};
+                A.filter(x => x.m === mo).forEach(x => { const k = (x.r.k || '').trim(); if (k) cnt[k] = (cnt[k] || 0) + 1 });
+                const nm = Object.keys(cnt).sort();
+                if (!pref.length) [...SEL].forEach(k => { if (!nm.includes(k)) SEL.delete(k) });
+                pref.forEach(p => { if (!nm.includes(p)) { nm.push(p); cnt[p] = 0 } });
+                sel.innerHTML = nm.map(x => `<button type="button" class="schip" data-k="${esc(x)}">${esc(x)}<small>${cnt[x]} đơn</small></button>`).join('') || '<span class="hint">(tháng này chưa có đơn hàng, hãy dùng tab «Nhập tay»)</span>';
+                paintChips()
             };
-            fillNames(E && !MO ? E.k : '');
+            sel.onclick = e => { const b = e.target.closest('.schip'); if (!b) return; const k = b.dataset.k; SEL.has(k) ? SEL.delete(k) : SEL.add(k); paintChips(); load(0) };
+            if (E && !MO) (E.ks && E.ks.length ? E.ks : [E.k]).forEach(k => k && SEL.add(k));
+            fillNames(E && !MO ? [...SEL] : []);
             const mode = () => {
                 $('bml').style.display = $('bsl1').style.display = MO ? 'none' : ''; $('bsl2').style.display = MO ? '' : 'none'; $('bpk').style.display = MO ? 'none' : ''; $('bmw').style.display = MO ? '' : 'none'; md.querySelectorAll('.btabs button').forEach(b => b.classList.toggle('on', +b.dataset.m === MO)); if (MO && !mb.children.length) addM()
             };
-            md.querySelectorAll('.btabs button').forEach(b => b.onclick = () => { MO = +b.dataset.m; if (MO && !$('bs').value) $('bs').value = sel.value || ''; mode(); load(1) });
-            $('bmo').onchange = () => { fillNames(''); load(0) }; $('bs').onchange = () => load(0);
+            md.querySelectorAll('.btabs button').forEach(b => b.onclick = () => { MO = +b.dataset.m; if (MO && !$('bs').value) $('bs').value = [...SEL].join(', '); mode(); load(1) });
+            $('bmo').onchange = () => { fillNames([]); load(0) }; $('bs').onchange = () => load(0);
             $('bv').oninput = () => { const v = parseFloat($('bv').value.replace(/,/g, '')); if (isFinite(v)) $('bu').value = ru(S.rate ? v / S.rate : 0) };
-            sel.onchange = () => load(0); $('brk').onchange = fillR; box.onchange = tot;
+            $('brk').onchange = fillR; box.onchange = tot;
             $('bua').onclick = () => { let c = mEls().length; boxes().forEach(i => { const r = A[+i.value].r; i.checked = !r.bill && pd(r) !== 'yes' && c < MAX; if (i.checked) c++ }); tot() };
             $('bun').onclick = () => { boxes().forEach(i => i.checked = false); tot() };
             if (E) if (E && MO) (E.man || []).forEach(m => addM(m));
@@ -6227,16 +6248,16 @@
             if (E) { const lc = A.filter(x => x.r.bill === E.no).length, mc = (E.man || []).length; if (lc + mc < E.rows.length) $('bw').textContent = `Lưu ý: phiếu này có ${E.rows.length} dòng nhưng chỉ tìm thấy ${lc} đơn hàng liên kết và ${mc} dòng nhập tay. Bấm «Lưu thay đổi» sẽ thay các dòng theo lựa chọn hiện tại.` }
             md.querySelector('form').onsubmit = e => {
                 e.preventDefault(); const P = picked(), M = manual();
-                const sk = key(); if (!sk) { $('fe').textContent = 'Nhập tên khách gửi.'; return }
+                const ks = keys(), sk = ks.join(', '); if (!ks.length) { $('fe').textContent = 'Chọn ít nhất 1 người gửi.'; return }
                 if (!P.length && !M.length) { $('fe').textContent = MO ? 'Nhập ít nhất 1 dòng hàng (số lượng hoặc kg).' : 'Chọn ít nhất 1 đơn hàng.'; return }
                 if (M.some(x => x.by === 'M3' && x.m3 && !x.pm3)) { $('fe').textContent = 'Dòng tính theo khối cần chọn hoặc nhập đơn giá USD/khối.'; return }
                 if (P.length + M.length > MAX) { $('fe').textContent = 'Phiếu chỉ có 5 dòng hàng, hãy chọn tối đa 5 dòng (hoặc tạo 2 phiếu).'; return }
                 const no = $('bno').value.trim(), s = { n: $('bsn').value.trim(), p: $('bsp').value.trim(), a: $('bsa').value.trim() }, rc = { n: $('brn').value.trim(), p: $('brp').value.trim(), a: $('bra').value.trim() }, rk = $('brk').value.trim();
                 if (!no) { $('fe').textContent = 'Nhập số phiếu.'; return }
                 if (billAll().some(b => b.no === no && !(E && b.no === E.no))) { $('fe').textContent = 'Số phiếu ' + no + ' đã có rồi. Hãy đổi sang số khác hoặc xóa phiếu cũ trong «Phiếu đã lập».'; return }
-                C.ct[sk] = fixKey(sk) ? fixSender(sk, s) : s; if (rk) { C.ct[rk] = fixRecv(rk) || rc; C.rv[sk] = rk }
+                if (ks.length === 1) C.ct[sk] = fixKey(sk) ? fixSender(sk, s) : s; if (rk) { C.ct[rk] = fixRecv(rk) || rc; ks.forEach(k => C.rv[k] = rk) }
                 const m = no.match(/(\d+)\s*$/); if (m && +m[1] > C.no) C.no = +m[1];
-                const bill = { no, dt: $('bdt').value, k: sk, rk, s, r: rc, rows: [...P.map(x => snap(x.r)), ...M.map(snap)], man: M.map(x => ({ by: x.by, m3: x.m3, pm3: x.pm3, desc: x.desc, d: x.d, q: x.q, u: x.u, kg: x.kg })), mo: MO, v: $('bv').value.trim(), u: ru($('bu').value), t: E ? (E.t || Date.now()) : Date.now() };
+                const bill = { no, dt: $('bdt').value, k: sk, ks, rk, s, r: rc, rows: [...P.map(x => snap(x.r)), ...M.map(snap)], man: M.map(x => ({ by: x.by, m3: x.m3, pm3: x.pm3, desc: x.desc, d: x.d, q: x.q, u: x.u, kg: x.kg })), mo: MO, v: $('bv').value.trim(), u: ru($('bu').value), t: E ? (E.t || Date.now()) : Date.now() };
                 if (E) { A.forEach(x => { if (x.r.bill === E.no) delete x.r.bill }); C.bills = C.bills.filter(b => b.no !== E.no) }
                 C.bills.push(bill); P.forEach(x => { x.r.bill = no }); save(); all(); close();
                 showBill(bill, 1)
@@ -6608,7 +6629,7 @@
         };
         try { navigator.storage && navigator.storage.persist && navigator.storage.persist() } catch (e) { }
         let tab = 'tong';
-        function showTab(t) { tab = t; document.querySelectorAll('.tp').forEach(e => e.classList.toggle('hid', e.id !== 'tp-' + t)); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t)) }
+        function showTab(t) { tab = t; document.querySelectorAll('.tp').forEach(e => e.classList.toggle('hid', e.id !== 'tp-' + t)); document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t)); try { const tb = $('tabs'), a = tb.querySelector('button.on'); if (a) tb.scrollTo({ left: a.offsetLeft - (tb.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' }) } catch (e) { } }
         $('tabs').onclick = e => { const t = e.target.dataset.tab; if (t) showTab(t) };
         $('cpw').onclick = () => form('Đổi mật khẩu', [{ k: 'p', l: 'Mật khẩu mới', t: 'password', req: 1, min: 6, w: 1 }], {}, o => { const a = U.find(x => x.u === me.u); if (!a) return; const sl = salt(); hash(o.p, sl).then(h => { a.s = sl; a.h = h; delete a.h2; saveU() }) }, 'Mật khẩu cũ sẽ không dùng được nữa.');
         $('sp').onchange = e => { $('lp').type = e.target.checked ? 'text' : 'password' };
