@@ -615,6 +615,8 @@
         const rt = r => n(r.rate) || S.rate;
         const isU = r => r.by === 'USD' || r.by === 'M3';
         const fee = r => isU(r) ? n(r.usd) * rt(r) : r.by === 'KG' ? n(r.kg) * (n(r.pk) || S.kg) : n(r.vnd);
+        /* kg dùng để cộng tổng: dòng «Theo khối» không cộng kg (chỉ dùng tính phí ông Nghĩa) */
+        const kgT = r => r.by === 'M3' ? 0 : n(r.kg), kgK = r => r.by === 'M3' ? n(r.kg) : 0;
         const cl = k => { k = (k || '').toLowerCase(); return k.includes('nghĩa') ? 1 : k.includes('chả cá') ? 2 : k.includes('trọng') ? 3 : 4 };
         const key = k => (k || '').trim() || '(chưa ghi khách)';
         const pd = r => r.paid === 'yes' || r.paid === 'free' ? r.paid : 'no';
@@ -662,7 +664,7 @@
                 const tv = R.reduce((a, r) => a + fee(r), 0), tu = R.reduce((a, r) => a + uo(r), 0);
                 const pv = PD.reduce((a, r) => a + fee(r), 0), pu = PD.reduce((a, r) => a + uo(r), 0), nv = NP.reduce((a, r) => a + fee(r), 0), nu = NP.reduce((a, r) => a + uo(r), 0);
                 const sub = (l, v) => `<div style="font-size:11.5px;font-weight:500;opacity:.85;white-space:nowrap">${l} ${v}</div>`;
-                ft = `<tfoot><tr><td colspan="5">Tổng ${R.length} dòng${ix.length < S.rows.length ? ' (đang lọc)' : ''}${Object.keys(un).length > 1 ? `<div style="font-size:12px;font-weight:400;opacity:.8">${esc(ub)}</div>` : ''}</td><td class="num" title="${esc(ub)}">${f2(sm('q'))}</td><td title="${esc(ub)}">${Object.keys(un).length === 1 ? esc(Object.keys(un)[0]) : ''}</td><td class="num">${f(sm('kg'))}</td><td class="num">${f2(sm('m3'))}</td><td class="num">${f(tv)}${sub('Đã thu', f(pv))}${sub('Chưa thu', f(nv))}</td><td class="num">${f2(tu)}${sub('Đã thu', f2(pu))}${sub('Chưa thu', f2(nu))}</td><td></td><td class="num">${f(XE.reduce((a, b) => a + b, 0))}</td><td class="num">${f(sm('don'))}</td><td colspan="2"></td></tr></tfoot>`
+                ft = `<tfoot><tr><td colspan="5">Tổng ${R.length} dòng${ix.length < S.rows.length ? ' (đang lọc)' : ''}${Object.keys(un).length > 1 ? `<div style="font-size:12px;font-weight:400;opacity:.8">${esc(ub)}</div>` : ''}</td><td class="num" title="${esc(ub)}">${f2(sm('q'))}</td><td title="${esc(ub)}">${Object.keys(un).length === 1 ? esc(Object.keys(un)[0]) : ''}</td><td class="num">${f(R.reduce((a, r) => a + kgT(r), 0))}${R.some(r => kgK(r)) ? sub('Không gồm', f(R.reduce((a, r) => a + kgK(r), 0)) + ' (khối)') : ''}</td><td class="num">${f2(sm('m3'))}</td><td class="num">${f(tv)}${sub('Đã thu', f(pv))}${sub('Chưa thu', f(nv))}</td><td class="num">${f2(tu)}${sub('Đã thu', f2(pu))}${sub('Chưa thu', f2(nu))}</td><td></td><td class="num">${f(XE.reduce((a, b) => a + b, 0))}</td><td class="num">${f(sm('don'))}</td><td colspan="2"></td></tr></tfoot>`
             }
             $('tb').innerHTML = h + '</tbody>' + ft;
             applyRO()
@@ -692,14 +694,14 @@
                 card('Đơn hỏa tốc', `${le.length} đơn`, `${curr(le)}, ${f(le.reduce((a, r) => a + n(r.q), 0))} kiện, không tính vào số xe`) +
                 card('Đơn kiện nhỏ', `${nho.length} đơn`, `${curr(nho)}, ${f(nho.reduce((a, r) => a + n(r.q), 0))} kiện, không tính vào số xe`) +
                 card('Tổng số lượng', f(sum('q')), 'thùng, bao, kiện') +
-                card('Tổng khối lượng', f(sum('kg')) + ' kg', `${f(kgm)} kg tính cước theo kg`) +
+                card('Tổng khối lượng', f(R.reduce((a, r) => a + kgT(r), 0)) + ' kg', R.some(r => kgK(r)) ? `Không gồm ${f(R.reduce((a, r) => a + kgK(r), 0))} kg hàng tính theo khối (đã tính theo m³)` : 'Hàng tính theo kg') +
                 card('Tổng thể tích', f2(sum('m3')) + ' m³');
             // theo khách
-            const g = {}; R.forEach(r => { const k = key(r.k); (g[k] = g[k] || { k, c: cl(r.k), n: 0, q: 0, kg: 0, m3: 0, rev: 0, unp: 0 }); const o = g[k]; o.n++; o.q += n(r.q); o.kg += n(r.kg); o.m3 += n(r.m3); o.rev += fee(r); if (pd(r) === 'no') o.unp += fee(r) });
+            const g = {}; R.forEach(r => { const k = key(r.k); (g[k] = g[k] || { k, c: cl(r.k), n: 0, q: 0, kg: 0, m3: 0, rev: 0, unp: 0 }); const o = g[k]; o.n++; o.q += n(r.q); o.kg += kgT(r); o.m3 += n(r.m3); o.rev += fee(r); if (pd(r) === 'no') o.unp += fee(r) });
             const L = Object.values(g).sort((a, b) => b.rev - a.rev), mx = Math.max(1, ...L.map(o => o.rev));
             let h = '<thead><tr><th>Khách</th><th>Số dòng</th><th>Số lượng</th><th>Kg</th><th>m³</th><th>Doanh số (VND)</th><th>Chưa thu (VND)</th><th>Tỷ trọng</th><th style="min-width:140px"></th></tr></thead><tbody>';
             for (const o of L) h += `<tr><td><span class="sw b${o.c}"></span><button class="lk" data-cust="${esc(o.k)}" title="Xem đơn hàng của khách này">${esc(o.k)}</button></td><td class="num">${o.n}</td><td class="num">${f(o.q)}</td><td class="num">${f(o.kg)}</td><td class="num">${f2(o.m3)}</td><td class="num">${f(o.rev)}</td><td class="num ${o.unp ? 'neg' : ''}">${f(o.unp)}</td><td class="num">${tot ? (o.rev / tot * 100).toFixed(1) : 0}%</td><td><div class="bar b${o.c}" style="width:${o.rev / mx * 100}%"></div></td></tr>`;
-            $('cust').innerHTML = h + `</tbody><tfoot><tr><td>Tổng</td><td class="num">${R.length}</td><td class="num">${f(sum('q'))}</td><td class="num">${f(sum('kg'))}</td><td class="num">${f2(sum('m3'))}</td><td class="num">${f(tot)}</td><td class="num">${f(no.reduce((a, r) => a + fee(r), 0))}</td><td></td><td></td></tr></tfoot>`;
+            $('cust').innerHTML = h + `</tbody><tfoot><tr><td>Tổng</td><td class="num">${R.length}</td><td class="num">${f(sum('q'))}</td><td class="num">${f(R.reduce((a, r) => a + kgT(r), 0))}</td><td class="num">${f2(sum('m3'))}</td><td class="num">${f(tot)}</td><td class="num">${f(no.reduce((a, r) => a + fee(r), 0))}</td><td></td><td></td></tr></tfoot>`;
             const sel = $('fc'), cur = sel.value;
             sel.innerHTML = '<option value="">Tất cả khách</option>' + Object.keys(g).sort().map(k => `<option ${k === cur ? 'selected' : ''}>${esc(k)}</option>`).join('');
             const ts = $('ftrip'), tcur = ts.value, tm = {};
@@ -1353,7 +1355,7 @@
             el.innerHTML = o + '</svg>'
         }
         function mcalc(M) {
-            let vnd = 0, usd = 0, kg = 0; M.rows.forEach(r => { vnd += fee(r); kg += n(r.kg) });
+            let vnd = 0, usd = 0, kg = 0; M.rows.forEach(r => { vnd += fee(r); kg += kgT(r) });
             return { n: M.rows.length, kg, tot: vnd, pt: M.rows.reduce((a, r) => a + (pd(r) === 'yes' ? fee(r) : 0), 0), left: M.rows.reduce((a, r) => a + (pd(r) === 'no' ? fee(r) : 0), 0) }
         }
         function renderMo() { $('mo').innerHTML = Object.keys(S.months).sort().map(m => `<option value="${m}" ${m === S.cur ? 'selected' : ''}>${mk(m)}</option>`).join('') }
@@ -1563,11 +1565,11 @@ const PFF = [{ k: 'chuyen', l: 'Chi phí chuyển hàng (VND)', t: 'number', w: 
 function lnData() { return lnDataOf(S.months[S.cur]) }
 function lnDataOf(M) {
     const p = M.pf || {}, d = mcalc(M), sal = salOf(M).sal, ng = nghOf(M).fee;
-    const nhanL = (M.pays || []).filter(q => /thịnh/i.test(q.w || '') && n(q.vnd) > 0), nhan = nhanL.map(q => n(q.vnd));
+    const nhanL = (M.pays || []).map(q => { const w = q.w || '', ot = /sakhen|di[eệ]n/i.test(w), th = /thịnh/i.test(w), amt = th ? n(q.vnd) : ot ? n(q.vnd) + n(q.usd) * S.rate : 0; return { ...q, amt, ot, lbl: [ot ? w.trim() : '', q.note || '', ot && n(q.usd) ? '(' + vn1(n(q.usd), 2) + ' USD × ' + vn(S.rate) + ')' : ''].filter(Boolean).join(' · ') } }).filter(q => q.amt > 0), nhan = nhanL.map(q => q.amt);
     const m3 = M.rows.reduce((a, r) => a + n(r.m3), 0), sc = shipCost(M), chuyen = sc.tot, ads = n(p.ads), ns = p.ns == null || p.ns === '' ? 10000000 : n(p.ns), conlai = n(p.conlai);
-    const tru = Array.isArray(p.tr) ? p.tr.map(o => ({ l: String((o && o.l) || ''), v: n(o && o.v) })) : [], nhanT = nhan.reduce((a, v) => a + v, 0), truT = tru.reduce((a, o) => a + o.v, 0);
-    const napA = 0, thuc = nhanT, qcThieu = Math.max(0, ads - ns), qcDu = Math.max(0, ns - ads);
-    return { d, m3, sal, ng, nhan, nhanL, nhanT, napA, thuc, conNhan: d.tot - thuc, sc, tru, truT, net: nhanT - truT, chuyen, ads, ns, qcThieu, qcDu, conlai: nhanT + qcDu - sal - ng - ns - qcThieu, loi: d.tot - chuyen - sal - ng - ads, nap: sal + ng + ns + qcThieu - thuc - qcDu }
+    const tru = Array.isArray(p.tr) ? p.tr.map(o => ({ l: String((o && o.l) || ''), v: n(o && o.v) })) : [], nhanT = nhan.reduce((a, v) => a + v, 0), nhanTh = nhanL.filter(q => !q.ot).reduce((a, q) => a + q.amt, 0), truT = tru.reduce((a, o) => a + o.v, 0);
+    const napA = 0, thuc = nhanTh, qcThieu = Math.max(0, ads - ns), qcDu = Math.max(0, ns - ads);
+    return { d, m3, sal, ng, nhan, nhanL, nhanT, nhanTh, napA, thuc, conNhan: d.tot - nhanT, sc, tru, truT, net: nhanT - truT, chuyen, ads, ns, qcThieu, qcDu, conlai: nhanTh + qcDu - sal - ng - ns - qcThieu, loi: d.tot - chuyen - sal - ng - ads, nap: sal + ng + ns + qcThieu - thuc - qcDu }
 }
 function lnText() {
     const x = lnData(), t = x.nap > 0 ? `==> Khoản cần nạp thêm: ${vn(x.nap)} VNĐ` : `==> Không cần nạp thêm (dư ${vn(-x.nap)} VNĐ)`;
@@ -1579,13 +1581,13 @@ Số khối: ${vn1(x.m3, 2)} m³
 Số đơn: ${x.d.n} đơn
 
 2. Các khoản chi phí
-Chi phí chuyển hàng: ${vn(x.chuyen)} VNĐ (${vn(x.sc.kg)} kg × 10.000 + ${vn1(x.sc.m3, 2)} m³ × 90$ + ${vn(x.sc.nho)} kiện nhỏ × 20$)
+Chi phí chuyển hàng: ${vn(x.chuyen)} VNĐ (${vn1(x.sc.kg, 1)} kg × 10.000 + ${vn1(x.sc.m3, 2)} m³ × 90$ + ${vn(x.sc.nho)} kiện nhỏ × 20$; không tính kg của hàng theo khối)
 Lương + hoa hồng: ${vn(x.sal)} VNĐ
 Phí ông Nghĩa: ${vn(x.ng)} VNĐ
 Phí quảng cáo + vận hành: ${vn(x.ns)} VNĐ (Đã sử dụng: ${vn(x.ads)} VNĐ)
 
 3. Các khoản nhận vào tài khoản để thanh toán chuyển hàng
-${x.nhanL.map(q => fd(q.d) + (q.note ? ' – ' + q.note : '') + ': ' + vn(n(q.vnd)) + ' VNĐ').join('\n') || '(chưa có)'}
+${x.nhanL.map(q => fd(q.d) + (q.lbl ? ' – ' + q.lbl : '') + ': ' + vn(q.amt) + ' VNĐ').join('\n') || '(chưa có)'}
 Tổng các khoản nhận: ${vn(x.nhanT)} VNĐ
 ${x.conNhan > 0 ? '==> Còn thiếu so với doanh số' : '==> Dư so với doanh số'}: ${vn(Math.abs(x.conNhan))} VNĐ
 Số tiền còn lại trong tài khoản: ${vn(x.conlai)} VNĐ
@@ -1601,16 +1603,64 @@ ${t}`
 }
 
 function lnPdfHtml(){
-  const x=lnData(), T=(h,rows)=>'<h3 style="margin:18px 0 4px;color:#14337D;border-bottom:2px solid #C8201C;padding-bottom:3px">'+h+'</h3><table>'+rows.map(r=>'<tr'+(r[2]?' style="font-weight:700;background:#eef2f9"':'')+'><td>'+r[0]+'</td><td class="n">'+r[1]+'</td></tr>').join('')+'</table>', v=a=>vn(a)+' đ';
-  const cp=x.chuyen+x.sal+x.ng+x.ads;
-  return '<div style="border-bottom:4px solid #C8201C;padding-bottom:8px"><h2 style="margin:0;color:#14337D">SOKMOK TRANSPORT</h2><div>Báo cáo doanh số – chi phí – lợi nhuận · <b>'+esc(mk(S.cur))+'</b> · xuất ngày '+new Date().toLocaleDateString('vi-VN')+'</div></div>'
-  +T('1. Tổng quan',[['Tổng doanh số',v(x.d.tot)],['Số tấn',vn1(x.d.kg/1000,3)+' tấn'],['Số khối',vn1(x.m3,2)+' m³'],['Số đơn',x.d.n+' đơn'],['LỢI NHUẬN',v(x.loi),1]])
-  +T('2. Các khoản chi phí',[['Chuyển hàng ('+vn(x.sc.kg)+' kg × 10.000 + '+vn1(x.sc.m3,2)+' m³ × 90$ + '+vn(x.sc.nho)+' kiện nhỏ × 20$)',v(x.chuyen)],['Lương + hoa hồng',v(x.sal)],['Phí ông Nghĩa',v(x.ng)],['QC + vận hành (ngân sách '+vn(x.ns)+')',v(x.ads)],['Tổng chi phí',v(cp),1]])
-  +T('3. Các khoản nhận vào tài khoản',[...x.nhanL.map(q=>[fd(q.d)+(q.note?' – '+esc(q.note):''),v(n(q.vnd))]),['Tổng các khoản nhận',v(x.nhanT),1],[x.conNhan>0?'Còn thiếu so với doanh số':'Dư so với doanh số',v(Math.abs(x.conNhan)),1]])
-  +T('4. Tiền còn lại trong tài khoản',[['Tiền nhận vào TK',v(x.nhanT)],['+ QC dư (nạp '+vn(x.ns)+', đã dùng '+vn(x.ads)+')',v(x.qcDu)],['− Lương + hoa hồng',v(x.sal)],['− Phí ông Nghĩa',v(x.ng)],['− Ngân sách QC',v(x.ns)],...(x.qcThieu>0?[['− QC thiếu',v(x.qcThieu)]]:[]),['= Tiền còn lại',v(x.conlai),1],[x.nap>0?'Cần nạp thêm':'Không cần nạp thêm',x.nap>0?v(x.nap):'Còn dư '+v(x.conlai),1]])
-  +'<h3 style="margin:18px 0 4px;color:#14337D;border-bottom:2px solid #C8201C;padding-bottom:3px">5. Diễn giải từng bước</h3><pre>'+esc($('lnc').innerText)+'</pre>'
-  +'<h3 style="margin:18px 0 4px;color:#14337D;border-bottom:2px solid #C8201C;padding-bottom:3px">6. Lợi nhuận theo từng tháng</h3>'+$('lnmt').outerHTML
-  +'<style>@page{size:A4;margin:12mm}td{padding:4px 8px!important}</style>';
+  const x=lnData(), M=S.months[S.cur], cp=x.chuyen+x.sal+x.ng+x.ads, tot=x.d.tot, v=a=>vn(a)+' đ';
+  const pc=a=>tot?(a/tot*100).toFixed(1)+'%':'–', okc=a=>a>=0?'#1e8e4e':'#c8201c';
+  const sl=salOf(M), ngf=nghOf(M);
+  const kpi=(l,val,c,sub)=>'<div class="kp"><small>'+l+'</small><b style="color:'+(c||'#14337D')+'">'+val+'</b>'+(sub?'<em>'+sub+'</em>':'')+'</div>';
+  const H=t=>'<h3>'+t+'</h3>';
+  const tbl=(cols,rows,foot)=>'<table class="rt"><thead><tr>'+cols.map(c=>'<th'+(c[1]?' class="r"':'')+'>'+c[0]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr'+(r.cls?' class="'+r.cls+'"':'')+'>'+r.c.map((t,i)=>'<td'+(cols[i][1]?' class="r"':'')+'>'+t+'</td>').join('')+'</tr>').join('')+'</tbody>'+(foot?'<tfoot><tr>'+foot.map((t,i)=>'<td'+(cols[i][1]?' class="r"':'')+'>'+t+'</td>').join('')+'</tr></tfoot>':'')+'</table>';
+  const P=[['Chuyển hàng',x.chuyen,'#1f4e9e'],['Lương + hoa hồng',x.sal,'#e0a526'],['Phí ông Nghĩa',x.ng,'#8e5ad7'],['QC + vận hành',x.ads,'#e07a26'],['Lợi nhuận',Math.max(0,x.loi),'#2e9e5b']], TT=Math.max(tot,1,P.reduce((a,q)=>a+q[1],0));
+  const bar='<div class="bar">'+P.map(q=>'<i style="width:'+(q[1]/TT*100)+'%;background:'+q[2]+'"></i>').join('')+'</div><div class="lg">'+P.map(q=>'<span><u style="background:'+q[2]+'"></u>'+q[0]+': <b>'+vn(q[1])+'</b> ('+pc(q[1])+')</span>').join('')+'</div>';
+  /* chi tiết đơn */
+  const R=M.rows||[], isK=r=>r.by==='M3', rowsO=R.map((r,i)=>{const kgc=n(r.kg)?(isK(r)?'<span class="mt">'+vn1(n(r.kg),1)+'*</span>':vn1(n(r.kg),1)):'–';return {c:[i+1,fd(r.g)||'–','<b>'+esc(r.k||'')+'</b>',PL[pd(r)],fd(r.d)||'–',vn1(n(r.q),2)+' '+esc(r.u||''),kgc,n(r.m3)?vn1(n(r.m3),2):'–',esc(BY[r.by]||r.by||''),vn(fee(r)),esc(r.trip||r.note||'')],cls:'p-'+pd(r)}});
+  const sumK=R.reduce((a,r)=>a+(isK(r)?0:n(r.kg)),0);
+  /* theo khách */
+  const G={}; R.forEach(r=>{const k=r.k||'(không tên)',o=G[k]=G[k]||{k,n:0,kg:0,m3:0,t:0,y:0,no:0}; o.n++; o.kg+=kgT(r); o.m3+=n(r.m3); o.t+=fee(r); if(pd(r)==='yes')o.y+=fee(r); if(pd(r)==='no')o.no+=fee(r)});
+  const GK=Object.values(G).sort((a,b)=>b.t-a.t), gs=GK.reduce((a,o)=>({n:a.n+o.n,kg:a.kg+o.kg,m3:a.m3+o.m3,t:a.t+o.t,y:a.y+o.y,no:a.no+o.no}),{n:0,kg:0,m3:0,t:0,y:0,no:0});
+  /* theo tháng */
+  const ks=Object.keys(S.months).sort(), AT={d:0,c:0,l:0};
+  const rowsM=ks.map(k=>{const y=lnDataOf(S.months[k]),c=y.chuyen+y.sal+y.ng+y.ads; AT.d+=y.d.tot; AT.c+=c; AT.l+=y.loi; return {c:[mk(k),vn(y.d.tot),vn(c),'<b style="color:'+okc(y.loi)+'">'+vn(y.loi)+'</b>',y.d.tot?(y.loi/y.d.tot*100).toFixed(1)+'%':'–'],cls:k===S.cur?'cur':''}});
+  const css='<style>@page{size:A4;margin:11mm 11mm 13mm}*{box-sizing:border-box}html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:12.5px/1.45 "Segoe UI",Roboto,Arial,sans-serif;color:#1c2333}'
+  +'.rp .hd{display:flex;justify-content:space-between;align-items:flex-end;background:#14337D;color:#fff;border-radius:10px;padding:14px 18px;border-bottom:5px solid #C8201C}.rp .hd h1{margin:0;font-size:22px;letter-spacing:.5px}.rp .hd div{font-size:12px;opacity:.92}.rp .hd .rt2{text-align:right}.rp .hd .rt2 b{font-size:16px;display:block}'
+  +'.rp .kps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.rp .kp{border:1px solid #d5dbe8;border-radius:9px;padding:9px 12px;background:#f7f9fd;break-inside:avoid}.rp .kp small{display:block;color:#5c6780;font-size:11px;text-transform:uppercase;letter-spacing:.3px}.rp .kp b{font-size:18px}.rp .kp em{display:block;font-style:normal;color:#5c6780;font-size:11px;margin-top:1px}'
+  +'.rp h3{margin:16px 0 6px;color:#14337D;font-size:14px;border-left:5px solid #C8201C;padding:2px 0 2px 8px;break-after:avoid}.rp h3 small{font-weight:400;color:#5c6780;font-size:11.5px;margin-left:6px}'
+  +'.rp .bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#e4e8f1;margin:6px 0}.rp .bar i{display:block;height:100%}.rp .lg{display:flex;flex-wrap:wrap;gap:3px 16px;font-size:11.5px;color:#43506b}.rp .lg u{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}'
+  +'.rp table.rt{width:100%;border-collapse:collapse;margin:4px 0;font-size:11.5px;border:1px solid #cfd6e6}.rp table.rt th{background:#14337D;color:#fff;font-weight:600;padding:5px 7px;text-align:left;border:1px solid #14337D}.rp table.rt td{padding:4px 7px;border:1px solid #dde2ee;vertical-align:top}.rp table.rt tbody tr:nth-child(even){background:#f5f7fc}.rp table.rt tfoot td{background:#e8edf8;font-weight:700;border-top:2px solid #14337D}.rp .r{text-align:right!important;white-space:nowrap}.rp thead{display:table-header-group}.rp tr{break-inside:avoid}'
+  +'.rp tr.cur td{background:#fff3cd!important;font-weight:600}.rp tr.tot td{background:#e8edf8!important;font-weight:700}.rp tr.p-no td:nth-child(4){color:#c8201c;font-weight:600}.rp tr.p-yes td:nth-child(4){color:#1e8e4e;font-weight:600}.rp .mt{color:#8a93a8;font-style:italic}'
+  +'.rp .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rp .box{border:1px solid #d5dbe8;border-radius:9px;padding:8px 11px;break-inside:avoid}.rp .box h4{margin:0 0 4px;font-size:12.5px;color:#14337D}.rp .box p{margin:2px 0}.rp .fm{font-family:Consolas,monospace;font-size:11.5px;background:#f0f3fa;border-radius:6px;padding:3px 6px;margin:3px 0}.rp .nt{font-size:11px;color:#5c6780;margin:4px 0}'
+  +'.rp .ft{margin-top:14px;padding-top:6px;border-top:1px solid #cfd6e6;font-size:10.5px;color:#7a849b;display:flex;justify-content:space-between}</style>';
+  const dtl=(l,val,b)=>'<p style="display:flex;justify-content:space-between;gap:8px'+(b?';font-weight:700':'')+'"><span>'+l+'</span><span>'+val+'</span></p>';
+  const nhanRows=x.nhanL.map((q,i)=>({c:[i+1,fd(q.d)||'–',esc(q.lbl||''),vn(q.amt)]}));
+  return css+'<div class="rp">'
+  +'<div class="hd"><div><h1>SOKMOK TRANSPORT</h1><div>Báo cáo doanh số – chi phí – lợi nhuận</div></div><div class="rt2"><b>'+esc(mk(S.cur))+'</b><div>Tỷ giá: '+vn(S.rate)+' đ/USD · Xuất ngày '+new Date().toLocaleDateString('vi-VN')+'</div></div></div>'
+  +'<div class="kps">'+kpi('Tổng doanh số',v(tot),'#14337D',x.d.n+' đơn')+kpi('Tổng chi phí',v(cp),'#c8201c',pc(cp)+' doanh số')+kpi('Lợi nhuận',v(x.loi),okc(x.loi),'Biên '+pc(x.loi))+kpi('Tiền nhận vào TK',v(x.nhanT),'#14337D',x.nhanL.length+' khoản')+kpi(x.conNhan>0?'Còn thiếu so với doanh số':'Dư so với doanh số',v(Math.abs(x.conNhan)),x.conNhan>0?'#c8201c':'#1e8e4e')+kpi(x.nap>0?'Cần nạp thêm':'Tiền còn lại trong TK',x.nap>0?v(x.nap):v(x.conlai),x.nap>0?'#c8201c':'#1e8e4e',x.nap>0?'':'Không cần nạp thêm')+'</div>'
+  +H('1. Cơ cấu doanh số')+bar
+  +H('2. Khối lượng hàng')+tbl([['Chỉ tiêu'],['Giá trị',1]],[{c:['Tổng số đơn (dòng)',x.d.n]},{c:['Tổng khối lượng hàng tính theo kg (không gồm hàng tính theo khối)',vn1(x.d.kg,1)+' kg ('+vn1(x.d.kg/1000,3)+' tấn)']},{c:['Kg của hàng tính theo khối ('+x.sc.nK+' dòng) – không cộng vào tổng, chỉ dùng tính phí ông Nghĩa',vn1(x.sc.kgK,1)+' kg']},{c:['Tổng thể tích',vn1(x.m3,2)+' m³']},{c:['Kiện nhỏ',vn(x.sc.nho)+' kiện']}])
+  +H('3. Các khoản chi phí')
+  +tbl([['Khoản chi phí'],['Cách tính'],['Số tiền (VND)',1],['% doanh số',1]],[
+    {c:['Chuyển hàng – theo kg',vn1(x.sc.kg,1)+' kg × 10.000',vn(x.sc.a),pc(x.sc.a)]},
+    {c:['Chuyển hàng – theo khối',vn1(x.sc.m3,2)+' m³ × 90$ × '+vn(S.rate),vn(x.sc.b),pc(x.sc.b)]},
+    {c:['Chuyển hàng – kiện nhỏ',vn(x.sc.nho)+' kiện × 20$ × '+vn(S.rate),vn(x.sc.c),pc(x.sc.c)]},
+    {c:['<b>Cộng chuyển hàng</b>','',vn(x.chuyen),pc(x.chuyen)],cls:'tot'},
+    {c:['Lương + hoa hồng',vn(SAL.base)+' + '+vn(tot)+' × '+(SAL.pct*100)+'% ('+vn(sl.com)+')',vn(x.sal),pc(x.sal)]},
+    {c:['Phí ông Nghĩa',vn1(ngf.kg,1)+' kg hàng khách Nghĩa × '+vn(NG.per)+' × '+(NG.pct*100)+'%',vn(x.ng),pc(x.ng)]},
+    {c:['Quảng cáo + vận hành (đã dùng)','Ngân sách '+vn(x.ns)+' · '+(x.qcThieu>0?'thiếu '+vn(x.qcThieu):'dư '+vn(x.qcDu)),vn(x.ads),pc(x.ads)]}
+  ],['TỔNG CHI PHÍ','',vn(cp),pc(cp)])
+  +'<p class="nt">* Hàng tính theo khối chỉ tính cước theo m³, không cộng kg vào cước chuyển hàng. Số kg đó chỉ dùng để tính phí ông Nghĩa (khách Nghĩa).</p>'
+  +H('4. Lợi nhuận')
+  +'<div class="two"><div class="box"><h4>Cách tính</h4>'+dtl('Doanh số',vn(tot))+dtl('− Chuyển hàng',vn(x.chuyen))+dtl('− Lương + hoa hồng',vn(x.sal))+dtl('− Phí ông Nghĩa',vn(x.ng))+dtl('− QC đã dùng',vn(x.ads))+dtl('= LỢI NHUẬN','<span style="color:'+okc(x.loi)+'">'+vn(x.loi)+'</span>',1)+dtl('Biên lợi nhuận',pc(x.loi),1)+'</div>'
+  +'<div class="box"><h4>Tiền trong tài khoản</h4>'+dtl('Tiền Thịnh nhận vào TK',vn(x.nhanTh))+(x.qcDu>0?dtl('+ QC dư',vn(x.qcDu)):'')+dtl('− Lương + hoa hồng',vn(x.sal))+dtl('− Phí ông Nghĩa',vn(x.ng))+dtl('− Ngân sách QC',vn(x.ns))+(x.qcThieu>0?dtl('− QC thiếu',vn(x.qcThieu)):'')+dtl('= Tiền còn lại','<span style="color:'+okc(x.conlai)+'">'+vn(x.conlai)+'</span>',1)+dtl(x.nap>0?'Cần nạp thêm':'Không cần nạp thêm',x.nap>0?vn(x.nap):'Dư '+vn(x.conlai),1)+'</div></div>'
+  +H('5. Các khoản nhận vào tài khoản')
+  +(nhanRows.length?tbl([['STT'],['Ngày'],['Ghi chú'],['Số tiền (VND)',1]],nhanRows,['','','Tổng các khoản nhận',vn(x.nhanT)]):'<p class="nt">Chưa có khoản nhận nào.</p>')
+  +'<p class="nt">Trong đó Thịnh nhận (dùng tính tiền còn lại trong tài khoản): <b>'+vn(x.nhanTh)+' đ</b></p><p class="nt">Doanh số '+vn(tot)+' − tiền nhận vào '+vn(x.nhanT)+' = <b style="color:'+(x.conNhan>0?'#c8201c':'#1e8e4e')+'">'+(x.conNhan>0?'còn thiếu ':'dư ')+vn(Math.abs(x.conNhan))+' đ</b></p>'
+  +H('6. Doanh số theo khách hàng')
+  +tbl([['Khách hàng'],['Số đơn',1],['Kg',1],['m³',1],['Doanh số (VND)',1],['Đã thu',1],['Chưa thu',1]],GK.map(o=>({c:['<b>'+esc(o.k)+'</b>',o.n,vn1(o.kg,1),o.m3?vn1(o.m3,2):'–',vn(o.t),o.y?vn(o.y):'–',o.no?'<b style="color:#c8201c">'+vn(o.no)+'</b>':'–']})),['Tổng',gs.n,vn1(gs.kg,1),vn1(gs.m3,2),vn(gs.t),vn(gs.y),vn(gs.no)])
+  +H('7. Chi tiết đơn hàng <small>('+R.length+' dòng)</small>')
+  +tbl([['#'],['Ngày giao'],['Khách'],['Thu tiền'],['Hàng về'],['Số lượng',1],['Kg',1],['m³',1],['Tính theo'],['Cước (VND)',1],['Chuyến / ghi chú']],rowsO,['','','Tổng','','',R.reduce((a,r)=>a+n(r.q),0)||'',vn1(sumK,1)+' (+'+vn1(x.sc.kgK,1)+'*)',vn1(x.m3,2),'',vn(tot),''])
+  +'<p class="nt">* kg in nghiêng là hàng tính theo khối: không tính cước theo kg, chỉ dùng cho phí ông Nghĩa.</p>'
+  +H('8. Lợi nhuận theo từng tháng')
+  +tbl([['Tháng'],['Doanh số',1],['Tổng chi phí',1],['Lợi nhuận',1],['Biên',1]],rowsM,['Tổng',vn(AT.d),vn(AT.c),vn(AT.l),AT.d?(AT.l/AT.d*100).toFixed(1)+'%':'–'])
+  +'<div class="ft"><span>Sokmok Transport · Hotline 0865 491 456</span><span>Chi phí = chuyển hàng + lương + hoa hồng + phí ông Nghĩa + QC đã dùng</span></div></div>';
 }
 function renderExtra() {
     const own = !!me && me.r === 'owner'; $('tabln').classList.toggle('hid', !own);
@@ -1625,8 +1675,8 @@ function lnRender() {
     const P = [['Chuyển hàng', x.chuyen, '#1f4e9e'], ['Lương + hoa hồng', x.sal, '#e0a526'], ['Phí ông Nghĩa', x.ng, '#8e5ad7'], ['QC + vận hành', x.ads, '#e07a26'], ['Lợi nhuận', Math.max(0, x.loi), '#2e9e5b']], T = Math.max(x.d.tot, 1);
     $('lnb').innerHTML = P.map(([l, v, c]) => `<div title="${l}: ${vn(v)}" style="width:${v / T * 100}%;background:${c}"></div>`).join('');
     $('lnl').innerHTML = P.map(([l, v, c]) => `<span><i style="background:${c}"></i>${l}: <b>${vn(v)}</b> (${(v / T * 100).toFixed(1)}%)</span>`).join('');
-    $('lnf').innerHTML = row('Chi phí chuyển hàng (tự tính)', '<b>' + vn(x.chuyen) + '</b>') + `<div class="note" style="margin:0 0 6px">${vn(x.sc.kg)} kg × 10.000 = ${vn(x.sc.a)}<br>${vn1(x.sc.m3, 2)} m³ × 90 USD × ${vn(S.rate)} = ${vn(x.sc.b)}<br>${vn(x.sc.nho)} kiện nhỏ × 20 USD × ${vn(S.rate)} = ${vn(x.sc.c)}</div>` + row('Ngân sách QC + vận hành', inp('ns', x.ns)) + row('Đã sử dụng QC + vận hành', inp('ads', x.ads)) + row('Tiền còn lại trong tài khoản (tự tính)', '<b style="color:' + (x.conlai >= 0 ? '#1e8e4e' : '#c8201c') + '">' + vn(x.conlai) + '</b>') + '<div class="note" style="margin:0 0 6px">= ' + vn(x.nhanT) + ' (nhận vào)' + (x.qcDu > 0 ? ' + ' + vn(x.qcDu) + ' (QC dư)' : '') + ' − ' + vn(x.sal) + ' − ' + vn(x.ng) + ' − ' + vn(x.ns) + (x.qcThieu > 0 ? ' − ' + vn(x.qcThieu) + ' (QC thiếu)' : '') + '. Số này luôn bằng «còn dư» ở Bước 5.</div>';
-    $('lnn').innerHTML = (x.nhanL.map((q, i) => row(`Khoản ${i + 1} · ${fd(q.d) || '–'}${q.note ? ' · ' + esc(q.note) : ''}`, vn(n(q.vnd)))).join('') || '<p class="note" style="margin:4px 0">Chưa có khoản nào.</p>') + row('Tổng các khoản nhận', vn(x.nhanT), 't') + '<p class="note" style="margin:6px 0 0">Lấy tự động từ tab «Chi phí đã thu» (các khoản người thu là Thịnh, tiền Việt). Muốn thêm hoặc sửa thì vào tab đó.</p>';
+    $('lnf').innerHTML = row('Chi phí chuyển hàng (tự tính)', '<b>' + vn(x.chuyen) + '</b>') + `<div class="note" style="margin:0 0 6px">${vn1(x.sc.kg, 1)} kg (hàng tính theo kg) × 10.000 = ${vn(x.sc.a)}<br>${vn1(x.sc.m3, 2)} m³ × 90 USD × ${vn(S.rate)} = ${vn(x.sc.b)}<br>${vn(x.sc.nho)} kiện nhỏ × 20 USD × ${vn(S.rate)} = ${vn(x.sc.c)}` + (x.sc.nK ? `<br><i>Không tính ${vn1(x.sc.kgK, 1)} kg của ${x.sc.nK} dòng «Theo khối» (chỉ dùng tính phí ông Nghĩa)</i>` : '') + `</div>` + row('Ngân sách QC + vận hành', inp('ns', x.ns)) + row('Đã sử dụng QC + vận hành', inp('ads', x.ads)) + row('Tiền còn lại trong tài khoản (tự tính)', '<b style="color:' + (x.conlai >= 0 ? '#1e8e4e' : '#c8201c') + '">' + vn(x.conlai) + '</b>') + '<div class="note" style="margin:0 0 6px">= ' + vn(x.nhanTh) + ' (Thịnh nhận vào)' + (x.qcDu > 0 ? ' + ' + vn(x.qcDu) + ' (QC dư)' : '') + ' − ' + vn(x.sal) + ' − ' + vn(x.ng) + ' − ' + vn(x.ns) + (x.qcThieu > 0 ? ' − ' + vn(x.qcThieu) + ' (QC thiếu)' : '') + '. Số này luôn bằng «còn dư» ở Bước 5.</div>';
+    $('lnn').innerHTML = (x.nhanL.map((q, i) => row(`Khoản ${i + 1} · ${fd(q.d) || '–'}${q.lbl ? ' · ' + esc(q.lbl) : ''}`, vn(q.amt))).join('') || '<p class="note" style="margin:4px 0">Chưa có khoản nào.</p>') + row('Tổng các khoản nhận', vn(x.nhanT), 't') + row('Trong đó Thịnh nhận (dùng tính tiền còn lại)', vn(x.nhanTh)) + '<p class="note" style="margin:6px 0 0">Lấy tự động từ tab «Chi phí đã thu» (khoản Thịnh thu tiền Việt, cộng thêm khoản anh Sakhen và anh Diện thu, tiền đô quy đổi theo tỷ giá). Muốn thêm hoặc sửa thì vào tab đó.</p>';
     $('lnnet').innerHTML = `<h3 style="margin:0 0 6px">Thiếu / dư so với doanh số</h3>` + row('Tổng các khoản nhận', vn(x.nhanT)) + row('Doanh số tháng', vn(x.d.tot)) + row(x.conNhan > 0 ? 'Còn thiếu' : 'Dư', `<span style="color:${x.conNhan > 0 ? '#c8201c' : '#1e8e4e'}">${vn(Math.abs(x.conNhan))}</span>`, 't');
     $('lnc').innerHTML = row('Doanh số', vn(x.d.tot)) + row('− Chuyển hàng', vn(x.chuyen)) + row('− Lương + hoa hồng', vn(x.sal)) + row('− Phí ông Nghĩa', vn(x.ng)) + row('− QC đã dùng', vn(x.ads)) + row('= Lợi nhuận', vn(x.loi), 't') + row('Tiền nhận vào TK', vn(x.nhanT)) + row('− Nạp thêm', vn(x.napA)) + row('= Thực nhận', vn(x.thuc)) + row(x.conNhan > 0 ? 'Còn thiếu so với doanh số' : 'Dư so với doanh số', vn(Math.abs(x.conNhan)), 't') + row('Tiền còn lại − lương − phí Nghĩa − ngân sách QC' + (x.qcThieu > 0 ? ' − QC thiếu' : ''), vn(-x.nap)) + row(x.nap > 0 ? 'Cần nạp thêm' : 'Dư, không cần nạp', vn(Math.abs(x.nap)), 't');
     $('lnpre').textContent = lnText(); try { lnExplain(x) } catch (e) { console.error(e) }
@@ -1724,10 +1774,11 @@ $('tp-no').addEventListener('click', e => {
 
 /* ---- Chi phí chuyển hàng: 10.000 đ/kg, 90 USD/khối, 20 USD/kiện nhỏ ---- */
 function shipCost(M) {
-    const C = { kg: 10000, m3: 90, nho: 20 }; let kg = 0, m3 = 0, nho = 0;
-    (M.rows || []).forEach(r => { kg += n(r.kg); m3 += n(r.m3); if (r.loai === 'nho') nho += n(r.q) || 1 });
+    const C = { kg: 10000, m3: 90, nho: 20 }; let kg = 0, m3 = 0, nho = 0, kgK = 0, nK = 0;
+    /* Dòng «Theo khối» chỉ tính theo m³; kg của dòng đó KHÔNG tính vào cước chuyển hàng (chỉ dùng tính phí ông Nghĩa) */
+    (M.rows || []).forEach(r => { if (r.by === 'M3') { kgK += n(r.kg); nK++ } else kg += n(r.kg); m3 += n(r.m3); if (r.loai === 'nho') nho += n(r.q) || 1 });
     const a = kg * C.kg, b = m3 * C.m3 * S.rate, c = nho * C.nho * S.rate;
-    return { kg, m3, nho, a, b, c, tot: a + b + c }
+    return { kg, kgK, nK, m3, nho, a, b, c, tot: a + b + c }
 }
 /* ---- Chức năng đơn hàng: đổi nhanh thu tiền, nhân bản, đã thu hết (đang lọc), xuất CSV ---- */
 $('bulkpaid').onclick = async () => {
@@ -2095,23 +2146,23 @@ window.lnExplain=function(x){
  const M=S.months[S.cur], sl=salOf(M), ng=nghOf(M), com=sl.com, C=x.chuyen+x.sal+x.ng+x.ads;
  const loi=x.d.tot-x.chuyen-x.sal-x.ng-x.ads, okL=Math.round(loi)===Math.round(x.loi);
  const needTot=x.sal+x.ng+x.ns+x.qcThieu;
- const warn=[]; if(!x.d.tot)warn.push('Tháng này chưa có doanh số.'); if(!x.nhanT)warn.push('Chưa có khoản nhận nào (tab «Chi phí đã thu», người thu = Thịnh, có tiền Việt).');
+ const warn=[]; if(!x.d.tot)warn.push('Tháng này chưa có doanh số.'); if(!x.nhanT)warn.push('Chưa có khoản nhận nào (tab «Chi phí đã thu», người thu = Thịnh, anh Sakhen hoặc anh Diện).');
  if(x.ads>x.ns&&x.ns>0)warn.push('QC đã dùng ('+V(x.ads)+') lớn hơn ngân sách ('+V(x.ns)+').'); if(x.conlai<0)warn.push('Tiền còn lại trong tài khoản đang âm.');
  $('lnc').innerHTML='<div class="ex">'+
  stp('Bước 1 – Doanh số (tiền khách phải trả)',fm('Cộng cước của '+x.d.n+' đơn = <span class="rs">'+V(x.d.tot)+'</span>')+'<div class="tip">Mỗi đơn tính theo VND, USD × tỷ giá '+V(S.rate)+', hoặc kg × '+V(S.kg)+' tuỳ cột «Tính theo».</div>')+
  stp('Bước 2 – Các khoản chi phí',
-  fm('Chuyển hàng = '+V(x.sc.kg)+' kg × 10.000 ('+V(x.sc.a)+')<br>+ '+vn1(x.sc.m3,2)+' m³ × 90$ × '+V(S.rate)+' ('+V(x.sc.b)+')<br>+ '+V(x.sc.nho)+' kiện nhỏ × 20$ × '+V(S.rate)+' ('+V(x.sc.c)+')<br>= <span class="rs">'+V(x.chuyen)+'</span>')+
+  fm('Chuyển hàng = '+vn1(x.sc.kg,1)+' kg (hàng tính theo kg) × 10.000 ('+V(x.sc.a)+')<br>+ '+vn1(x.sc.m3,2)+' m³ × 90$ × '+V(S.rate)+' ('+V(x.sc.b)+')<br>+ '+V(x.sc.nho)+' kiện nhỏ × 20$ × '+V(S.rate)+' ('+V(x.sc.c)+')<br>= <span class="rs">'+V(x.chuyen)+'</span>')+(x.sc.nK?'<div class="tip">Hàng tính theo khối ('+x.sc.nK+' dòng, '+vn1(x.sc.kgK,1)+' kg) chỉ tính theo m³, không tính theo kg nữa. Số kg đó chỉ dùng để tính phí ông Nghĩa.</div>':'')+
   fm('Lương + hoa hồng = '+V(SAL.base)+' (lương cứng) + '+V(x.d.tot)+' × '+(SAL.pct*100)+'% ('+V(com)+') = <span class="rs">'+V(x.sal)+'</span>')+
   fm('Phí ông Nghĩa = '+vn1(ng.kg,1)+' kg hàng khách Nghĩa × '+V(NG.per)+' × '+(NG.pct*100)+'% = <span class="rs">'+V(x.ng)+'</span>')+
   fm('QC đã dùng = <span class="rs">'+V(x.ads)+'</span> (nhập ở ô bên trái)')+
   fm('Tổng chi phí = '+V(x.chuyen)+' + '+V(x.sal)+' + '+V(x.ng)+' + '+V(x.ads)+' = <span class="rs">'+V(C)+'</span>'))+
  stp('Bước 3 – LỢI NHUẬN',fm(V(x.d.tot)+' − '+V(C)+' = <span class="rs '+(loi>=0?'ok':'bad')+'">'+V(loi)+'</span> ('+(x.d.tot?(loi/x.d.tot*100).toFixed(1):0)+'% doanh số)')+'<div class="tip">Kiểm tra lại: '+(okL?'<span class="ok">khớp ✔</span>':'<span class="bad">LỆCH, hãy báo lại để kiểm tra</span>')+'</div>')+
  stp('Bước 4 – Tiền nhận vào tài khoản',
-  fm('Tiền nhận vào TK (tab Chi phí đã thu, người thu = Thịnh) = <span class="rs">'+V(x.nhanT)+'</span>')+
+  fm('Tiền nhận vào TK (tab Chi phí đã thu, người thu = Thịnh, anh Sakhen, anh Diện) = <span class="rs">'+V(x.nhanT)+'</span>')+
   fm('Doanh số '+V(x.d.tot)+' − tiền nhận vào '+V(x.nhanT)+' = <span class="rs '+(x.conNhan>0?'bad':'ok')+'">'+(x.conNhan>0?'Còn thiếu ':'Dư ')+V(Math.abs(x.conNhan))+'</span>')+'<div class="tip">Phần «còn thiếu» là tiền khách chưa chuyển vào tài khoản so với doanh số.</div>')+
  stp('Bước 5 – Lấy tiền còn lại trong tài khoản trừ các khoản cần chi',
   fm('Quảng cáo: nạp '+V(x.ns)+', đã dùng '+V(x.ads)+' → '+(x.qcThieu>0?'<span class="bad">thiếu '+V(x.qcThieu)+'</span> (phải nạp thêm, trừ vào tiền còn lại)':'dư '+V(x.qcDu)+' (phần dư này được cộng lại vào tiền còn lại)'))+
-  fm('Tiền nhận vào TK (bước 4): '+V(x.nhanT)+(x.qcDu>0?'<br>+ QC dư '+V(x.qcDu)+' (= '+V(x.thuc+x.qcDu)+')':'')+'<br>− Lương '+V(x.sal)+' − phí Nghĩa '+V(x.ng)+' − ngân sách QC '+V(x.ns)+(x.qcThieu>0?' − QC thiếu '+V(x.qcThieu):'')+' (= '+V(needTot)+')<br>= Tiền còn lại trong tài khoản: <span class="rs '+(x.conlai>=0?'ok':'bad')+'">'+V(x.conlai)+'</span>')+
+  fm('Tiền Thịnh nhận vào TK: '+V(x.nhanTh)+(x.qcDu>0?'<br>+ QC dư '+V(x.qcDu)+' (= '+V(x.thuc+x.qcDu)+')':'')+'<br>− Lương '+V(x.sal)+' − phí Nghĩa '+V(x.ng)+' − ngân sách QC '+V(x.ns)+(x.qcThieu>0?' − QC thiếu '+V(x.qcThieu):'')+' (= '+V(needTot)+')<br>= Tiền còn lại trong tài khoản: <span class="rs '+(x.conlai>=0?'ok':'bad')+'">'+V(x.conlai)+'</span>')+
   '<div class="'+(x.conlai>=0?'ok':'bad')+' rs">'+(x.conlai>=0?'➜ Không cần nạp thêm, còn dư '+V(x.conlai)+' đ':'➜ Cần nạp thêm '+V(-x.conlai)+' đ')+'</div>')+
  (warn.length?'<div class="st bad">⚠ Lưu ý: '+warn.join('<br>⚠ ')+'</div>':'')+'</div>';
 };
@@ -2364,7 +2415,7 @@ function custRows(name){ const o=[]; Object.keys(S.months).sort().forEach(m=>(S.
 function goOrder(m,i){ document.querySelectorAll('.rpo,.plb').forEach(e=>e.remove()); setMonth(m); all(); try{showTab('don')}catch(e){} showRow(i) }
 function listOrders(title,hits){ const o=document.createElement('div'); o.className='rpo'; o.style.zIndex=99980; o.innerHTML=`<div><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">${esc(title)}</h3><button type="button" id="lox">Đóng</button></div>${hits.map(({r,m,i})=>`<div class="pfr" data-m="${m}" data-i="${i}"><span><b>${esc(r.id||'')}</b> · ${esc(r.k||'')} · ${fd(r.d)}</span><span>${f(fee(r))} đ</span></div>`).join('')}</div>`; document.body.appendChild(o); o.onclick=e=>{ if(e.target===o||e.target.id==='lox'){o.remove();return} const r=e.target.closest('.pfr'); if(r)goOrder(r.dataset.m,+r.dataset.i) } }
 function profile(name){ const R=custRows(name), c=cust(name)||{}, ad=isAd(); let rev=0,paid=0,debt=0,kg=0,m3=0,last=''; const un=[];
- R.forEach(({r})=>{ const v=fee(r), p=pd(r); rev+=v; kg+=n(r.kg); m3+=n(r.m3); if((r.d||'')>last)last=r.d; if(p==='yes')paid+=v; else if(p==='no'){debt+=v;un.push({r,v})} });
+ R.forEach(({r})=>{ const v=fee(r), p=pd(r); rev+=v; kg+=kgT(r); m3+=n(r.m3); if((r.d||'')>last)last=r.d; if(p==='yes')paid+=v; else if(p==='no'){debt+=v;un.push({r,v})} });
  const I=(id,k,lb,tp)=>`<label style="display:block;font-size:12px;margin-top:8px">${lb}<input id="${id}" type="${tp||'text'}" value="${esc(c[k]||'')}" ${ad?'':'readonly'} style="width:100%;padding:7px 8px;margin-top:3px"></label>`;
  const o=document.createElement('div'); o.className='rpo'; o.style.zIndex=99980;
  o.innerHTML=`<div><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3 style="margin:0">👤 ${esc(name)}</h3><button type="button" id="pfx">Đóng</button></div>
@@ -2389,7 +2440,7 @@ document.addEventListener('input',e=>{ const t=e.target; if(!t||t.id!=='ff_k')re
 
 /* báo cáo cuối tháng: xem, in / lưu PDF, sao chép gửi Zalo */
 function mreport(m0){ const ms=Object.keys(S.months).sort(); let m=m0||S.cur;
- const D=mm=>{ const R=(S.months[mm]||{}).rows||[], P=(S.months[mm]||{}).pays||[], o={n:R.length,kg:0,m3:0,rev:0,paid:0,free:0,debt:0,got:0,by:{},un:[]}; R.forEach(r=>{ const v=fee(r), p=pd(r), k=key(r.k), b=o.by[k]=o.by[k]||{n:0,kg:0,rev:0,debt:0}; o.kg+=n(r.kg); o.m3+=n(r.m3); o.rev+=v; b.n++; b.kg+=n(r.kg); b.rev+=v; if(p==='yes')o.paid+=v; else if(p==='free')o.free+=v; else {o.debt+=v; b.debt+=v; o.un.push({r,v})} }); P.forEach(x=>o.got+=n(x.vnd)+n(x.usd)*S.rate); return o };
+ const D=mm=>{ const R=(S.months[mm]||{}).rows||[], P=(S.months[mm]||{}).pays||[], o={n:R.length,kg:0,m3:0,rev:0,paid:0,free:0,debt:0,got:0,by:{},un:[]}; R.forEach(r=>{ const v=fee(r), p=pd(r), k=key(r.k), b=o.by[k]=o.by[k]||{n:0,kg:0,rev:0,debt:0}; o.kg+=kgT(r); o.m3+=n(r.m3); o.rev+=v; b.n++; b.kg+=kgT(r); b.rev+=v; if(p==='yes')o.paid+=v; else if(p==='free')o.free+=v; else {o.debt+=v; b.debt+=v; o.un.push({r,v})} }); P.forEach(x=>o.got+=n(x.vnd)+n(x.usd)*S.rate); return o };
  const pc=(a,b)=>b?((a>=b?'▲ +':'▼ ')+((a-b)/b*100).toFixed(1)+'%'):'–';
  const o=document.createElement('div'); o.className='rpo mro'; o.style.zIndex=99980;
  o.innerHTML='<div><div class="noprt" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><select id="mrm">'+ms.slice().reverse().map(k=>`<option value="${k}">${esc(mk(k))}</option>`).join('')+'</select><button type="button" class="p" id="mrp">🖨 In / Lưu PDF</button><button type="button" id="mrc">📋 Sao chép</button><button type="button" id="mrx">Đóng</button></div><div id="mrb"></div></div>'; document.body.appendChild(o);
