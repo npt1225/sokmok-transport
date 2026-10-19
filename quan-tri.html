@@ -280,6 +280,10 @@
                             accept=".json,application/json" class="hid"><button id="reset">Khôi phục dữ liệu
                             mẫu</button></div>
                 </details>
+                <details class="mn" id="tien-ich">
+                    <summary>Tiện ích ▾</summary>
+                    <div class="dd" id="tiDd"><button type="button" data-fab="rpbtn">📋 Báo cáo: lịch giao hàng, lợi nhuận năm, chuyến xe</button><button type="button" data-fab="mrbtn">📑 Báo cáo cuối tháng</button><button type="button" data-fab="cubtn">👥 Hồ sơ khách hàng</button><button type="button" data-fab="glbtn">🖼 Thư viện ảnh của tháng</button><button type="button" data-fab="instb" id="tiInst" class="hid">📲 Cài lên màn hình điện thoại</button></div>
+                </details>
                 <button id="theme">Sáng/tối</button>
                 <button id="cpw">Đổi mật khẩu</button><button id="out">Đăng xuất</button>
             </div>
@@ -1662,6 +1666,76 @@ function lnPdfHtml(){
   +tbl([['Tháng'],['Doanh số',1],['Tổng chi phí',1],['Lợi nhuận',1],['Biên',1]],rowsM,['Tổng',vn(AT.d),vn(AT.c),vn(AT.l),AT.d?(AT.l/AT.d*100).toFixed(1)+'%':'–'])
   +'<div class="ft"><span>Sokmok Transport · Hotline 0865 491 456</span><span>Chi phí = chuyển hàng + lương + hoa hồng + phí ông Nghĩa + QC đã dùng</span></div></div>';
 }
+function lnPdfAll(){
+  const x=lnData(), M=S.months[S.cur], tot=x.d.tot, cp=x.chuyen+x.sal+x.ng+x.ads, v=a=>vn(a)+' đ';
+  const pc=a=>tot?(a/tot*100).toFixed(1)+'%':'–', R=M.rows||[], sl=salOf(M), ngf=nghOf(M), D=debtData();
+  const DT=D.reduce((a,o)=>a+o.tot,0), DN=D.reduce((a,o)=>a+o.n,0), DB=[0,1,2,3].map(i=>D.reduce((a,o)=>a+o.b[i],0));
+  const RED='#C8102E', BLK='#111111';
+  const kp=(l,val,sub,c)=>'<div class="kp '+(c||'')+'"><small>'+l+'</small><b>'+val+'</b>'+(sub?'<em>'+sub+'</em>':'')+'</div>';
+  const H=(no,t,sm)=>'<h3><span class="no">'+no+'</span>'+t+(sm?'<small>'+sm+'</small>':'')+'</h3>';
+  const tbl=(cols,rows,foot)=>'<table class="rt"><thead><tr>'+cols.map(c=>'<th'+(c[1]?' class="r"':'')+'>'+c[0]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr'+(r.cls?' class="'+r.cls+'"':'')+'>'+r.c.map((t,i)=>'<td'+(cols[i][1]?' class="r"':'')+'>'+t+'</td>').join('')+'</tr>').join('')+'</tbody>'+(foot?'<tfoot><tr>'+foot.map((t,i)=>'<td'+(cols[i][1]?' class="r"':'')+'>'+t+'</td>').join('')+'</tr></tfoot>':'')+'</table>';
+  const dtl=(l,val,b)=>'<p class="dl'+(b?' b':'')+'"><span>'+l+'</span><span>'+val+'</span></p>';
+  const tile=(l,val)=>'<div class="tile"><b>'+val+'</b><small>'+l+'</small></div>';
+  /* thanh dòng tiền: mỗi khoản là một thanh theo % doanh số */
+  const flow=[['Chuyển hàng',x.chuyen,BLK],['Lương + hoa hồng',x.sal,'#444'],['Phí ông Nghĩa',x.ng,'#777'],['QC + vận hành',x.ads,'#aaa'],['LỢI NHUẬN',x.loi,RED]];
+  const fl=flow.map(q=>'<div class="fr"><span class="fl">'+q[0]+'</span><div class="fb"><i style="width:'+Math.min(100,Math.max(0,tot?Math.abs(q[1])/tot*100:0))+'%;background:'+q[2]+'"></i></div><span class="fv">'+vn(q[1])+' <em>'+pc(q[1])+'</em></span></div>').join('');
+  /* chi tiết đơn */
+  const isK=r=>r.by==='M3', kgs=R.reduce((a,r)=>a+(isK(r)?0:n(r.kg)),0);
+  const rowsO=R.map((r,i)=>({c:[i+1,fd(r.g)||'–','<b>'+esc(r.k||'')+'</b>',PL[pd(r)],fd(r.d)||'–',vn1(n(r.q),2)+' '+esc(r.u||''),n(r.kg)?(isK(r)?'<span class="mt">'+vn1(n(r.kg),1)+'*</span>':vn1(n(r.kg),1)):'–',n(r.m3)?vn1(n(r.m3),2):'–',esc(BY[r.by]||r.by||''),vn(fee(r)),esc(r.trip||r.note||'')],cls:'p-'+pd(r)}));
+  /* theo khách */
+  const G={}; R.forEach(r=>{const k=r.k||'(không tên)',o=G[k]=G[k]||{k,n:0,kg:0,m3:0,t:0,y:0,no:0}; o.n++; o.kg+=isK(r)?0:n(r.kg); o.m3+=n(r.m3); o.t+=fee(r); if(pd(r)==='yes')o.y+=fee(r); if(pd(r)==='no')o.no+=fee(r)});
+  const GK=Object.values(G).sort((a,b)=>b.t-a.t), gs=GK.reduce((a,o)=>({n:a.n+o.n,kg:a.kg+o.kg,m3:a.m3+o.m3,t:a.t+o.t,y:a.y+o.y,no:a.no+o.no}),{n:0,kg:0,m3:0,t:0,y:0,no:0});
+  /* theo tháng */
+  const ks=Object.keys(S.months).sort(), AT={d:0,c:0,l:0}, MD=ks.map(k=>{const y=lnDataOf(S.months[k]),c=y.chuyen+y.sal+y.ng+y.ads; AT.d+=y.d.tot; AT.c+=c; AT.l+=y.loi; return {k,d:y.d.tot,c,l:y.loi}}), mx=Math.max(1,...MD.map(m=>m.d));
+  const mch=MD.map(m=>'<div class="mc'+(m.k===S.cur?' cur':'')+'"><span class="ml">'+mk(m.k).replace('Tháng ','T')+'</span><div class="mb"><i class="a" style="width:'+(m.d/mx*100)+'%"></i><i class="b" style="width:'+(Math.abs(m.l)/mx*100)+'%;background:'+(m.l>=0?RED:'#888')+'"></i></div><span class="mv">'+vn(m.l)+'</span></div>').join('');
+  const css='<style>@page{size:A4;margin:10mm 10mm 14mm;@bottom-center{content:"SOKMOK TRANSPORT  ·  Trang " counter(page) "/" counter(pages);font:9px sans-serif;color:#777}}*{box-sizing:border-box}html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:12.5px/1.45 "Segoe UI",Roboto,Arial,sans-serif;color:#111}'
+  +'.ra .hd{display:grid;grid-template-columns:1.25fr 1fr;border-radius:12px;overflow:hidden}.ra .hd .l{background:#111;color:#fff;padding:16px 20px}.ra .hd .l h1{margin:0;font-size:27px;letter-spacing:2px;font-weight:800}.ra .hd .l h1 span{color:#E5233F}.ra .hd .l p{margin:3px 0 0;font-size:11.5px;letter-spacing:.4px;opacity:.85;text-transform:uppercase}'
+  +'.ra .hd .r{background:#C8102E;color:#fff;padding:16px 20px;text-align:right}.ra .hd .r small{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.9}.ra .hd .r b{display:block;font-size:26px;line-height:1.15;font-weight:800}.ra .hd .r span{font-size:11px;opacity:.92}.ra .stripe{height:5px;background:repeating-linear-gradient(90deg,#111 0 24px,#fff 24px 28px,#C8102E 28px 52px,#fff 52px 56px);margin:0 0 12px;border-radius:0 0 4px 4px}'
+  +'.ra .kps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 8px}.ra .kp{border:1.5px solid #111;border-top:5px solid #C8102E;border-radius:9px;padding:8px 11px;background:#fff;break-inside:avoid}.ra .kp small{display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#555}.ra .kp b{display:block;font-size:17px;margin-top:1px;white-space:nowrap}.ra .kp em{display:block;font-style:normal;font-size:10.5px;color:#666}'
+  +'.ra .kp.red{background:#C8102E;border-color:#C8102E;border-top-color:#8E0B20;color:#fff}.ra .kp.red small,.ra .kp.red em{color:#ffd9de}.ra .kp.blk{background:#111;border-color:#111;color:#fff}.ra .kp.blk small,.ra .kp.blk em{color:#bbb}.ra .kp.neg b{color:#C8102E}'
+  +'.ra h3{display:flex;align-items:center;gap:9px;margin:16px 0 7px;font-size:14.5px;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #111;padding-bottom:4px;break-after:avoid}.ra h3 .no{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:50%;background:#C8102E;color:#fff;font-size:12px;letter-spacing:0}.ra h3 small{margin-left:auto;font-size:10.5px;font-weight:400;text-transform:none;letter-spacing:0;color:#666}'
+  +'.ra .fr{display:grid;grid-template-columns:120px 1fr 190px;align-items:center;gap:8px;margin:4px 0}.ra .fl{font-weight:600}.ra .fb{height:13px;background:#eee;border-radius:7px;overflow:hidden}.ra .fb i{display:block;height:100%;border-radius:7px}.ra .fv{text-align:right;font-weight:700;white-space:nowrap}.ra .fv em{font-style:normal;font-weight:400;color:#666;font-size:11px;margin-left:3px}'
+  +'.ra table.rt{width:100%;border-collapse:collapse;margin:4px 0;font-size:11.2px;border:1px solid #bbb}.ra table.rt th{background:#111;color:#fff;font-weight:600;padding:5px 7px;text-align:left;border:1px solid #111;border-bottom:3px solid #C8102E}.ra table.rt td{padding:4px 7px;border:1px solid #ddd;vertical-align:top}.ra table.rt tbody tr:nth-child(even){background:#f4f4f4}.ra table.rt tfoot td{background:#111;color:#fff;font-weight:700;border:1px solid #111}'
+  +'.ra .r{text-align:right!important;white-space:nowrap}.ra thead{display:table-header-group}.ra tr{break-inside:avoid}.ra tr.tot td{background:#fde8eb!important;font-weight:700;color:#8E0B20}.ra tr.cur td{background:#ffe3e7!important;font-weight:700}.ra tr.p-no td:nth-child(4){color:#C8102E;font-weight:700}.ra tr.p-yes td:nth-child(4){color:#111;font-weight:700}.ra .mt{color:#888;font-style:italic}'
+  +'.ra .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ra .box{border:1.5px solid #111;border-radius:9px;padding:8px 12px;break-inside:avoid}.ra .box h4{margin:-8px -12px 6px;padding:5px 12px;background:#111;color:#fff;font-size:12px;letter-spacing:.5px;text-transform:uppercase;border-radius:7px 7px 0 0;border-bottom:3px solid #C8102E}.ra .dl{display:flex;justify-content:space-between;gap:8px;margin:3px 0;border-bottom:1px dotted #ccc;padding-bottom:2px}.ra .dl.b{font-weight:800;border-bottom:0;color:#C8102E;font-size:13px}'
+  +'.ra .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.ra .tile{border:1.5px solid #111;border-radius:9px;text-align:center;padding:7px 4px;background:#fff}.ra .tile b{display:block;font-size:15px;color:#C8102E}.ra .tile small{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.3px}'
+  +'.ra .mc{display:grid;grid-template-columns:52px 1fr 100px;gap:8px;align-items:center;margin:4px 0;font-size:11.5px}.ra .mc.cur .ml{color:#C8102E;font-weight:800}.ra .mb{display:flex;flex-direction:column;gap:2px}.ra .mb i{display:block;height:7px;border-radius:4px}.ra .mb .a{background:#111}.ra .mv{text-align:right;font-weight:700}.ra .lgd{font-size:10.5px;color:#666;margin:2px 0}.ra .lgd u{display:inline-block;width:9px;height:9px;margin:0 4px 0 8px;border-radius:2px}'
+  +'.ra .nt{font-size:10.8px;color:#555;margin:4px 0}.ra .pb{break-before:page}.ra .ft{margin-top:14px;padding-top:6px;border-top:3px solid #C8102E;font-size:10.5px;color:#666;display:flex;justify-content:space-between}</style>';
+  const nhanRows=x.nhanL.map((q,i)=>({c:[i+1,fd(q.d)||'–',esc(q.lbl||''),q.ot?'Sakhen / Diện':'Thịnh',vn(q.amt)]}));
+  return css+'<div class="ra">'
+  +'<div class="hd"><div class="l"><h1>SOKMOK <span>TRANSPORT</span></h1><p>Báo cáo tổng hợp · doanh số – chi phí – lợi nhuận</p></div><div class="r"><small>Kỳ báo cáo</small><b>'+esc(mk(S.cur))+'</b><span>Tỷ giá '+vn(S.rate)+' đ/USD · Xuất ngày '+new Date().toLocaleDateString('vi-VN')+'</span></div></div><div class="stripe"></div>'
+  +'<div class="kps">'+kp('Tổng doanh số',v(tot),x.d.n+' đơn')+kp('Tổng chi phí',v(cp),pc(cp)+' doanh số')+kp('Lợi nhuận',v(x.loi),'Biên lợi nhuận '+pc(x.loi),'red')+kp('Biên lợi nhuận',tot?(x.loi/tot*100).toFixed(1)+'%':'–','Lợi nhuận ÷ doanh số','blk')+'</div>'
+  +'<div class="kps">'+kp('Tiền nhận vào',v(x.nhanT),x.nhanL.length+' khoản')+kp(x.conNhan>0?'Còn thiếu so với doanh số':'Dư so với doanh số',v(Math.abs(x.conNhan)),'',x.conNhan>0?'neg':'')+kp(x.nap>0?'Cần nạp thêm':'Tiền còn lại trong TK',x.nap>0?v(x.nap):v(x.conlai),x.nap>0?'':'Không cần nạp thêm',x.nap>0?'neg':'')+kp('Công nợ khách (mọi tháng)',v(DT),DN+' đơn · '+D.length+' khách','neg')+'</div>'
+  +H(1,'Dòng tiền: doanh số đi đâu','% theo doanh số')+fl
+  +H(2,'Khối lượng hàng')+'<div class="tiles">'+tile('Số đơn (dòng)',x.d.n)+tile('Hàng tính theo kg',vn1(x.d.kg,1)+' kg')+tile('Tổng thể tích',vn1(x.m3,2)+' m³')+tile('Kiện nhỏ',vn(x.sc.nho))+tile('Kg hàng theo khối*',vn1(x.sc.kgK,1))+'</div><p class="nt">* Hàng tính theo khối chỉ tính cước theo m³; kg của hàng này không cộng vào tổng, chỉ dùng tính phí ông Nghĩa.</p>'
+  +H(3,'Các khoản chi phí')
+  +tbl([['Khoản chi phí'],['Cách tính'],['Số tiền (VND)',1],['% doanh số',1]],[
+    {c:['Chuyển hàng – theo kg',vn1(x.sc.kg,1)+' kg × 10.000',vn(x.sc.a),pc(x.sc.a)]},
+    {c:['Chuyển hàng – theo khối',vn1(x.sc.m3,2)+' m³ × 90$ × '+vn(S.rate),vn(x.sc.b),pc(x.sc.b)]},
+    {c:['Chuyển hàng – kiện nhỏ',vn(x.sc.nho)+' kiện × 20$ × '+vn(S.rate),vn(x.sc.c),pc(x.sc.c)]},
+    {c:['Cộng chuyển hàng','',vn(x.chuyen),pc(x.chuyen)],cls:'tot'},
+    {c:['Lương + hoa hồng',vn(SAL.base)+' + '+vn(tot)+' × '+(SAL.pct*100)+'% ('+vn(sl.com)+')',vn(x.sal),pc(x.sal)]},
+    {c:['Phí ông Nghĩa',vn1(ngf.kg,1)+' kg hàng khách Nghĩa × '+vn(NG.per)+' × '+(NG.pct*100)+'%',vn(x.ng),pc(x.ng)]},
+    {c:['Quảng cáo + vận hành (đã dùng)','Ngân sách '+vn(x.ns)+' · '+(x.qcThieu>0?'thiếu '+vn(x.qcThieu):'dư '+vn(x.qcDu)),vn(x.ads),pc(x.ads)]}
+  ],['TỔNG CHI PHÍ','',vn(cp),pc(cp)])
+  +H(4,'Lợi nhuận & tiền trong tài khoản')
+  +'<div class="two"><div class="box"><h4>Cách tính lợi nhuận</h4>'+dtl('Doanh số',vn(tot))+dtl('− Chuyển hàng',vn(x.chuyen))+dtl('− Lương + hoa hồng',vn(x.sal))+dtl('− Phí ông Nghĩa',vn(x.ng))+dtl('− QC đã dùng',vn(x.ads))+dtl('= LỢI NHUẬN',vn(x.loi),1)+'</div>'
+  +'<div class="box"><h4>Tiền trong tài khoản (Thịnh)</h4>'+dtl('Tiền Thịnh nhận vào TK',vn(x.nhanTh))+(x.qcDu>0?dtl('+ QC dư',vn(x.qcDu)):'')+dtl('− Lương + hoa hồng',vn(x.sal))+dtl('− Phí ông Nghĩa',vn(x.ng))+dtl('− Ngân sách QC',vn(x.ns))+(x.qcThieu>0?dtl('− QC thiếu',vn(x.qcThieu)):'')+dtl(x.conlai>=0?'= Còn dư, không cần nạp':'= Cần nạp thêm',vn(Math.abs(x.conlai)),1)+'</div></div>'
+  +H(5,'Các khoản nhận vào','so với doanh số')
+  +(nhanRows.length?tbl([['STT'],['Ngày'],['Ghi chú'],['Người thu'],['Số tiền (VND)',1]],nhanRows,['','','Tổng các khoản nhận','',vn(x.nhanT)]):'<p class="nt">Chưa có khoản nhận nào.</p>')
+  +'<p class="nt">Doanh số '+vn(tot)+' − tiền nhận '+vn(x.nhanT)+' = <b style="color:'+(x.conNhan>0?RED:BLK)+'">'+(x.conNhan>0?'còn thiếu ':'dư ')+vn(Math.abs(x.conNhan))+' đ</b>. Trong đó Thịnh nhận '+vn(x.nhanTh)+' đ (dùng tính tiền còn lại).</p>'
+  +H(6,'Doanh số theo khách hàng')
+  +tbl([['Khách hàng'],['Số đơn',1],['Kg',1],['m³',1],['Doanh số (VND)',1],['Tỷ trọng',1],['Đã thu',1],['Chưa thu',1]],GK.map(o=>({c:['<b>'+esc(o.k)+'</b>',o.n,vn1(o.kg,1),o.m3?vn1(o.m3,2):'–',vn(o.t),gs.t?(o.t/gs.t*100).toFixed(1)+'%':'–',o.y?vn(o.y):'–',o.no?'<b style="color:'+RED+'">'+vn(o.no)+'</b>':'–']})),['Tổng',gs.n,vn1(gs.kg,1),vn1(gs.m3,2),vn(gs.t),'100%',vn(gs.y),vn(gs.no)])
+  +H(7,'Công nợ khách hàng','tất cả các tháng · tính đến '+new Date().toLocaleDateString('vi-VN'))
+  +(D.length?tbl([['Khách'],['Số đơn',1],['< 10 ngày',1],['10–30 ngày',1],['> 30 ngày',1],['Chưa giao',1],['Tổng nợ (VND)',1]],D.map(o=>({c:['<b>'+esc(o.k)+'</b>',o.n,o.b[0]?vn(o.b[0]):'–',o.b[1]?vn(o.b[1]):'–',o.b[2]?'<b style="color:'+RED+'">'+vn(o.b[2])+'</b>':'–',o.b[3]?vn(o.b[3]):'–','<b>'+vn(o.tot)+'</b>']})),['Tổng',DN,vn(DB[0]),vn(DB[1]),vn(DB[2]),vn(DB[3]),vn(DT)]):'<p class="nt">Không có công nợ. Tất cả đơn đã thu.</p>')
+  +H(8,'Lợi nhuận theo từng tháng')
+  +'<div class="lgd"><u style="background:#111"></u>Doanh số<u style="background:'+RED+'"></u>Lợi nhuận</div>'+mch
+  +tbl([['Tháng'],['Doanh số',1],['Tổng chi phí',1],['Lợi nhuận',1],['Biên',1]],MD.map(m=>({c:[mk(m.k),vn(m.d),vn(m.c),'<b style="color:'+(m.l>=0?'#111':RED)+'">'+vn(m.l)+'</b>',m.d?(m.l/m.d*100).toFixed(1)+'%':'–'],cls:m.k===S.cur?'cur':''})),['Tổng',vn(AT.d),vn(AT.c),vn(AT.l),AT.d?(AT.l/AT.d*100).toFixed(1)+'%':'–'])
+  +'<div class="pb"></div>'+H(9,'Chi tiết đơn hàng '+esc(mk(S.cur)),R.length+' dòng')
+  +tbl([['#'],['Ngày giao'],['Khách'],['Thu tiền'],['Hàng về'],['Số lượng',1],['Kg',1],['m³',1],['Tính theo'],['Cước (VND)',1],['Chuyến / ghi chú']],rowsO,['','','Tổng','','',R.reduce((a,r)=>a+n(r.q),0)||'',vn1(kgs,1),vn1(x.m3,2),'',vn(tot),''])
+  +'<p class="nt">* kg in nghiêng là hàng tính theo khối: không cộng vào tổng kg.</p>'
+  +'<div class="ft"><span>Sokmok Transport · Hotline 0865 491 456</span><span>Chi phí = chuyển hàng + lương + hoa hồng + phí ông Nghĩa + QC đã dùng</span></div></div>';
+}
 function renderExtra() {
     const own = !!me && me.r === 'owner'; $('tabln').classList.toggle('hid', !own);
     if (!own) { if (tab === 'ln') showTab('tong') } else lnRender();
@@ -2242,9 +2316,9 @@ window.mgx=function(){
  const tk=$('tp-khach'); if(tk&&S&&S.months){ const ks=[...new Set(Object.values(S.months).flatMap(m=>(m.rows||[]).map(r=>r.k||'(không tên)')))].sort((a,b)=>a.localeCompare(b,'vi'));
   let bx=$('skbox'); if(!bx){bx=document.createElement('div'); bx.id='skbox'; bx.className='tb'; bx.style.margin='0 0 10px'; const sec=tk.querySelector('section'); sec.insertBefore(bx,sec.querySelector('.wrap'))}
   const cur=$('skk')?$('skk').value:''; bx.innerHTML='<b>Bảng kê công nợ:</b> <select id="skk">'+ks.map(k=>`<option ${k===cur?'selected':''}>${esc(k)}</option>`).join('')+'</select><label><input type="checkbox" id="skn" checked> chỉ đơn chưa thu</label><button type="button" class="p" id="skp">In / lưu PDF bảng kê</button>'}
- const lc=$('lncp'); if(lc&&!$('lnpr')){lc.insertAdjacentHTML('afterend',' <button type="button" id="lnpr">Xuất PDF báo cáo đầy đủ</button>')}
+ const lc=$('lncp'); if(lc&&!$('lnpr')){lc.insertAdjacentHTML('afterend',' <button type="button" id="lnpr">Xuất PDF báo cáo đầy đủ</button>')} if($('lnpr')&&!$('lnpr2')){$('lnpr').insertAdjacentHTML('afterend',' <button type="button" id="lnpr2" style="background:#C8102E;border-color:#C8102E;color:#fff;font-weight:700">Xuất PDF tổng thông tin</button>')}
 };
-document.addEventListener('click',e=>{ const t=e.target; if(t.id==='skp'){try{stmt($('skk').value,$('skn').checked)}catch(x){console.error(x)}} if(t.id==='lnpr'){try{win('Báo cáo lợi nhuận '+mk(S.cur),lnPdfHtml())}catch(x){console.error(x)}} });
+document.addEventListener('click',e=>{ const t=e.target; if(t.id==='skp'){try{stmt($('skk').value,$('skn').checked)}catch(x){console.error(x)}} if(t.id==='lnpr'){try{win('Báo cáo lợi nhuận '+mk(S.cur),lnPdfHtml())}catch(x){console.error(x)}} if(t.id==='lnpr2'){try{win('Tổng thông tin '+mk(S.cur),lnPdfAll())}catch(x){console.error(x)}} });
 try{window.mgx()}catch(e){console.error(e)}
 })();
 
@@ -2513,6 +2587,17 @@ safe(showPub); addEventListener('hashchange',()=>safe(showPub));
 const bn=document.createElement('div'); bn.id='offb'; bn.setAttribute('role','alert'); bn.textContent='⚠ Mất kết nối mạng: thay đổi có thể chưa được lưu lên máy chủ'; document.body.appendChild(bn);
 const net=()=>{bn.style.display=navigator.onLine?'none':'block'}; addEventListener('offline',net); addEventListener('online',()=>{net();safe(()=>toast('ok','Đã có mạng trở lại.'))}); net();
 document.addEventListener('keydown',e=>{ if(e.key!=='Escape'||document.querySelector('.plb'))return; const m=document.getElementById('md'); if(m&&!m.classList.contains('hid')){const c=document.getElementById('mc'); if(c)c.click()} });
+})();
+
+/* ===== Gom các nút nổi vào menu «Tiện ích» trên thanh công cụ ===== */
+(function(){
+  try{ document.head.insertAdjacentHTML('beforeend','<style>#fab{display:none!important}</style>') }catch(e){}
+  /* chế độ tối kiểu cũ (nút 🌙) đã bỏ, đã có nút «Sáng/tối» trên thanh công cụ: tắt để khỏi bị kẹt */
+  try{ localStorage.setItem('bc-dark','0'); document.documentElement.classList.remove('dk') }catch(e){}
+  const dd=document.getElementById('tiDd'), det=document.getElementById('tien-ich'); if(!dd||!det)return;
+  det.addEventListener('toggle',()=>{ const i=document.getElementById('tiInst'); if(i)i.classList.toggle('hid',!document.getElementById('instb')) });
+  dd.addEventListener('click',e=>{ const b=e.target.closest('button[data-fab]'); if(!b)return; det.open=false; const t=document.getElementById(b.dataset.fab); if(t)t.click() });
+  document.addEventListener('click',e=>{ if(det.open&&!det.contains(e.target))det.open=false });
 })();
 </script>
 </body>
