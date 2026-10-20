@@ -1,0 +1,94 @@
+                .lnk {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+                    gap: 12px;
+                    margin-bottom: 14px
+                }
+
+                .lnk>div {
+                    border: 1px solid var(--bd);
+                    border-radius: 14px;
+                    padding: 14px 16px
+                }
+
+                .lnk small {
+                    display: block;
+                    color: var(--mu);
+                    font-size: 12px;
+                    margin-bottom: 4px
+                }
+
+                .lnk b {
+                    font-size: 22px
+                }
+
+                .lnk .g b {
+                    color: #1e8e4e
+                }
+
+                .lnk .r b {
+                    color: #c8201c
+                }
+
+                .lnb {
+                    display: flex;
+                    height: 22px;
+                    border-radius: 11px;
+                    overflow: hidden;
+                    margin: 6px 0 10px;
+                    background: var(--bd)
+                }
+
+                .lnl {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px 18px;
+                    font-size: 13px;
+                    color: var(--mu)
+                }
+
+                .lnl i {
+                    display: inline-block;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 3px;
+                    margin-right: 6px
+                }
+
+                .lng {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 14px
+                }
+
+                .lnp {
+                    border: 1px solid var(--bd);
+                    border-radius: 14px;
+                    padding: 14px 16px
+                }
+
+                .lnp h3 {
+                    margin: 0 0 8px;
+                    font-size: 15px
+                }
+
+                .lnr {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 7px 0;
+                    border-bottom: 1px dashed var(--bd);
+                    font-size: 14px
+                }
+
+                .lnr input {
+                    width: 150px;
+                    text-align: right
+                }
+
+                .lnr.t {
+                    font-weight: 700;
+                    border-bottom: 0;
+                    font-size: 15px
+                }

@@ -1,0 +1,11 @@
+/* Phân trang bảng đơn hàng */
+.pgx{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;margin:8px 0;font-size:13px}
+.pgx:empty{display:none}
+.pgx .pgi{color:var(--mu)}
+.pgx .pgb{display:inline-flex;gap:6px;align-items:center}
+.pgx .pgb button{min-width:36px;padding:6px 10px}
+.pgx .pgb button:disabled{opacity:.4;cursor:default}
+.pgx .pgn{padding:0 6px;white-space:nowrap}
+.pgx .pgs{display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.pgx .pgs select{padding:5px 8px}
+@media(max-width:560px){.pgx{justify-content:center}}

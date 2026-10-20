@@ -1,0 +1,430 @@
+        #ld .spn,
+        #ld .ldlane,
+        #ld .ldsv {
+            display: none !important
+        }
+
+        #ld .ldbrand {
+            animation: ld2in .8s ease both
+        }
+
+        .ld2 {
+            width: min(360px, 84vw);
+            margin: 22px auto 6px
+        }
+
+        .ld2r {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .ld2n {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            opacity: .85
+        }
+
+        .ld2n i {
+            font-style: normal;
+            font-size: 26px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: rgba(127, 127, 127, .12);
+            box-shadow: 0 0 0 0 rgba(30, 100, 220, .45);
+            animation: ld2p 2s infinite
+        }
+
+        .ld2n:last-child i {
+            animation-delay: 1s
+        }
+
+        .ld2n em {
+            font-style: normal
+        }
+
+        .ld2t {
+            flex: 1;
+            position: relative;
+            height: 26px
+        }
+
+        .ld2t b {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 0;
+            border-top: 2px dashed rgba(127, 127, 127, .5);
+            animation: ld2d 1s linear infinite;
+            background: none
+        }
+
+        .ld2t u {
+            position: absolute;
+            top: 0;
+            left: 0;
+            text-decoration: none;
+            font-size: 20px;
+            animation: ld2m 2.4s ease-in-out infinite
+        }
+
+        .ld2b {
+            height: 6px;
+            border-radius: 99px;
+            background: rgba(127, 127, 127, .18);
+            overflow: hidden;
+            margin-top: 18px
+        }
+
+        .ld2b s {
+            display: block;
+            height: 100%;
+            width: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, transparent, #2f6fed, #35c0a0, transparent);
+            background-size: 50% 100%;
+            background-repeat: no-repeat;
+            animation: ld2s 1.3s ease-in-out infinite;
+            text-decoration: none
+        }
+
+        #ld.bad .ld2b s {
+            background: #c8201c;
+            animation: none
+        }
+
+        @keyframes ld2in {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        @keyframes ld2p {
+            0% {
+                box-shadow: 0 0 0 0 rgba(30, 100, 220, .45)
+            }
+
+            70%,
+            100% {
+                box-shadow: 0 0 0 14px rgba(30, 100, 220, 0)
+            }
+        }
+
+        @keyframes ld2d {
+            to {
+                background-position: 12px 0
+            }
+        }
+
+        @keyframes ld2m {
+            0% {
+                left: 0;
+                transform: scale(.8);
+                opacity: 0
+            }
+
+            15% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            85% {
+                opacity: 1
+            }
+
+            100% {
+                left: calc(100% - 22px);
+                transform: scale(.8);
+                opacity: 0
+            }
+        }
+
+        @keyframes ld2s {
+            0% {
+                background-position: -60% 0
+            }
+
+            100% {
+                background-position: 160% 0
+            }
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+
+            .ld2n i,
+            .ld2t u,
+            .ld2b s,
+            #ld .ldbrand {
+                animation: none
+            }
+
+            .ld2t u {
+                left: calc(50% - 10px)
+            }
+        }
+
+        #ld .ld2 {
+            display: none
+        }
+
+        #ld .ldbrand b {
+            font-size: 34px
+        }
+
+        .ld3 {
+            width: min(560px, 92vw);
+            margin: 14px auto 0;
+            padding: 26px 24px 22px;
+            border-radius: 24px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .03));
+            border: 1px solid rgba(255, 255, 255, .16);
+            box-shadow: 0 30px 70px -24px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 255, 255, .12);
+            backdrop-filter: blur(8px)
+        }
+
+        .ld3r {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px
+        }
+
+        .ld3f {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 92px;
+            color: #fff
+        }
+
+        .ld3f svg {
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, .92), 0 10px 26px rgba(0, 0, 0, .5)
+        }
+
+        .ld3f b {
+            font-size: 12px;
+            letter-spacing: .16em
+        }
+
+        .ld3f small {
+            font-size: 10.5px;
+            color: #a9b8cb;
+            margin-top: -4px;
+            white-space: nowrap
+        }
+
+        .ld3t {
+            position: relative;
+            height: 96px;
+            overflow: hidden
+        }
+
+        .ld3t:before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 12px;
+            height: 14px;
+            border-radius: 7px;
+            background: #1b2636;
+            box-shadow: inset 0 2px 3px rgba(0, 0, 0, .5)
+        }
+
+        .ld3t:after {
+            content: "";
+            position: absolute;
+            left: 6px;
+            right: 6px;
+            bottom: 18px;
+            height: 2px;
+            background: repeating-linear-gradient(90deg, #ffde00 0 10px, transparent 10px 20px);
+            animation: ld3d .6s linear infinite
+        }
+
+        .ld3g {
+            position: absolute;
+            left: 50%;
+            bottom: 26px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center
+        }
+
+        .ld3g span {
+            width: 3px;
+            height: 30px;
+            background: #8a93a0;
+            border-radius: 2px;
+            position: relative
+        }
+
+        .ld3g span:before {
+            content: "";
+            position: absolute;
+            left: 3px;
+            top: 4px;
+            width: 30px;
+            height: 5px;
+            background: repeating-linear-gradient(90deg, #fff 0 6px, #c8102e 6px 12px);
+            border-radius: 2px
+        }
+
+        .ld3g em {
+            font-style: normal;
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            color: #ffde00;
+            white-space: nowrap;
+            position: absolute;
+            top: -16px
+        }
+
+        .ld3k {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 76px;
+            animation: ld3go 4.2s ease-in-out infinite;
+            filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .5))
+        }
+
+        .ld3k svg {
+            display: block;
+            width: 100%
+        }
+
+        .ld3w {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: ld3s .5s linear infinite
+        }
+
+        .ld3p {
+            position: absolute;
+            font-style: normal;
+            font-size: 16px;
+            top: 6px;
+            left: 8%;
+            opacity: 0;
+            animation: ld3up 4.2s ease-in-out infinite
+        }
+
+        .ld3p2 {
+            left: auto;
+            right: 8%;
+            animation-delay: 2.1s
+        }
+
+        .ld3b {
+            height: 8px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, .14);
+            overflow: hidden;
+            margin-top: 20px
+        }
+
+        .ld3b s {
+            display: block;
+            height: 100%;
+            width: 0;
+            border-radius: 99px;
+            text-decoration: none;
+            background: linear-gradient(90deg, #da251d, #ffde00 55%, #2f7cc0);
+            box-shadow: 0 0 14px rgba(255, 222, 0, .55);
+            transition: width .35s ease
+        }
+
+        #ld.bad .ld3b s {
+            background: #c8201c;
+            width: 100% !important
+        }
+
+        @keyframes ld3d {
+            to {
+                background-position: 20px 0
+            }
+        }
+
+        @keyframes ld3s {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes ld3go {
+            0% {
+                left: -8%;
+                opacity: 0
+            }
+
+            10% {
+                opacity: 1
+            }
+
+            45% {
+                left: calc(50% - 48px)
+            }
+
+            55% {
+                left: calc(50% - 38px)
+            }
+
+            90% {
+                opacity: 1
+            }
+
+            100% {
+                left: 100%;
+                opacity: 0
+            }
+        }
+
+        @keyframes ld3up {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: translateY(12px)
+            }
+
+            20%,
+            70% {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        @media(prefers-reduced-motion:reduce) {
+
+            .ld3k,
+            .ld3w,
+            .ld3p,
+            .ld3t:after {
+                animation: none
+            }
+
+            .ld3k {
+                left: calc(50% - 38px)
+            }
+        }

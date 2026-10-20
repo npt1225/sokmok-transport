@@ -1,0 +1,42 @@
+/* --- phiếu giao nhận: nhãn số ngày nợ --- */
+.bi .bago{color:var(--mu);font-size:11px;font-style:normal}
+.bi .bago.old{color:var(--ng);font-weight:600}
+/* --- thanh lọc đơn hàng --- */
+#tp-don .tbtog{display:none}
+#tp-don .tbf,#tp-don .tbx{display:contents}
+@media(max-width:700px){
+  #tp-don .tb{display:flex!important;flex-wrap:wrap;gap:8px;align-items:stretch}
+  #tp-don .tb #q{order:1;flex:1 1 0;min-width:0;width:auto;min-height:42px}
+  #tp-don .tbtog{order:2;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;min-height:42px;padding:0 14px;font-weight:600}
+  #tp-don .tbtog.act{border-color:var(--pr);color:var(--pr)}
+  #tp-don .tbtog .bnb{position:static;margin:0}
+  #tp-don .tbf,#tp-don .tbx{display:none;flex:1 1 100%}
+  #tp-don .tbf{order:3}
+  #tp-don .tbx{order:7}
+  #tp-don .tb.open .tbf{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--in)}
+  #tp-don .tb.open .tbx{display:flex;gap:8px}
+  #tp-don .tbf select,#tp-don .tbf .dr input{width:100%;min-width:0;min-height:40px;font-size:14px}
+  #tp-don .tbf .dr{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--mu)}
+  #tp-don .tbf #dclr{grid-column:1/-1;min-height:38px}
+  #tp-don .tbx button{flex:1 1 0;min-height:40px;font-size:13px}
+  #tp-don .tb #add{order:4;flex:1 1 100%;min-height:44px;font-size:15px}
+  #tp-don .tb #bill{order:5;flex:1 1 calc(50% - 4px);min-height:42px}
+  #tp-don .tb #bills{order:6;flex:1 1 calc(50% - 4px);min-height:42px}
+}
+/* --- hộp thoại lập phiếu trên điện thoại --- */
+@media(max-width:620px){
+  #md .schips{gap:6px}
+  #md .schip{padding:6px 11px;min-height:36px;font-size:13px}
+  #md .bpb{width:100%;margin-left:0}
+  #md .bpb button{flex:1 1 0;padding:7px 6px}
+  #md .bpl{max-height:min(48vh,380px)}
+  #md .bi{grid-template-columns:26px 1fr 1fr auto;grid-template-areas:"ck d1 d1 d4" "ck d2 d3 d4" "ck d5 d5 d5" "ck d6 d6 d6";gap:2px 10px;padding:9px 10px}
+  #md .bi input{grid-area:ck;align-self:start;margin-top:2px}
+  #md .bi .bd1{grid-area:d1}
+  #md .bi .bd2{grid-area:d2}
+  #md .bi .bd3{grid-area:d3}
+  #md .bi .bd4{grid-area:d4;text-align:right;white-space:nowrap;align-self:start}
+  #md .bi .bd5{grid-area:d5;display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+  #md .bi .bd6{grid-area:d6}
+  #md .bi b{font-size:13px}
+}

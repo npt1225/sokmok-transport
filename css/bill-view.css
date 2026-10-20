@@ -1,0 +1,113 @@
+        #bvw {
+            -webkit-overflow-scrolling: touch
+        }
+
+        #bvw .tb {
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 2
+        }
+
+        #bvw .tb button,
+        #bvw .tb select {
+            min-height: 40px;
+            font-size: 14px
+        }
+
+        #bvw #bmsg {
+            width: 100%;
+            font-size: 12px
+        }
+
+        #bvw.zm #bc {
+            width: 1100px;
+            max-width: none;
+            margin: 0
+        }
+
+        @media(max-width:640px) {
+            #bvw {
+                padding: 8px !important
+            }
+
+            #bvw .tb {
+                gap: 6px !important
+            }
+
+            #bvw .tb .p,
+            #bvw .tb select {
+                flex: 1 1 46%
+            }
+
+            #bvw .tb button {
+                flex: 1 1 30%
+            }
+
+            #bvw #bc {
+                border-radius: 4px !important
+            }
+
+            #bvw.zm #bc {
+                width: 1000px
+            }
+
+            .dlg {
+                padding: 14px;
+                border-radius: 12px;
+                max-height: 94vh
+            }
+
+            .dlg h3 {
+                font-size: 17px
+            }
+
+            .fg {
+                grid-template-columns: 1fr
+            }
+
+            #md {
+                padding: 8px;
+                align-items: flex-start
+            }
+
+            .bi {
+                grid-template-columns: 26px 1fr
+            }
+
+            .bi .bd6 {
+                grid-column: 1/-1
+            }
+
+            .bcard {
+                grid-template-columns: 1fr
+            }
+
+            .bcard .ba {
+                flex-direction: row
+            }
+
+            .bcard .ba button {
+                flex: 1
+            }
+
+            .act {
+                position: sticky;
+                bottom: -14px;
+                background: var(--cd);
+                padding: 10px 0 2px
+            }
+
+            .bpl {
+                max-height: 240px
+            }
+
+            .btabs button {
+                font-size: 12px;
+                padding: 8px 4px
+            }
+
+            .dt {
+                grid-template-columns: 110px 1fr
+            }
+        }
