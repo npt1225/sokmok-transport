@@ -6402,7 +6402,97 @@
             color: var(--mu)
         }
     </style>
-<style>.xc{position:sticky;top:0;float:right;z-index:30;width:34px;height:34px;margin:-8px -8px 4px 10px;padding:0 0 2px;border:0;border-radius:50%;background:rgba(127,127,127,.16);color:inherit;font:400 24px/1 system-ui,sans-serif;display:inline-grid;place-items:center;cursor:pointer;transition:background .15s,color .15s,transform .15s}.xc:hover{background:#c8201c;color:#fff}.xc:active{transform:scale(.92)}.xc:focus-visible{outline:2px solid #1f4e9e;outline-offset:2px}.xc.xw{position:absolute;top:12px;right:12px;float:none;margin:0;background:rgba(255,255,255,.22);color:#fff}.rpo #pfx,.rpo #cux,.rpo #lox,.rpo #qrx{display:none}.rpo>.bwrap{background:transparent;box-shadow:none;padding:0 4px 10px;width:min(460px,100%);position:relative}.bact{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}.bact button{border-radius:99px;padding:9px 16px;font-weight:600;border:0;background:#fff;color:#1c1f24;cursor:pointer}.bact button.p{background:#c8201c;color:#fff}</style>
+    <style>
+        .xc {
+            position: sticky;
+            top: 0;
+            float: right;
+            z-index: 30;
+            width: 34px;
+            height: 34px;
+            margin: -8px -8px 4px 10px;
+            padding: 0 0 2px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(127, 127, 127, .16);
+            color: inherit;
+            font: 400 24px/1 system-ui, sans-serif;
+            display: inline-grid;
+            place-items: center;
+            cursor: pointer;
+            transition: background .15s, color .15s, transform .15s
+        }
+
+        .xc:hover {
+            background: #c8201c;
+            color: #fff
+        }
+
+        .xc:active {
+            transform: scale(.92)
+        }
+
+        .xc:focus-visible {
+            outline: 2px solid #1f4e9e;
+            outline-offset: 2px
+        }
+
+        .xc.xw {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            float: none;
+            margin: 0;
+            background: rgba(255, 255, 255, .22);
+            color: #fff
+        }
+
+        .rpo #pfx,
+        .rpo #cux,
+        .rpo #lox,
+        .rpo #qrx {
+            display: none
+        }
+
+        .rpo>.bwrap {
+            background: transparent;
+            box-shadow: none;
+            padding: 0 4px 10px;
+            width: min(460px, 100%);
+            position: relative
+        }
+
+        .bact {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 12px
+        }
+
+        .bact button {
+            border-radius: 99px;
+            padding: 9px 16px;
+            font-weight: 600;
+            border: 0;
+            background: #fff;
+            color: #1c1f24;
+            cursor: pointer
+        }
+
+        .bact button.p {
+            background: #c8201c;
+            color: #fff
+        }
+    </style>
+<style id="khoa-so">
+#lockbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid #e0b252;background:#fff6e0;color:#6b4a00;font-size:14px}
+#lockbar.hid{display:none}
+#lockbar button{margin-left:auto}
+#lockm.on{border-color:#e0b252}
+@media (prefers-color-scheme:dark){#lockbar{background:#3a2e12;border-color:#8a6a1f;color:#f3d994}}
+:root[data-theme="dark"] #lockbar,body.dark #lockbar{background:#3a2e12;border-color:#8a6a1f;color:#f3d994}
+</style>
 </head>
 
 <body>
@@ -6642,7 +6732,7 @@
                 <label class="f">Đơn giá cước (VND/kg)<input id="kgp" type="number" step="500"
                         style="width:120px"></label>
                 <label class="f">Tháng<span class="inl"><select id="mo"></select><button id="delm" type="button"
-                            title="Xóa tháng đang chọn">Xóa tháng</button></span></label>
+                            title="Xóa tháng đang chọn">Xóa tháng</button><button id="lockm" type="button" title="Khóa sổ tháng đang chọn">🔒 Khóa sổ</button></span></label>
                 <label class="f">Thêm tháng mới<span class="inl"><input id="nm" type="month"><button
                             id="newm">Thêm</button></span></label>
             </div>
@@ -6672,6 +6762,8 @@
         <p class="note" style="margin:-6px 0 12px"><span id="sv"></span><span> · Bấm vào ô tỷ giá hoặc đơn giá để chỉnh
                 (có hỏi xác nhận).</span></p>
 
+        <div id="lockbar" class="hid" role="status"></div>
+
         <nav class="tabs" id="tabs" role="tablist">
             <button data-tab="tong" class="on">Tổng quan</button><button data-tab="don">Đơn hàng</button><button
                 data-tab="khach">Khách hàng</button><button data-tab="thang">Theo tháng</button><button
@@ -6696,38 +6788,45 @@
                 <h2>Chi tiết đơn hàng</h2>
                 <div class="tb">
                     <input id="q" type="search" placeholder="Tìm khách, ghi chú...">
-                    <select id="fc"></select>
-                    <select id="ftrip" aria-label="Lọc theo chuyến xe chung"></select>
-                    <select id="fp" aria-label="Lọc theo tình trạng thu tiền">
-                        <option value="">Tất cả tình trạng thu</option>
-                        <option value="no">Chưa thu</option>
-                        <option value="yes">Đã thu</option>
-                        <option value="free">Không thu</option>
-                    </select>
-                    <select id="df" aria-label="Lọc theo loại ngày">
-                        <option value="g">Ngày giao</option>
-                        <option value="d">Ngày hàng về</option>
-                    </select>
-                    <label class="dr">Từ <input id="d1" type="date"></label>
-                    <label class="dr">đến <input id="d2" type="date"></label>
-                    <button id="dclr" type="button" title="Xóa lọc ngày">Xóa ngày</button>
-                    <select id="so">
-                        <option value="">Thứ tự nhập</option>
-                        <option value="g">Ngày giao</option>
-                        <option value="d">Ngày hàng về</option>
-                        <option value="k">Tên khách</option>
-                        <option value="kg">Khối lượng (giảm dần)</option>
-                        <option value="rev">Doanh số (giảm dần)</option>
-                    </select>
+                    <button id="tbtog" class="tbtog" type="button" aria-expanded="false" aria-controls="tbf"
+                        title="Hiện / ẩn bộ lọc">⚙ Bộ lọc <span class="bnb" id="tbn" hidden></span></button>
+                    <div class="tbf" id="tbf">
+                        <select id="fc"></select>
+                        <select id="ftrip" aria-label="Lọc theo chuyến xe chung"></select>
+                        <select id="fp" aria-label="Lọc theo tình trạng thu tiền">
+                            <option value="">Tất cả tình trạng thu</option>
+                            <option value="no">Chưa thu</option>
+                            <option value="yes">Đã thu</option>
+                            <option value="free">Không thu</option>
+                        </select>
+                        <select id="df" aria-label="Lọc theo loại ngày">
+                            <option value="g">Ngày giao</option>
+                            <option value="d">Ngày hàng về</option>
+                        </select>
+                        <label class="dr">Từ <input id="d1" type="date"></label>
+                        <label class="dr">đến <input id="d2" type="date"></label>
+                        <button id="dclr" type="button" title="Xóa lọc ngày">Xóa ngày</button>
+                        <select id="so">
+                            <option value="">Thứ tự nhập</option>
+                            <option value="g">Ngày giao</option>
+                            <option value="d">Ngày hàng về</option>
+                            <option value="k">Tên khách</option>
+                            <option value="kg">Khối lượng (giảm dần)</option>
+                            <option value="rev">Doanh số (giảm dần)</option>
+                        </select>
+                    </div>
                     <button class="p" id="add">+ Thêm đơn hàng</button>
                     <button id="bill" title="Tạo phiếu giao nhận hàng để in hoặc gửi khách">Tạo phiếu giao nhận</button>
                     <button id="bills" title="Xem lại, in lại, xóa các phiếu đã lập">Phiếu đã lập <span class="bnb"
                             id="bn" hidden>0</span></button>
-                    <button id="bulkpaid" type="button"
-                        title="Đánh dấu Đã thu cho tất cả đơn chưa thu đang hiện trong bảng">✔ Đã thu hết (đang
-                        lọc)</button>
-                    <button id="csvx" type="button" title="Tải danh sách đơn đang lọc ra file CSV mở bằng Excel">⬇ Xuất
-                        CSV</button>
+                    <div class="tbx">
+                        <button id="bulkpaid" type="button"
+                            title="Đánh dấu Đã thu cho tất cả đơn chưa thu đang hiện trong bảng">✔ Đã thu hết (đang
+                            lọc)</button>
+                        <button id="csvx" type="button" title="Tải danh sách đơn đang lọc ra file CSV mở bằng Excel">⬇
+                            Xuất
+                            CSV</button>
+                    </div>
                 </div>
                 <div id="dstrip" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px"></div>
                 <div id="ordx"></div>
@@ -6976,6 +7075,235 @@
         </div>
     </main>
     <div id="md" class="hid"></div>
+    <style id="x-mobile-fix">
+        /* --- phiếu giao nhận: nhãn số ngày nợ --- */
+        .bi .bago {
+            color: var(--mu);
+            font-size: 11px;
+            font-style: normal
+        }
+
+        .bi .bago.old {
+            color: var(--ng);
+            font-weight: 600
+        }
+
+        /* --- thanh lọc đơn hàng --- */
+        #tp-don .tbtog {
+            display: none
+        }
+
+        #tp-don .tbf,
+        #tp-don .tbx {
+            display: contents
+        }
+
+        @media(max-width:700px) {
+            #tp-don .tb {
+                display: flex !important;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: stretch
+            }
+
+            #tp-don .tb #q {
+                order: 1;
+                flex: 1 1 0;
+                min-width: 0;
+                width: auto;
+                min-height: 42px
+            }
+
+            #tp-don .tbtog {
+                order: 2;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                flex: 0 0 auto;
+                min-height: 42px;
+                padding: 0 14px;
+                font-weight: 600
+            }
+
+            #tp-don .tbtog.act {
+                border-color: var(--pr);
+                color: var(--pr)
+            }
+
+            #tp-don .tbtog .bnb {
+                position: static;
+                margin: 0
+            }
+
+            #tp-don .tbf,
+            #tp-don .tbx {
+                display: none;
+                flex: 1 1 100%
+            }
+
+            #tp-don .tbf {
+                order: 3
+            }
+
+            #tp-don .tbx {
+                order: 7
+            }
+
+            #tp-don .tb.open .tbf {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 10px;
+                border: 1px solid var(--bd);
+                border-radius: 10px;
+                background: var(--in)
+            }
+
+            #tp-don .tb.open .tbx {
+                display: flex;
+                gap: 8px
+            }
+
+            #tp-don .tbf select,
+            #tp-don .tbf .dr input {
+                width: 100%;
+                min-width: 0;
+                min-height: 40px;
+                font-size: 14px
+            }
+
+            #tp-don .tbf .dr {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                font-size: 12px;
+                color: var(--mu)
+            }
+
+            #tp-don .tbf #dclr {
+                grid-column: 1/-1;
+                min-height: 38px
+            }
+
+            #tp-don .tbx button {
+                flex: 1 1 0;
+                min-height: 40px;
+                font-size: 13px
+            }
+
+            #tp-don .tb #add {
+                order: 4;
+                flex: 1 1 100%;
+                min-height: 44px;
+                font-size: 15px
+            }
+
+            #tp-don .tb #bill {
+                order: 5;
+                flex: 1 1 calc(50% - 4px);
+                min-height: 42px
+            }
+
+            #tp-don .tb #bills {
+                order: 6;
+                flex: 1 1 calc(50% - 4px);
+                min-height: 42px
+            }
+        }
+
+        /* --- hộp thoại lập phiếu trên điện thoại --- */
+        @media(max-width:620px) {
+            #md .schips {
+                gap: 6px
+            }
+
+            #md .schip {
+                padding: 6px 11px;
+                min-height: 36px;
+                font-size: 13px
+            }
+
+            #md .bpb {
+                width: 100%;
+                margin-left: 0
+            }
+
+            #md .bpb button {
+                flex: 1 1 0;
+                padding: 7px 6px
+            }
+
+            #md .bpl {
+                max-height: min(48vh, 380px)
+            }
+
+            #md .bi {
+                grid-template-columns: 26px 1fr 1fr auto;
+                grid-template-areas: "ck d1 d1 d4" "ck d2 d3 d4" "ck d5 d5 d5" "ck d6 d6 d6";
+                gap: 2px 10px;
+                padding: 9px 10px
+            }
+
+            #md .bi input {
+                grid-area: ck;
+                align-self: start;
+                margin-top: 2px
+            }
+
+            #md .bi .bd1 {
+                grid-area: d1
+            }
+
+            #md .bi .bd2 {
+                grid-area: d2
+            }
+
+            #md .bi .bd3 {
+                grid-area: d3
+            }
+
+            #md .bi .bd4 {
+                grid-area: d4;
+                text-align: right;
+                white-space: nowrap;
+                align-self: start
+            }
+
+            #md .bi .bd5 {
+                grid-area: d5;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                margin-top: 3px
+            }
+
+            #md .bi .bd6 {
+                grid-area: d6
+            }
+
+            #md .bi b {
+                font-size: 13px
+            }
+        }
+    </style>
+    <script>
+        /* thanh lọc đơn hàng: nút «Bộ lọc» + số bộ lọc đang bật */
+        (function () {
+            try {
+                var tb = document.querySelector('#tp-don .tb'), tg = document.getElementById('tbtog'), bd = document.getElementById('tbn');
+                if (!tb || !tg || !bd) return;
+                function cnt() {
+                    var n = 0;['fc', 'ftrip', 'fp', 'd1', 'd2', 'so'].forEach(function (id) { var e = document.getElementById(id); if (e && e.value) n++ });
+                    var df = document.getElementById('df'); if (df && df.value && df.value !== 'g') n++;
+                    bd.textContent = n || ''; bd.hidden = !n; tg.classList.toggle('act', !!n)
+                }
+                tg.addEventListener('click', function () { var o = tb.classList.toggle('open'); tg.setAttribute('aria-expanded', o ? 'true' : 'false') });
+                ['input', 'change', 'click'].forEach(function (ev) { tb.addEventListener(ev, function () { setTimeout(cnt, 50) }) });
+                cnt(); setTimeout(cnt, 1500); setTimeout(cnt, 4000)
+            } catch (e) { }
+        })();
+    </script>
     <script>
         const KEY = 'bc-doanhso-v2';
 
@@ -7506,7 +7834,7 @@
                 <label class="f w" id="bsl2">Khách gửi (gõ tên hoặc chọn; nhiều người thì cách nhau dấu phẩy)<input id="bs" list="bkl" autocomplete="off" value="${E && E.mo ? esc((E.ks && E.ks.length ? E.ks : [E.k]).join(', ')) : ''}"></label>
                 <div class="w" id="bpk"><div class="bph"><b>Chọn đơn hàng đưa vào phiếu</b><span class="bpc" id="bcn"></span>
                     <span class="bpb"><button type="button" id="bua">Chọn đơn chưa lập phiếu</button><button type="button" id="bun">Bỏ chọn hết</button></span></div>
-                    <div id="bl" class="bpl"></div></div>
+                    <div class="bsel-hint" style="margin:-2px 0 6px">Xếp theo thứ tự: đơn chưa thu cũ nhất lên đầu, đơn đã thu nằm cuối.</div><div id="bl" class="bpl"></div></div>
                 <div class="w" id="bmw"><div class="bph"><b>Dòng hàng nhập tay</b><span class="bpc" id="bmc"></span>
                     <span class="bpb"><button type="button" id="bma">+ Thêm dòng</button></span></div>
                     <div id="bm"></div></div>
@@ -7524,7 +7852,10 @@
             const sel = $('bss'), box = $('bl'), mb = $('bm'), MAX = 5, SEL = new Set(); let MO = E && (E.mo || ((E.man || []).length && !A.some(x => x.r.bill === E.no))) ? 1 : 0, first = true;
             const keys = () => MO ? [...new Set($('bs').value.split(/[,;&]/).map(x => x.trim()).filter(Boolean))] : [...SEL];
             const key = () => keys()[0] || '';
-            const rows = () => { const ks = keys(); return MO ? [] : A.map((x, j) => ({ ...x, j })).filter(x => x.m === $('bmo').value && ks.includes((x.r.k || '').trim())).sort((a, b) => ks.indexOf((a.r.k || '').trim()) - ks.indexOf((b.r.k || '').trim()) || (b.r.d || '').localeCompare(a.r.d || '')) };
+            /* thứ tự: đơn của phiếu đang sửa → chưa thu & chưa lập phiếu → chưa thu & đã lập phiếu → không thu → đã thu; trong mỗi nhóm đơn cũ (hàng về sớm) lên trên */
+            const rnk = x => (E && x.r.bill === E.no) ? -1 : pd(x.r) === 'no' ? (x.r.bill ? 1 : 0) : pd(x.r) === 'free' ? 2 : 3, dk0 = x => x.r.d || '9999-99-99';
+            const ago = d => { const t = Date.parse((d || '') + 'T00:00:00'); if (!isFinite(t)) return ''; const k = Math.floor((Date.now() - t) / 864e5); return k >= 1 ? `<i class="bago${k >= 10 ? ' old' : ''}">nợ ${k} ngày</i>` : '' };
+            const rows = () => { const ks = keys(); return MO ? [] : A.map((x, j) => ({ ...x, j })).filter(x => x.m === $('bmo').value && ks.includes((x.r.k || '').trim())).sort((a, b) => rnk(a) - rnk(b) || dk0(a).localeCompare(dk0(b)) || ks.indexOf((a.r.k || '').trim()) - ks.indexOf((b.r.k || '').trim()) || a.j - b.j) };
             const boxes = () => [...box.querySelectorAll('input[type=checkbox]')];
             const picked = () => rows().filter(x => { const i = box.querySelector(`input[value="${x.j}"]`); return i && i.checked });
             const mEls = () => MO ? [...mb.querySelectorAll('.bmr')] : [];
@@ -7563,7 +7894,7 @@
                     const r = x.r, w = n(r.kg) ? f2(r.kg) + ' kg' : n(r.m3) ? f2(r.m3) + ' m³' : '–', us = bUsd(r), mine = !!E && r.bill === E.no, lk = pd(r) === 'yes' && !mine;
                     const on = (first && E ? mine : !r.bill && !lk) && c5 < MAX; if (on) c5++;
                     return `<label class="bi"><input type="checkbox" value="${x.j}" ${on ? 'checked' : ''} ${lk ? 'disabled data-lk="1"' : ''}>
-                        <span class="bd1"><small>Hàng về</small><b>${fd(r.d) || '–'}</b></span>
+                        <span class="bd1"><small>Hàng về</small><b>${fd(r.d) || '–'}</b>${pd(r) === 'no' ? ago(r.d) : ''}</span>
                         <span class="bd2"><small>Số lượng</small><b>${f2(r.q)} ${esc(r.u)}</b></span>
                         <span class="bd3"><small>Khối lượng</small><b>${w}</b></span>
                         <span class="bd4"><small>Cước</small><b>${f(bVnd(r))} VND</b>${us ? `<i>≈ ${f2(us)} USD</i>` : ''}</span>
@@ -7940,13 +8271,13 @@
             let vnd = 0, usd = 0, kg = 0; M.rows.forEach(r => { vnd += fee(r); kg += kgT(r) });
             return { n: M.rows.length, kg, tot: vnd, pt: M.rows.reduce((a, r) => a + (pd(r) === 'yes' ? fee(r) : 0), 0), left: M.rows.reduce((a, r) => a + (pd(r) === 'no' ? fee(r) : 0), 0) }
         }
-        function renderMo() { $('mo').innerHTML = Object.keys(S.months).sort().map(m => `<option value="${m}" ${m === S.cur ? 'selected' : ''}>${mk(m)}</option>`).join('') }
+        function renderMo() { $('mo').innerHTML = Object.keys(S.months).sort().map(m => `<option value="${m}" ${m === S.cur ? 'selected' : ''}>${mk(m)}${isLk(m) ? ' 🔒' : ''}</option>`).join('') }
         function renderMonths() {
             const ks = Object.keys(S.months).sort(), D = ks.map(k => mcalc(S.months[k])), T = { n: 0, kg: 0, tot: 0, pt: 0, left: 0 };
             let h = '<thead><tr><th>Tháng</th><th>Số dòng</th><th>Kg</th><th>Doanh số (VND)</th><th>Đã thu (VND)</th><th>Còn phải thu</th></tr></thead><tbody>';
             ks.forEach((k, i) => {
                 const d = D[i]; for (const x in T) T[x] += d[x];
-                h += `<tr${k === S.cur ? ' class="c1"' : ''}><td><button data-mo="${k}">${mk(k)}</button></td><td class="num">${d.n}</td><td class="num">${f(d.kg)}</td><td class="num">${f(d.tot)}</td><td class="num">${f(d.pt)}</td><td class="num">${f(d.left)}</td></tr>`
+                h += `<tr${k === S.cur ? ' class="c1"' : ''}><td><button data-mo="${k}">${mk(k)}${isLk(k) ? ' 🔒' : ''}</button></td><td class="num">${d.n}</td><td class="num">${f(d.kg)}</td><td class="num">${f(d.tot)}</td><td class="num">${f(d.pt)}</td><td class="num">${f(d.left)}</td></tr>`
             });
             $('mt').innerHTML = h + `</tbody>`;
             bars($('ch1'), ks.map(k => Number(k.slice(5)) + '/' + k.slice(2, 4)), [D.map(d => d.tot), D.map(d => d.pt)], ['var(--b1)', 'var(--b3)']);
@@ -8083,9 +8414,37 @@
             if ($('ar').value === 'admin' && me.r !== 'owner') { e.textContent = 'Chỉ chủ tài khoản mới tạo được tài khoản quản trị.'; return }
             const sl = salt(); U.push({ u, s: sl, h: await hash(p, sl), r: $('ar').value }); saveU(); e.textContent = ''; $('au').value = $('ap').value = ''; renderUsers()
         };
+        /* ---- khóa sổ tháng ---- */
+        var LK_SEL = '#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#bulkpaid,#pay [data-editp],#add,#addp,#delm,[data-goal],[data-pf],#tp-ln input,#tp-ln select';
+        function isLk(m) { return !!(S.months[m] && S.months[m].locked) }
+        function lockApply() {
+            const M = S.months[S.cur], lk = !!(M && M.locked), ow = !!me && me.r === 'owner';
+            if (lk) document.querySelectorAll(LK_SEL).forEach(e => e.disabled = true);
+            const b = $('lockm');
+            if (b) { b.textContent = lk ? '🔓 Mở khóa' : '🔒 Khóa sổ'; b.classList.toggle('on', lk); b.disabled = lk ? !ow : !isAd(); b.title = lk ? (ow ? 'Mở khóa tháng này (chỉ chủ)' : 'Chỉ chủ mới mở khóa được') : 'Khóa sổ tháng đang chọn' }
+            const bar = $('lockbar'); if (!bar) return;
+            bar.classList.toggle('hid', !lk);
+            if (lk) bar.innerHTML = '🔒 <span><b>' + esc(mk(S.cur)) + '</b> đã khóa sổ bởi <b>' + esc(M.locked.by || '?') + '</b> lúc ' + new Date(M.locked.at).toLocaleString('vi-VN') + '. Không sửa được đơn hàng, khoản thu và chi phí của tháng này.</span>'
+        }
+        $('lockm').onclick = async () => {
+            const M = S.months[S.cur]; if (!M || !me) return;
+            M.lockLog = M.lockLog || [];
+            if (M.locked) {
+                if (me.r !== 'owner') return;
+                if (!await ask('Mở khóa <b>' + mk(S.cur) + '</b>? Tháng này sẽ sửa được trở lại.', 'Mở khóa')) return;
+                delete M.locked; M.lockLog.push({ a: 'unlock', by: me.u, at: new Date().toISOString() })
+            } else {
+                if (!isAd()) return;
+                const d = mcalc(M);
+                if (!await ask('Khóa sổ <b>' + mk(S.cur) + '</b>? Sau khi khóa sẽ không sửa, thêm hay xóa được đơn hàng, khoản thu và chi phí của tháng này.' + (d.left > 0 ? '<br>Lưu ý: tháng này còn phải thu <b>' + f(d.left) + ' đ</b>.' : '') + '<br>Đơn giá và tỷ giá hiện tại sẽ được cố định vào từng đơn.', 'Khóa sổ')) return;
+                M.rows.forEach(r => { if (r.by === 'KG' && !n(r.pk)) r.pk = S.kg; if (isU(r) && !n(r.rate)) r.rate = S.rate });
+                M.locked = { by: me.u, at: new Date().toISOString() }; M.lockLog.push({ a: 'lock', by: me.u, at: M.locked.at })
+            }
+            save(); all()
+        };
         function applyRO() {
             const ro = !isAd();
-            document.querySelectorAll('#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#bulkpaid,#pay [data-editp],#add,#addp,#reset,#bk,#rs,#rsa,#newm,#nm,#rate,#kgp,#getrate,#bill,#delm').forEach(e => e.disabled = ro)
+            document.querySelectorAll('#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#bulkpaid,#pay [data-editp],#add,#addp,#reset,#bk,#rs,#rsa,#newm,#nm,#rate,#kgp,#getrate,#bill,#delm').forEach(e => e.disabled = ro); try { lockApply() } catch (e) { console.error(e) }
         }
         [['rate', 'tỷ giá'], ['kgp', 'đơn giá cước/kg']].forEach(([id, nm]) => {
             const el = $(id); el.readOnly = true; el.title = 'Bấm để chỉnh (có xác nhận)';
@@ -9075,7 +9434,7 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
             }
 
             function box(i) {
-                const r = S.rows[i], act = document.querySelector('#md .dlg .act'); if (!r || !act) return; if (!act.querySelector('#cpf')) {[['cpf', '👤 Hồ sơ', () => profile(key(r.k))], ['cqr', '🔳 QR', () => qrBox(r)], ['cbl', '🧾 Bill', () => payBill([r], key(r.k))]].reverse().forEach(([id, tx, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = tx; b.onclick = fn; act.insertBefore(b, act.firstChild) }) } tagUI(r, i, act); const ids = r.ph || []; if (!ids.length && !isAd()) return;
+                const r = S.rows[i], act = document.querySelector('#md .dlg .act'); if (!r || !act) return; if (!act.querySelector('#cpf')) { [['cpf', '👤 Hồ sơ', () => profile(key(r.k))], ['cqr', '🔳 QR', () => qrBox(r)], ['cbl', '🧾 Bill', () => payBill([r], key(r.k))]].reverse().forEach(([id, tx, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = tx; b.onclick = fn; act.insertBefore(b, act.firstChild) }) } tagUI(r, i, act); const ids = r.ph || []; if (!ids.length && !isAd()) return;
                 const bx = document.createElement('div'); bx.className = 'dn'; bx.innerHTML = '<small>Ảnh đính kèm (' + ids.length + '/' + MX + ')</small><div class="phg">' + thumbs(ids) + '</div>' + (isAd() ? '<div class="phb"><button type="button" id="phadd">📷 Thêm ảnh</button><span class="phm" id="phm">Chọn, kéo thả hoặc dán (Ctrl+V) ảnh</span><input type="file" id="phf" accept="image/*" multiple hidden></div>' : ''); act.parentNode.insertBefore(bx, act);
                 const g = bx.querySelector('.phg'), redraw = () => { if (document.body.contains(g)) g.innerHTML = thumbs(r.ph || []) }; load(ids).then(redraw);
                 bx.onclick = async e => {
@@ -9253,7 +9612,8 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
 <div style="border-top:2px solid #1c1f24">${list}</div>
 ${n(B.x) ? `<p style="font-size:12px;color:#667085;margin:6px 0 0">… và ${n(B.x)} đơn khác (không liệt kê hết).</p>` : ''}
 <div style="margin-top:10px;border-radius:14px;padding:14px 16px;background:${U ? '#fff3f2' : '#ecf8f1'}"><div style="${fl};font-size:13px;color:#475467"><span>Tổng cước</span><b style="color:#1c1f24">${f(T)}</b></div><div style="${fl};font-size:13px;color:#475467;margin-top:4px"><span>Đã thu</span><b style="color:#15803d">${f(P)}</b></div><div style="border-top:1px dashed ${U ? '#f0b8b5' : '#a9d9bd'};margin:10px 0 8px"></div><div style="${fl}"><span style="font-weight:600">${U ? 'Còn phải thanh toán' : 'Đã thanh toán đủ'}</span><span style="font-weight:800;font-size:${U ? 24 : 20}px;color:${U ? '#c8201c' : '#15803d'};font-variant-numeric:tabular-nums">${U ? f(U) + ' VND' : '✓'}</span></div></div>
-${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14px 0 0">Cảm ơn quý khách đã sử dụng dịch vụ SOKMOK Transport</p></div></div>` }
+${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14px 0 0">Cảm ơn quý khách đã sử dụng dịch vụ SOKMOK Transport</p></div></div>`
+            }
             function payBill(rows, name) {
                 ensureIds(); if (!rows.length) { toast('err', 'Không có đơn nào để lập bill.'); return }
                 const B = { n: 'TT' + Date.now().toString(36).slice(-5).toUpperCase(), k: name, t: fd(today()), i: rows.slice(0, 12).map(r => [r.id || '', r.d || '', f2(r.q) + ' ' + (r.u || ''), Math.round(fee(r)), pd(r)]), x: Math.max(0, rows.length - 12) || undefined }, url = baseUrl() + '#tt=' + b64e(JSON.stringify(B));
@@ -9287,14 +9647,18 @@ ${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14px 0 0">
             document.addEventListener('click', e => { if (det.open && !det.contains(e.target)) det.open = false });
         })();
     </script>
-<script>
-(function(){var md=document.getElementById('md'),q=false;
-function mk(){var b=document.createElement('button');b.type='button';b.className='xc noprt';b.setAttribute('aria-label','Đóng');b.title='Đóng';b.textContent='\u00d7';return b}
-function scan(){q=false;var d=document.querySelector('#md:not(.hid) .dlg');
-if(d&&!d.querySelector(':scope > .xc')){var b=mk();b.onclick=function(e){e.stopPropagation();var c=document.getElementById('mc');if(c)c.click();else{md.classList.add('hid');md.innerHTML=''}};d.insertBefore(b,d.firstChild)}
-document.querySelectorAll('.rpo > div').forEach(function(h){if(h.querySelector(':scope > .xc'))return;var o=h.parentNode,b=mk();b.onclick=function(e){e.stopPropagation();o.dispatchEvent(new MouseEvent('click',{bubbles:true}));if(document.body.contains(o))o.remove()};h.insertBefore(b,h.firstChild)})}
-new MutationObserver(function(){if(!q){q=true;requestAnimationFrame(scan)}}).observe(document.body,{childList:true,subtree:true})})();
-</script>
+    <script>
+        (function () {
+            var md = document.getElementById('md'), q = false;
+            function mk() { var b = document.createElement('button'); b.type = 'button'; b.className = 'xc noprt'; b.setAttribute('aria-label', 'Đóng'); b.title = 'Đóng'; b.textContent = '\u00d7'; return b }
+            function scan() {
+                q = false; var d = document.querySelector('#md:not(.hid) .dlg');
+                if (d && !d.querySelector(':scope > .xc')) { var b = mk(); b.onclick = function (e) { e.stopPropagation(); var c = document.getElementById('mc'); if (c) c.click(); else { md.classList.add('hid'); md.innerHTML = '' } }; d.insertBefore(b, d.firstChild) }
+                document.querySelectorAll('.rpo > div').forEach(function (h) { if (h.querySelector(':scope > .xc')) return; var o = h.parentNode, b = mk(); b.onclick = function (e) { e.stopPropagation(); o.dispatchEvent(new MouseEvent('click', { bubbles: true })); if (document.body.contains(o)) o.remove() }; h.insertBefore(b, h.firstChild) })
+            }
+            new MutationObserver(function () { if (!q) { q = true; requestAnimationFrame(scan) } }).observe(document.body, { childList: true, subtree: true })
+        })();
+    </script>
 </body>
 
 </html>
