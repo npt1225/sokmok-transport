@@ -6493,6 +6493,25 @@
 @media (prefers-color-scheme:dark){#lockbar{background:#3a2e12;border-color:#8a6a1f;color:#f3d994}}
 :root[data-theme="dark"] #lockbar,body.dark #lockbar{background:#3a2e12;border-color:#8a6a1f;color:#f3d994}
 </style>
+<style id="x-toolbar-pretty">
+/* bỏ lọc loại ngày, Đã thu hết, Xuất CSV (giữ phần tử để code cũ không lỗi) */
+#tp-don #df,#tp-don .tbx{display:none!important}
+/* thanh tìm kiếm + bộ lọc */
+#tp-don .tb{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--bd);border-radius:18px;background:var(--in);box-shadow:0 1px 2px rgba(16,24,40,.04)}
+#tp-don .tb #q{flex:1 1 280px;min-width:220px;height:44px;padding:0 16px 0 44px;border-radius:999px;border:1px solid var(--bd);background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a95a5' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 15px center/20px;font-size:14px;transition:border-color .15s,box-shadow .15s}
+#tp-don .tb #q:focus{outline:0;border-color:var(--pr);box-shadow:0 0 0 4px color-mix(in srgb,var(--pr) 18%,transparent)}
+#tp-don .tbf select,#tp-don .tbf .dr input{height:40px;border-radius:999px;padding:0 14px;font-size:13.5px}
+#tp-don .tbf .dr{display:inline-flex;align-items:center;gap:6px;color:var(--mu);font-size:12.5px}
+#tp-don .tbf #dclr{height:40px;border-radius:999px;padding:0 14px}
+#tp-don .tb>button{height:40px;border-radius:999px;padding:0 16px;font-weight:600}
+#tp-don .tb #add{box-shadow:0 4px 12px color-mix(in srgb,var(--pr) 30%,transparent)}
+#tp-don .tgk{width:18px;height:18px;accent-color:#229ed9;cursor:pointer;margin-right:6px;vertical-align:middle}
+#tp-don #tgsel{background:#229ed9;border-color:#229ed9;color:#fff}
+#tp-don .tgb{color:#229ed9}
+#tp-don .tgb:hover{background:#e6f5fc;border-color:#229ed9}
+#tp-don .tgb:disabled{opacity:.5;cursor:wait}
+@media(max-width:700px){#tp-don .tb{padding:10px;border-radius:16px}#tp-don .tb #q{min-height:44px;min-width:0}}
+</style>
 </head>
 
 <body>
@@ -6787,7 +6806,7 @@
             <section>
                 <h2>Chi tiết đơn hàng</h2>
                 <div class="tb">
-                    <input id="q" type="search" placeholder="Tìm khách, ghi chú...">
+                    <input id="q" type="search" placeholder="Tìm khách, mã đơn, ghi chú…" autocomplete="off">
                     <button id="tbtog" class="tbtog" type="button" aria-expanded="false" aria-controls="tbf"
                         title="Hiện / ẩn bộ lọc">⚙ Bộ lọc <span class="bnb" id="tbn" hidden></span></button>
                     <div class="tbf" id="tbf">
@@ -6817,6 +6836,7 @@
                     </div>
                     <button class="p" id="add">+ Thêm đơn hàng</button>
                     <button id="bill" title="Tạo phiếu giao nhận hàng để in hoặc gửi khách">Tạo phiếu giao nhận</button>
+                    <button id="tgsel" type="button" style="display:none" title="Gửi ảnh từng đơn đã chọn, rồi 1 tin tổng số lượng">✈ Báo đơn đã chọn</button>
                     <button id="bills" title="Xem lại, in lại, xóa các phiếu đã lập">Phiếu đã lập <span class="bnb"
                             id="bn" hidden>0</span></button>
                     <div class="tbx">
@@ -7562,7 +7582,7 @@
                 const Z = '<span class="zr">–</span>', zz = v => n(v) ? f2(v) : Z;
                 const vn = isU(r) ? (fee(r) ? `<span title="Tỷ giá ${f(rt(r))} VND/USD">${f(fee(r))}</span>` : Z) : r.by === 'KG' ? (fee(r) ? f(fee(r)) : Z) : !n(r.vnd) ? Z : `<span>${f(n(r.vnd))}</span>`;
                 const us = isU(r) ? (!n(r.usd) ? Z : `<span>${f2(r.usd)}</span><div style="font-size:11px;opacity:.65" title="Tỷ giá lúc nhập đơn">× ${f(rt(r))}</div>`) : fee(r) && rt(r) ? `<span style="opacity:.7" title="Quy đổi theo tỷ giá ${f(rt(r))}">≈ ${f2(fee(r) / rt(r))}</span>` : !n(r.usd) ? Z : `<span class="mu">${f2(r.usd)}</span>`;
-                h += `<tr class="c${cl(r.k)}" data-row="${i}"><td class="stt">${no}</td><td>${dgCell(r)}</td><td><b>${esc(r.k)}</b></td><td><span class="pill pill-${pd(r)}">${PL[pd(r)]}</span></td><td>${fd(r.d) || '–'}</td><td class="num">${f2(r.q)}</td><td>${esc(r.u)}</td><td class="num">${zz(r.kg)}</td><td class="num">${zz(r.m3)}</td><td class="num">${vn}</td><td class="num">${us}</td><td>${BY[r.by] || esc(r.by)}</td><td class="num">${r.loai === 'le' ? '<span class="pill pill-free">Hỏa tốc</span>' : r.loai === 'nho' ? '<span class="pill pill-free">Kiện nhỏ</span>' : xeCell(r, XE[no - 1])}</td><td class="num">${zz(r.don)}</td><td class="nt" title="${esc(r.note)}">${esc(r.note)}</td><td><div class="ed"><button class="ib" data-edit="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-del="${i}" title="Xóa" aria-label="Xóa dòng">${ID}</button></div></td></tr>`
+                h += `<tr class="c${cl(r.k)}" data-row="${i}"><td class="stt">${no}</td><td>${dgCell(r)}</td><td><b>${esc(r.k)}</b></td><td><span class="pill pill-${pd(r)}">${PL[pd(r)]}</span></td><td>${fd(r.d) || '–'}</td><td class="num">${f2(r.q)}</td><td>${esc(r.u)}</td><td class="num">${zz(r.kg)}</td><td class="num">${zz(r.m3)}</td><td class="num">${vn}</td><td class="num">${us}</td><td>${BY[r.by] || esc(r.by)}</td><td class="num">${r.loai === 'le' ? '<span class="pill pill-free">Hỏa tốc</span>' : r.loai === 'nho' ? '<span class="pill pill-free">Kiện nhỏ</span>' : xeCell(r, XE[no - 1])}</td><td class="num">${zz(r.don)}</td><td class="nt" title="${esc(r.note)}">${esc(r.note)}</td><td><div class="ed"><input type="checkbox" class="tgk" data-tgk="${i}" title="Chọn đơn để báo Telegram nhiều đơn" ${(window.__tgSel && window.__tgSel.has(r.id)) ? 'checked' : ''}><button class="ib tgb" data-tg="${i}" title="Báo Telegram: ảnh + số lượng hàng" aria-label="Báo Telegram"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button class="ib" data-edit="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-del="${i}" title="Xóa" aria-label="Xóa dòng">${ID}</button></div></td></tr>`
             }
             if (!ix.length) h += '<tr><td colspan="16" style="padding:14px;color:var(--mu)">Không có dòng nào khớp. Đổi bộ lọc hoặc bấm Thêm đơn hàng.</td></tr>';
             let ft = '';
@@ -9415,6 +9435,53 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
             /* lưu ảnh lên máy chủ và CHỜ kết quả thật (bản cũ bắn rồi quên nên lỗi vẫn tưởng đã lưu) */
             async function up(id, u) { SB_G[id] = () => u; delete SB_REV[id]; const t0 = TOAST_ON; TOAST_ON = false; let ok; try { ok = await sbSend(id) } finally { TOAST_ON = t0 } delete SB_G[id]; if (ok !== true) safe(() => stamp()); return ok === true }
             async function load(ids) { const miss = ids.filter(i => !PH[i]); if (!miss.length || !SB_ON || OFFLINE) return; try { const o = await sbPullKeys(miss); miss.forEach(i => { if (typeof o[i] === 'string' && o[i]) { PH[i] = o[i]; delete FAIL[i] } else FAIL[i] = 1 }) } catch (e) { console.warn(e); miss.forEach(i => FAIL[i] = 1) } }
+            /* Chọn nhiều đơn: gửi ảnh từng đơn (caption = số lượng), cuối cùng 1 tin "Tổng: N" */
+            const tgSel = () => window.__tgSel || (window.__tgSel = new Set());
+            const tgUpd = () => { const b = document.getElementById('tgsel'); if (!b) return; const n = tgSel().size; b.style.display = n ? '' : 'none'; b.textContent = '✈ Báo ' + n + ' đơn đã chọn' };
+            document.addEventListener('click', e => { if (e.target.closest && e.target.closest('input[data-tgk]')) e.stopPropagation() }, true);
+            document.addEventListener('change', e => {
+                const c = e.target.closest && e.target.closest('input[data-tgk]'); if (!c) return;
+                const r = S.rows[+c.dataset.tgk]; if (!r || !r.id) return;
+                c.checked ? tgSel().add(r.id) : tgSel().delete(r.id); tgUpd()
+            });
+            document.addEventListener('click', async e => {
+                const b = e.target.closest && e.target.closest('#tgsel'); if (!b) return;
+                if (!isAd()) { toast('err', 'Chỉ tài khoản quản trị mới báo Telegram.'); return }
+                if (!SB_ON) { toast('err', 'Chưa kết nối máy chủ.'); return }
+                const rows = S.rows.filter(r => tgSel().has(r.id)), withPh = rows.filter(r => (r.ph || []).length), skip = rows.length - withPh.length;
+                if (!withPh.length) { toast('err', 'Các đơn đã chọn chưa có ảnh hàng.'); return }
+                b.disabled = true; const t0 = b.textContent; let total = 0, sent = 0;
+                const post = body => fetch(SB_URL + '/functions/v1/dynamic-action', { method: 'POST', signal: AbortSignal.timeout(45000), headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                try {
+                    for (const r of withPh) {
+                        b.textContent = 'Đang gửi ' + (sent + 1) + '/' + withPh.length + '…';
+                        await load(r.ph); const imgs = r.ph.filter(i => PH[i]).map(i => PH[i].split(',')[1]);
+                        if (!imgs.length) throw new Error('Không tải được ảnh của ' + (r.k || 'đơn'));
+                        const res = await post({ k: r.k || '', q: r.q, imgs }); if (!res.ok) throw new Error('HTTP ' + res.status);
+                        total += Number(r.q) || 0; sent++
+                    }
+                    const res = await post({ total, count: sent }); if (!res.ok) throw new Error('HTTP ' + res.status);
+                    toast('ok', 'Đã báo ' + sent + ' đơn, tổng ' + total + (skip ? ' (bỏ qua ' + skip + ' đơn chưa có ảnh)' : '') + '.');
+                    tgSel().clear(); document.querySelectorAll('input[data-tgk]').forEach(c => c.checked = false)
+                } catch (err) { toast('err', 'Gửi Telegram dừng sau ' + sent + '/' + withPh.length + ' đơn: ' + (err && err.message || 'lỗi mạng') + '. Tin tổng chưa gửi.') }
+                finally { b.disabled = false; b.textContent = t0; tgUpd() }
+            });
+            /* Nút ✈ trên mỗi đơn: gửi ảnh hàng + số lượng lên Telegram (route /photo của Edge Function tg-bot) */
+            document.addEventListener('click', async e => {
+                const b = e.target.closest && e.target.closest('button[data-tg]'); if (!b) return; e.stopPropagation();
+                const r = S.rows[+b.dataset.tg]; if (!r) return;
+                if (!isAd()) { toast('err', 'Chỉ tài khoản quản trị mới báo Telegram.'); return }
+                if (!SB_ON) { toast('err', 'Chưa kết nối máy chủ.'); return }
+                const ids = r.ph || []; if (!ids.length) { toast('err', 'Đơn này chưa có ảnh hàng. Mở đơn, thêm ảnh đính kèm rồi báo lại.'); return }
+                b.disabled = true;
+                try {
+                    await load(ids); const imgs = ids.filter(i => PH[i]).map(i => PH[i].split(',')[1]);
+                    if (!imgs.length) { toast('err', 'Không tải được ảnh từ máy chủ. Thử lại sau.'); return }
+                    const res = await fetch(SB_URL + '/functions/v1/dynamic-action', { method: 'POST', signal: AbortSignal.timeout(45000), headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: me ? me.u : '', id: r.id || '', k: r.k || '', q: r.q, u: r.u || '', kg: r.kg || 0, m3: r.m3 || 0, d: r.d || '', imgs }) });
+                    toast(res.ok ? 'ok' : 'err', res.ok ? 'Đã báo Telegram: ' + (r.k || 'đơn') + ' · ' + imgs.length + ' ảnh.' : 'Gửi Telegram không thành công (HTTP ' + res.status + ').')
+                } catch (err) { toast('err', err && err.name === 'TimeoutError' ? 'Máy chủ không trả lời sau 45 giây. Xem Logs của function dynamic-action.' : 'Gửi Telegram không thành công. Kiểm tra mạng rồi thử lại.') }
+                finally { b.disabled = false }
+            }, true);
             const thumbs = ids => ids.map((id, k) => `<div class="phw"><button type="button" class="pht" data-ph="${id}" aria-label="Xem ảnh ${k + 1}">${PH[id] ? `<img src="${PH[id]}" alt="Ảnh ${k + 1}">` : FAIL[id] ? '<span title="Bấm để tải lại">⟳</span>' : '<i class="phs"></i>'}</button>${isAd() ? `<b class="phx" data-del="${id}" title="Xóa ảnh này" role="button" aria-label="Xóa ảnh ${k + 1}">✕</b>` : ''}</div>`).join('');
 
             /* trình xem ảnh: chuyển ảnh, vuốt, phím mũi tên, phóng to, tải về, xóa */
