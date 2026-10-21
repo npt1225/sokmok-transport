@@ -6512,6 +6512,74 @@
 #tp-don .tgb:disabled{opacity:.5;cursor:wait}
 @media(max-width:700px){#tp-don .tb{padding:10px;border-radius:16px}#tp-don .tb #q{min-height:44px;min-width:0}}
 </style>
+<style id="x-giao-hang-mobile">
+/* nút trạng thái giao hàng (cạnh Đã thu) */
+#tb .stc{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#tb button.pill{border:0;cursor:pointer;font-family:inherit;line-height:1.4;white-space:nowrap}
+.pill-dv-yes{background:#dbeafe;color:#1d4ed8}
+.pill-dv-no{background:#fff1cc;color:#8a5a00}
+#tb button.pill:hover{filter:brightness(.95)}
+#tb button.pill:disabled{opacity:.55;cursor:not-allowed}
+@media(prefers-color-scheme:dark){.pill-dv-yes{background:#1e3a8a;color:#bfdbfe}.pill-dv-no{background:#4a3a0f;color:#fde68a}}
+
+/* ===== ĐIỆN THOẠI: mỗi đơn là 1 thẻ, nút thao tác nằm dưới thẻ, không che thông tin ===== */
+@media(max-width:700px){
+  #tp-don .wrap{overflow:visible;border:0;background:transparent;box-shadow:none}
+  #tb,#tb tbody,#tb tfoot{display:block;width:100%}
+  #tb thead{display:none}
+  #tb tbody tr[data-row]{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 0 12px;padding:12px 12px 10px;border:1px solid var(--bd);border-left:5px solid var(--bd);border-radius:14px;background:var(--cd)!important;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+  #tb tbody tr.c1{border-left-color:var(--b1)}#tb tbody tr.c2{border-left-color:var(--b2)}#tb tbody tr.c3{border-left-color:var(--b3)}#tb tbody tr.c4{border-left-color:var(--b4)}
+  #tb tbody tr[data-row] td{display:block;padding:0;border:0;box-shadow:none!important;background:transparent!important;min-width:0;max-width:none;white-space:normal;text-align:left!important;font-size:13.5px;word-break:break-word}
+  #tb tbody tr[data-row] td::before{display:block;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mu);margin-bottom:1px}
+  /* dòng đầu: STT + tên khách */
+  #tb tbody td:nth-child(1){grid-column:1/2;grid-row:1;width:auto;text-align:left;font-size:12px;color:var(--mu);font-weight:700}
+  #tb tbody td:nth-child(1)::before{content:"Đơn "}#tb tbody td:nth-child(1)::before{display:inline;font-size:12px;text-transform:none;letter-spacing:0;margin:0}
+  #tb tbody td:nth-child(3){grid-column:1/-1;grid-row:2;font-size:16px}
+  #tb tbody td:nth-child(4){grid-column:1/-1;grid-row:3}
+  #tb tbody td:nth-child(2){grid-column:1/-1;grid-row:1;text-align:right!important;justify-self:end}
+  #tb tbody td:nth-child(2)::before{content:"Ngày giao";display:inline;margin-right:6px}
+  #tb tbody td:nth-child(5)::before{content:"Hàng về"}
+  #tb tbody td:nth-child(6)::before{content:"Số lượng"}
+  #tb tbody td:nth-child(6)::after{content:" " attr(data-u)}
+  #tb tbody td:nth-child(7){display:none}
+  #tb tbody td:nth-child(8)::before{content:"Khối lượng"}#tb tbody td:nth-child(8)::after{content:" kg"}
+  #tb tbody td:nth-child(9)::before{content:"Thể tích"}#tb tbody td:nth-child(9)::after{content:" m³"}
+  #tb tbody td:nth-child(10)::before{content:"Cước VND"}
+  #tb tbody td:nth-child(11)::before{content:"Cước USD"}
+  #tb tbody td:nth-child(12)::before{content:"Tính theo"}
+  #tb tbody td:nth-child(13)::before{content:"Số xe"}
+  #tb tbody td:nth-child(14)::before{content:"Số đơn"}
+  #tb tbody td:nth-child(15){grid-column:1/-1;max-width:none;white-space:normal;color:var(--mu)}
+  #tb tbody td:nth-child(15)::before{content:"Ghi chú"}
+  /* ô trống hoặc chỉ có dấu – thì ẩn đi cho gọn */
+  #tb tbody td:empty,#tb tbody td:has(>.zr:only-child){display:none!important}
+  #tb tbody td:nth-child(8):has(>.zr),#tb tbody td:nth-child(9):has(>.zr){display:none!important}
+  /* hàng nút thao tác: nằm ngang dưới thẻ, to dễ bấm */
+  #tb tbody td:nth-child(16),#tb tbody td:nth-child(16){grid-column:1/-1;position:static!important;margin-top:4px;padding-top:10px!important;border-top:1px dashed var(--bd)!important}
+  #tb tbody td:nth-child(16) .ed{width:100%;display:grid;grid-template-columns:44px 1fr 1fr 1fr;gap:8px}
+  #tb tbody td:nth-child(16) .ib{width:100%;height:42px;border-radius:10px}
+  #tb tbody td:nth-child(16) .ib::after{font-size:12.5px;font-weight:600;margin-left:6px}
+  #tb tbody td:nth-child(16) .ib.tgb::after{content:"Báo"}
+  #tb tbody td:nth-child(16) [data-edit]::after{content:"Sửa"}
+  #tb tbody td:nth-child(16) .ib.dl::after{content:"Xóa"}
+  #tb tbody td:nth-child(16) .tgk{width:22px;height:22px;margin:0 auto}
+  #tb .stc .pill{font-size:13px;padding:6px 12px}
+  /* dòng tổng */
+  #tb tfoot tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:12px;margin:0 0 12px;border:1px solid var(--bd);border-radius:14px;background:var(--in)}
+  #tb tfoot td{display:block;padding:0!important;border:0;text-align:left!important;position:static!important;box-shadow:none!important;background:transparent!important;font-size:13.5px}
+  #tb tfoot td:nth-child(1){grid-column:1/-1;font-size:15px}
+  #tb tfoot td:nth-child(n+2)::before{display:block;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mu)}
+  #tb tfoot td:nth-child(2)::before{content:"Tổng SL"}
+  #tb tfoot td:nth-child(3){display:none}
+  #tb tfoot td:nth-child(4)::before{content:"Tổng kg"}
+  #tb tfoot td:nth-child(5)::before{content:"Tổng m³"}
+  #tb tfoot td:nth-child(6)::before{content:"Cước VND"}
+  #tb tfoot td:nth-child(7)::before{content:"Cước USD"}
+  #tb tfoot td:nth-child(8),#tb tfoot td:nth-child(11){display:none}
+  #tb tfoot td:nth-child(9)::before{content:"Số xe"}
+  #tb tfoot td:nth-child(10)::before{content:"Số đơn"}
+}
+</style>
 </head>
 
 <body>
@@ -6817,6 +6885,11 @@
                             <option value="no">Chưa thu</option>
                             <option value="yes">Đã thu</option>
                             <option value="free">Không thu</option>
+                        </select>
+                        <select id="fdv" aria-label="Lọc theo tình trạng giao hàng">
+                            <option value="">Tất cả tình trạng giao</option>
+                            <option value="no">Chưa giao</option>
+                            <option value="yes">Đã giao</option>
                         </select>
                         <select id="df" aria-label="Lọc theo loại ngày">
                             <option value="g">Ngày giao</option>
@@ -7385,6 +7458,13 @@
                 tgNotify('change', { user: me.u, month: S.cur, n: L.length, items: L.slice(0, 8) })
             } catch (e) { }
         }
+        /* Gửi kèm tỷ giá USD hiện tại (lấy mới từ internet) ngay sau khi gửi phiếu */
+        async function tgRate(d) {
+            let r = null; try { r = await fetchRate() } catch (e) { }
+            const rate = r ? r.rate : S.rate, t = new Date(), hh = t.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + t.toLocaleDateString('vi-VN');
+            const text = '💱 Tỷ giá USD hiện tại: 1 USD = ' + en(rate) + ' VND (lúc ' + hh + ')' + (d.no ? '\nPhiếu ' + d.no + ': ' + (d.v && d.v !== '0' ? d.v + ' VND' : '') + (ru(d.u) ? ' ≈ ' + ru(d.u) + ' USD' : '') : '');
+            tgNotify('rate', { user: me ? me.u : '', no: d.no, rate, vnd: d.v || '', usd: ru(d.u), text })
+        }
         /* Gửi ảnh phiếu giao nhận (canvas #bc) lên Telegram */
         function tgBill(d, manual) {
             if (!SB_ON) { if (manual) toast('err', 'Chưa kết nối máy chủ.'); return }
@@ -7392,7 +7472,7 @@
                 const c = $('bc'); if (!c || !d) return;
                 const img = c.toDataURL('image/jpeg', 0.85).split(',')[1];
                 fetch(SB_URL + '/functions/v1/tg-bot/bill', { method: 'POST', keepalive: false, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: me ? me.u : '', no: d.no, dt: d.dt || '', s: d.s && d.s.n || '', r: d.r && d.r.n || '', img }) })
-                    .then(r => { if (manual) toast(r.ok ? 'ok' : 'err', r.ok ? 'Đã gửi phiếu ' + d.no + ' lên Telegram.' : 'Gửi Telegram không thành công (HTTP ' + r.status + ').') })
+                    .then(r => { if (r.ok) tgRate(d); if (manual) toast(r.ok ? 'ok' : 'err', r.ok ? 'Đã gửi phiếu ' + d.no + ' lên Telegram.' : 'Gửi Telegram không thành công (HTTP ' + r.status + ').') })
                     .catch(() => { if (manual) toast('err', 'Gửi Telegram không thành công. Kiểm tra mạng rồi thử lại.') })
             } catch (e) { if (manual) toast('err', 'Không gửi được phiếu lên Telegram.') }
         }
@@ -7488,12 +7568,26 @@
         const key = k => (k || '').trim() || '(chưa ghi khách)';
         const pd = r => r.paid === 'yes' || r.paid === 'free' ? r.paid : 'no';
         const PL = { no: 'Chưa thu', yes: 'Đã thu', free: 'Không thu' };
+        /* ===== Trạng thái GIAO HÀNG: tự tính, hoặc chọn tay (r.dv = 'yes' | 'no'; rỗng = tự động) =====
+           - Đơn giao nhiều đợt (r.sp): đủ số lượng (SL, nếu không có thì kg, rồi m³) thì tự là «Đã giao»
+           - Đơn giao 1 lần: có ngày giao và ngày đó không ở tương lai thì là «Đã giao» */
+        function dvOf(r) {
+            const S2 = spl(r); let auto, got = 0, tot = 0, un = '';
+            if (S2.length) {
+                for (const k of ['q', 'kg', 'm3']) { const T = n(r[k]); if (T > 0) { tot = T; got = S2.reduce((a, s) => a + n(s[k]), 0); un = k === 'q' ? (r.u || '') : k === 'kg' ? 'kg' : 'm³'; break } }
+                auto = tot > 0 ? got >= tot - 1e-9 : S2.every(s => s.g)
+            } else { const t = new Date(), td = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); auto = !!r.g && r.g <= td }
+            const man = r.dv === 'yes' || r.dv === 'no';
+            return { v: man ? r.dv : (auto ? 'yes' : 'no'), auto: auto ? 'yes' : 'no', man, got, tot, un, multi: S2.length > 0 }
+        }
+        const DVL = r => { const d = dvOf(r); return (d.v === 'yes' ? 'Đã giao' : 'Chưa giao') + (d.multi && d.tot > 0 ? ' (' + f2(d.got) + '/' + f2(d.tot) + ' ' + d.un + ')' : '') + (d.man ? ' · chọn tay' : '') };
+        const dvBtn = (r, i) => { const d = dvOf(r); return `<button type="button" class="pill pill-dv-${d.v}" data-dv="${i}" title="${esc(DVL(r))}. Bấm để đổi Đã giao / Chưa giao">${d.v === 'yes' ? '✔ Đã giao' : '🚚 Chưa giao'}${d.multi && d.tot > 0 ? ' ' + f2(d.got) + '/' + f2(d.tot) : ''}</button>` };
 
         function view() {
-            const q = $('q').value.trim().toLowerCase(), c = $('fc').value, s = $('so').value, pf = $('fp').value, dk = $('df').value, d1 = $('d1').value, d2 = $('d2').value, tf = $('ftrip').value, dts = r => dk === 'g' && spl(r).length ? spl(r).map(s => s.g).filter(Boolean) : [r[dk]].filter(Boolean);
+            const q = $('q').value.trim().toLowerCase(), c = $('fc').value, s = $('so').value, pf = $('fp').value, dvf = ($('fdv') || {}).value, dk = $('df').value, d1 = $('d1').value, d2 = $('d2').value, tf = $('ftrip').value, dts = r => dk === 'g' && spl(r).length ? spl(r).map(s => s.g).filter(Boolean) : [r[dk]].filter(Boolean);
             let ix = S.rows.map((r, i) => i).filter(i => {
                 const r = S.rows[i];
-                return (!c || key(r.k) === c) && (!tf || spTrips(r).includes(tf)) && (!pf || pd(r) === pf) && ((!d1 && !d2) || dts(r).some(x => (!d1 || x >= d1) && (!d2 || x <= d2))) && (!q || (r.k + ' ' + r.note + ' ' + (r.trip || '') + ' ' + (r.id || '') + ' ' + (r.tags || []).join(' ')).toLowerCase().includes(q))
+                return (!c || key(r.k) === c) && (!tf || spTrips(r).includes(tf)) && (!pf || pd(r) === pf) && (!dvf || dvOf(r).v === dvf) && ((!d1 && !d2) || dts(r).some(x => (!d1 || x >= d1) && (!d2 || x <= d2))) && (!q || (r.k + ' ' + r.note + ' ' + (r.trip || '') + ' ' + (r.id || '') + ' ' + (r.tags || []).join(' ')).toLowerCase().includes(q))
             });
             if (s) ix.sort((a, b) => {
                 const A = S.rows[a], B = S.rows[b];
@@ -7575,14 +7669,14 @@
         const ID = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
         function renderTable() {
             const ix = view(), XE = effXe(ix.map(i => S.rows[i]));
-            let h = '<thead><tr>' + ['STT', 'Ngày giao', 'Khách', 'Thu tiền', 'Ngày hàng về', 'SL', 'Đơn vị', 'Kg', 'm³', 'Cước VND', 'Cước USD', 'Tính theo', 'Số xe', 'Số đơn', 'Ghi chú', 'Thao tác'].map(t => `<th>${t}</th>`).join('') + '</tr></thead><tbody>';
+            let h = '<thead><tr>' + ['STT', 'Ngày giao', 'Khách', 'Thu tiền / Giao hàng', 'Ngày hàng về', 'SL', 'Đơn vị', 'Kg', 'm³', 'Cước VND', 'Cước USD', 'Tính theo', 'Số xe', 'Số đơn', 'Ghi chú', 'Thao tác'].map(t => `<th>${t}</th>`).join('') + '</tr></thead><tbody>';
             let no = 0;
             for (const i of ix) {
                 const r = S.rows[i]; no++;
                 const Z = '<span class="zr">–</span>', zz = v => n(v) ? f2(v) : Z;
                 const vn = isU(r) ? (fee(r) ? `<span title="Tỷ giá ${f(rt(r))} VND/USD">${f(fee(r))}</span>` : Z) : r.by === 'KG' ? (fee(r) ? f(fee(r)) : Z) : !n(r.vnd) ? Z : `<span>${f(n(r.vnd))}</span>`;
                 const us = isU(r) ? (!n(r.usd) ? Z : `<span>${f2(r.usd)}</span><div style="font-size:11px;opacity:.65" title="Tỷ giá lúc nhập đơn">× ${f(rt(r))}</div>`) : fee(r) && rt(r) ? `<span style="opacity:.7" title="Quy đổi theo tỷ giá ${f(rt(r))}">≈ ${f2(fee(r) / rt(r))}</span>` : !n(r.usd) ? Z : `<span class="mu">${f2(r.usd)}</span>`;
-                h += `<tr class="c${cl(r.k)}" data-row="${i}"><td class="stt">${no}</td><td>${dgCell(r)}</td><td><b>${esc(r.k)}</b></td><td><span class="pill pill-${pd(r)}">${PL[pd(r)]}</span></td><td>${fd(r.d) || '–'}</td><td class="num">${f2(r.q)}</td><td>${esc(r.u)}</td><td class="num">${zz(r.kg)}</td><td class="num">${zz(r.m3)}</td><td class="num">${vn}</td><td class="num">${us}</td><td>${BY[r.by] || esc(r.by)}</td><td class="num">${r.loai === 'le' ? '<span class="pill pill-free">Hỏa tốc</span>' : r.loai === 'nho' ? '<span class="pill pill-free">Kiện nhỏ</span>' : xeCell(r, XE[no - 1])}</td><td class="num">${zz(r.don)}</td><td class="nt" title="${esc(r.note)}">${esc(r.note)}</td><td><div class="ed"><input type="checkbox" class="tgk" data-tgk="${i}" title="Chọn đơn để báo Telegram nhiều đơn" ${(window.__tgSel && window.__tgSel.has(r.id)) ? 'checked' : ''}><button class="ib tgb" data-tg="${i}" title="Báo Telegram: ảnh + số lượng hàng" aria-label="Báo Telegram"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button class="ib" data-edit="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-del="${i}" title="Xóa" aria-label="Xóa dòng">${ID}</button></div></td></tr>`
+                h += `<tr class="c${cl(r.k)}" data-row="${i}"><td class="stt">${no}</td><td>${dgCell(r)}</td><td><b>${esc(r.k)}</b></td><td><div class="stc"><span class="pill pill-${pd(r)}">${PL[pd(r)]}</span>${dvBtn(r, i)}</div></td><td>${fd(r.d) || '–'}</td><td class="num" data-u="${esc(r.u)}">${f2(r.q)}</td><td>${esc(r.u)}</td><td class="num">${zz(r.kg)}</td><td class="num">${zz(r.m3)}</td><td class="num">${vn}</td><td class="num">${us}</td><td>${BY[r.by] || esc(r.by)}</td><td class="num">${r.loai === 'le' ? '<span class="pill pill-free">Hỏa tốc</span>' : r.loai === 'nho' ? '<span class="pill pill-free">Kiện nhỏ</span>' : xeCell(r, XE[no - 1])}</td><td class="num">${zz(r.don)}</td><td class="nt" title="${esc(r.note)}">${esc(r.note)}</td><td><div class="ed"><input type="checkbox" class="tgk" data-tgk="${i}" title="Chọn đơn để báo Telegram nhiều đơn" ${(window.__tgSel && window.__tgSel.has(r.id)) ? 'checked' : ''}><button class="ib tgb" data-tg="${i}" title="Báo Telegram: ảnh + số lượng hàng" aria-label="Báo Telegram"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button><button class="ib" data-edit="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-del="${i}" title="Xóa" aria-label="Xóa dòng">${ID}</button></div></td></tr>`
             }
             if (!ix.length) h += '<tr><td colspan="16" style="padding:14px;color:var(--mu)">Không có dòng nào khớp. Đổi bộ lọc hoặc bấm Thêm đơn hàng.</td></tr>';
             let ft = '';
@@ -7792,7 +7886,7 @@
         const dm = d => d ? d.split('-').reverse().join('-') : '';
         const en = v => Math.round(v).toLocaleString('en-US');
         const bVnd = r => r.by === 'M3' ? n(r.m3) * n(r.pm3) * (n(r.rate) || S.rate) : r.by !== 'VND' && n(r.kg) ? n(r.kg) * (n(r.pk) || S.kg) : fee(r);
-        const bUsd = r => S.rate ? bVnd(r) / S.rate : 0;
+        const bUsd = r => r.by === 'M3' ? n(r.m3) * n(r.pm3) : (r.by === 'USD' && !n(r.kg)) ? n(r.usd) : (S.rate ? bVnd(r) / S.rate : 0);
         const r2 = v => String(Math.round(n(v) * 100) / 100);
         const today = () => { const t = new Date(); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') };
         const ru = u => { const v = parseFloat(String(u == null ? '' : u).replace(/,/g, '')); return isFinite(v) && Math.round(v) ? en(v) : '' };
@@ -7887,7 +7981,7 @@
                 bx.forEach(i => { i.disabled = i.dataset.lk === '1' || (!i.checked && cnt >= MAX); const l = i.closest('.bi'); l.classList.toggle('on', i.checked); l.classList.toggle('bx', i.disabled) });
                 $('bma').disabled = cnt >= MAX;
                 ['bcn', 'bmc'].forEach(id => { const cn = $(id); cn.textContent = cnt + '/' + MAX + ' dòng'; cn.className = 'bpc ' + (cnt >= MAX ? 'mx' : cnt ? 'ok' : '') });
-                const P = picked().map(x => x.r).concat(manual()), vn = P.reduce((a, r) => a + bVnd(r), 0), us = S.rate ? vn / S.rate : 0;
+                const P = picked().map(x => x.r).concat(manual()), vn = P.reduce((a, r) => a + bVnd(r), 0), us = P.reduce((a, r) => a + bUsd(r), 0);
                 $('bsm').textContent = P.length ? `Tổng ${P.length} dòng: ${bUnits(P)} · ${bWeight(P)} · ${f(vn)} VND` : 'Chưa chọn đơn hàng hoặc nhập dòng hàng nào.';
                 if (!vehTouched) $('bveh').value = [...new Set(picked().flatMap(x => spTrips(x.r)))].join(', ');
                 vehHint();
@@ -7946,7 +8040,7 @@
             md.querySelectorAll('.btabs button').forEach(b => b.onclick = () => { MO = +b.dataset.m; if (MO && !$('bs').value) $('bs').value = [...SEL].join(', '); mode(); load(1) });
             $('bmo').onchange = () => { fillNames([]); load(0) }; $('bs').onchange = () => load(0);
             $('bv').oninput = () => { const v = parseFloat($('bv').value.replace(/,/g, '')); if (isFinite(v)) $('bu').value = ru(S.rate ? v / S.rate : 0) };
-            $('brk').onchange = fillR; box.onchange = tot; $('bveh').oninput = () => { vehTouched = !!$('bveh').value.trim(); vehHint() };
+            $('brk').onchange = fillR; box.onchange = tot; if (!E) fetchRate().then(r => { if (r && r.rate && r.rate !== S.rate) { S.rate = r.rate; const e = $('rate'); if (e) e.value = S.rate; save(); tot() } }).catch(() => { }); $('bveh').oninput = () => { vehTouched = !!$('bveh').value.trim(); vehHint() };
             $('bua').onclick = () => { let c = mEls().length; boxes().forEach(i => { const r = A[+i.value].r; i.checked = !r.bill && pd(r) !== 'yes' && c < MAX; if (i.checked) c++ }); tot() };
             $('bun').onclick = () => { boxes().forEach(i => i.checked = false); tot() };
             if (E) if (E && MO) (E.man || []).forEach(m => addM(m));
@@ -8106,7 +8200,7 @@
             if (veh) { txt('Chuyến xe: ' + veh, 1832, 752, 29, 'center', 640, 700, RED); if (mates && mates.length) txt('Chung xe với: ' + mates.join(', '), 1832, 784, 26, 'center', 640, 600, RED) }
             /* bảng hàng hóa */
             const hk = d.rows.some(bBm), hg = d.rows.some(r => !bBm(r));
-            if (hk) { white(1204, 897, 482, 78); txt(hg ? 'Khối lượng / Số khối' : 'Số khối (m³)', 1445, 948, 32, 'center', 440, 500, RED) }
+            if (hk) { white(1204, 897, 482, 78); txt(hg ? 'Khối lượng / Số khối' : 'Số khối (m³)', 1445, 948, 30, 'center', 440, 600, '#A81E1E') }
             let kg = 0, m3 = 0;
             d.rows.forEach((r, i) => {
                 const y = [1018, 1071, 1124, 1178, 1232][i]; if (y == null) return; if (bBm(r)) m3 += n(r.m3); else kg += n(r.kg);
@@ -8116,8 +8210,8 @@
             d.rows.slice(5).forEach(r => { if (bBm(r)) m3 += n(r.m3); else kg += n(r.kg) });
             /* tổng cộng + thành tiền */
             txt(bUnits(d.rows), 398, 1384, 40, 'left', 270, 700);
-            txt(kg && m3 ? r2(kg) + ' kg + ' + r2(m3) + ' m³' : m3 ? r2(m3) + ' m³' : kg ? r2(kg) + ' kg' : '', 62, 1528, 42, 'left', 580, 700);
-            txt(d.v && d.v !== '0' ? d.v + ' VND' : '', 755, 1388, 54, 'left', 520, 700); txt(ru(d.u) ? ru(d.u) + ' USD' : '', 755, 1507, 54, 'left', 520, 700)
+            txt(kg && m3 ? r2(kg) + ' kg + ' + r2(m3) + ' m³' : m3 ? r2(m3) + ' m³' : kg ? r2(kg) + ' kg' : '', 62, 1526, 42, 'left', 580, 700); dots(62, 648, 1540);
+            txt(d.v && d.v !== '0' ? d.v + ' VND' : '', 755, 1385, 44, 'left', 520, 700); txt(ru(d.u) ? ru(d.u) + ' USD' : '', 755, 1505, 44, 'left', 520, 700)
         }
         let bImg;
         function billBusy(msg, ms) {
@@ -8131,6 +8225,7 @@
             return showBill2(d, saved)
         }
         function showBill2(d, saved) {
+            try { const fr = (d.rows || []).reduce((a, r) => a + (r.by === 'M3' ? n(r.m3) * n(r.pm3) : n(r.usd)), 0), cu = parseFloat(String(d.u || '').replace(/,/g, '')) || 0; if (fr && cu && Math.abs(fr - cu) > .005 && Math.abs(fr - cu) / fr < .005) d = { ...d, u: ru(fr) } } catch (e) { }
             const veh = (d.veh || '').trim(), mates = vMates(d, billAll()).map(o => o.no), khoi = d.rows.some(r => n(r.m3));
             const drawOld = () => {
                 const c = $('bc'), x = c.getContext('2d'); c.width = 2212; c.height = 1659; x.drawImage(bImg, 0, 0, 2212, 1659);
@@ -8156,7 +8251,7 @@
             const draw = re => {
 
                 const ready = (document.fonts && document.fonts.load) ? Promise.race([Promise.all([400, 500, 600, 700, 800].map(w => document.fonts.load(w + ' 30px "Be Vietnam Pro"', 'ẤẬỜỀỮặệợữđ ÀÁẢÃẠ0123'))), new Promise(r => setTimeout(r, 2500))]).catch(() => { }) : Promise.resolve();
-                ready.then(() => { paintKhoi($('bc'), d, bImg, mates); if (saved && re !== 1) tgBill(d) })
+                ready.then(() => { paintKhoi($('bc'), d, bImg, mates); fetchRate().then(r => console.log('[Phiếu ' + d.no + '] Tỷ giá USD hiện tại (' + r.src + '):', r.rate, 'VND/USD | đang dùng trong trang:', S.rate, '| USD trên phiếu:', d.u)).catch(() => console.log('[Phiếu ' + d.no + '] Không lấy được tỷ giá USD, đang dùng:', S.rate)); if (saved && re !== 1) tgBill(d) })
             };
             let o = $('bvw');
             if (!o) {
@@ -8180,6 +8275,8 @@
         });
         document.addEventListener('click', e => {
             const t = e.target;
+            const bdv = t.closest && t.closest('[data-dv]');
+            if (bdv && !bdv.disabled && isAd()) { e.stopPropagation(); const i = +bdv.dataset.dv, r = S.rows[i]; if (r) { const d = dvOf(r), nv = d.v === 'yes' ? 'no' : 'yes'; r.dv = nv === d.auto ? '' : nv; save(); all() } return }
             if (t.dataset.del !== undefined) {
                 const i = +t.dataset.del, r = S.rows[i];
                 ask(`Xóa đơn hàng của <b>${esc(r.k || '(chưa ghi khách)')}</b>${r.d ? ', hàng về ' + esc(r.d.split('-').reverse().join('/')) : ''}? Thao tác này không hoàn tác được.`).then(ok => { if (ok) { S.rows.splice(i, 1); save(); all() } })
@@ -8202,7 +8299,7 @@
         });
         $('add').onclick = () => form('Thêm đơn hàng', RF, { u: 'kiện', by: 'KG', rate: S.rate, paid: 'no', loai: '', don: 1, xe: 0, d: new Date().toISOString().slice(0, 10) }, o => { fixUsd(o); S.rows.push(o) }, 'Tính theo kg: cước = kg × đơn giá cước. Tính theo khối: nhập m³ và đơn giá USD/m³, cước USD và VND tự tính. Chọn VND thì nhập cước VND. Chọn USD thì nhập cước USD, cước VND tự tính theo tỷ giá lúc nhập.');
         $('addp').onclick = () => form('Thêm khoản thu', PF, { d: new Date().toISOString().slice(0, 10) }, o => { S.pays.push(o) });
-        ['q', 'fc', 'ftrip', 'fp', 'so', 'df', 'd1', 'd2'].forEach(i => $(i).addEventListener('input', renderTable));
+        ['q', 'fc', 'ftrip', 'fp', 'fdv', 'so', 'df', 'd1', 'd2'].forEach(i => $(i).addEventListener('input', renderTable));
         $('dclr').onclick = () => { $('d1').value = ''; $('d2').value = ''; renderTable() };
 
         function detail(o) {
@@ -8224,7 +8321,7 @@
             detail({
                 title: 'Chi tiết đơn hàng', name: esc(r.k) || '(chưa ghi khách)', badge: `<span class="pill pill-${p}">${PL[p]}</span>`,
                 heroL: 'Doanh số quy đổi', hero: f(fee(r)) + ' <span>VND</span>', heroS: how,
-                items: [['Ngày giao', fd(r.g)], ['Ngày hàng về', fd(r.d)], ['Số lượng', f2(r.q) + ' ' + esc(r.u)], ['Khối lượng', f2(r.kg) + ' kg'],
+                items: [['Ngày giao', fd(r.g)], ['Giao hàng', esc(DVL(r))], ['Ngày hàng về', fd(r.d)], ['Số lượng', f2(r.q) + ' ' + esc(r.u)], ['Khối lượng', f2(r.kg) + ' kg'],
                 ['Thể tích', f2(r.m3) + ' m³'], ['Đơn giá khối', r.by === 'M3' ? f2(r.pm3) + ' USD/m³' : ''], ['Tính theo', BY[r.by] || esc(r.by)], ['Cước VND', f(isU(r) ? fee(r) : n(r.vnd))], ['Cước USD', f2(r.usd)], ['Tỷ giá USD', f(rt(r)) + (isU(r) ? '' : ' (hiện tại)') + ' VND/USD'], ['Quy đổi USD', rt(r) ? '≈ ' + f2(fee(r) / rt(r)) + ' USD' : ''],
                 ['Loại hàng', r.loai === 'le' ? 'Đơn hỏa tốc (không tính xe)' : r.loai === 'nho' ? 'Đơn kiện nhỏ (không tính xe)' : 'Hàng theo xe'], ['Chuyến xe chung', esc(r.trip || '–')], ...(spl(r).length ? [['Các đợt giao', spDetail(r)]] : []), ['Số xe', f2(r.xe)], ['Số đơn', f2(r.don)]],
                 note: esc(r.note), edit: () => editRow(i)
@@ -8251,7 +8348,7 @@
             })
         }
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && !md.classList.contains('hid')) { const c = $('mc'); if (c) c.click() } });
-        const RF = [{ k: 'k', l: 'Khách', t: 'text', req: 1, list: 'kl', w: 1, ph: 'Ví dụ: Anh Nghĩa' }, { k: 'd', l: 'Ngày hàng về', t: 'date', req: 1 }, { k: 'g', l: 'Ngày giao', t: 'date' }, { k: 'paid', l: 'Thu tiền', t: 'select', o: [['no', 'Chưa thu'], ['yes', 'Đã thu'], ['free', 'Không thu']] },
+        const RF = [{ k: 'k', l: 'Khách', t: 'text', req: 1, list: 'kl', w: 1, ph: 'Ví dụ: Anh Nghĩa' }, { k: 'd', l: 'Ngày hàng về', t: 'date', req: 1 }, { k: 'g', l: 'Ngày giao', t: 'date' }, { k: 'paid', l: 'Thu tiền', t: 'select', o: [['no', 'Chưa thu'], ['yes', 'Đã thu'], ['free', 'Không thu']] }, { k: 'dv', l: 'Giao hàng', t: 'select', o: [['', 'Tự động (đủ số lượng thì Đã giao)'], ['yes', 'Đã giao'], ['no', 'Chưa giao']] },
         { k: 'q', l: 'Số lượng', t: 'number' }, { k: 'u', l: 'Đơn vị', t: 'select', o: [['kiện', 'Kiện'], ['thùng', 'Thùng'], ['bao', 'Bao']] },
         { k: 'kg', l: 'Khối lượng (kg)', t: 'number' }, { k: 'm3', l: 'Thể tích (m³)', t: 'number' }, { k: 'by', l: 'Tính cước theo', t: 'select', o: [['KG', 'Theo kg'], ['M3', 'Theo khối (m³ × USD/m³)'], ['VND', 'VND'], ['USD', 'USD']] }, { k: 'pm3', l: 'Đơn giá theo khối (USD/m³)', t: 'number' },
         { k: 'vnd', l: 'Cước VND', t: 'number' }, { k: 'usd', l: 'Cước USD', t: 'number' }, { k: 'rate', l: 'Tỷ giá USD lúc nhập (VND/USD)', t: 'number', w: 1, rate: 1 }, { k: 'trip', l: 'Chuyến xe chung (nhiều đơn đi chung 1 xe thì nhập cùng 1 mã)', t: 'text', w: 1, list: 'tl', ph: 'Vd: 01/10 hoặc biển số xe. Để trống nếu xe riêng' }, { k: 'xe', l: 'Số xe (xe riêng, hoặc số xe của cả chuyến chung)', t: 'number' }, { k: 'don', l: 'Số đơn', t: 'number' }, { k: 'loai', l: 'Loại hàng', t: 'select', o: [['', 'Hàng theo xe'], ['le', 'Đơn hỏa tốc (không tính xe)'], ['nho', 'Đơn kiện nhỏ (không tính xe)']] }, { k: 'note', l: 'Ghi chú', t: 'text', w: 1 }];
@@ -8435,7 +8532,7 @@
             const sl = salt(); U.push({ u, s: sl, h: await hash(p, sl), r: $('ar').value }); saveU(); e.textContent = ''; $('au').value = $('ap').value = ''; renderUsers()
         };
         /* ---- khóa sổ tháng ---- */
-        var LK_SEL = '#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#bulkpaid,#pay [data-editp],#add,#addp,#delm,[data-goal],[data-pf],#tp-ln input,#tp-ln select';
+        var LK_SEL = '#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#tb [data-dv],#bulkpaid,#pay [data-editp],#add,#addp,#delm,[data-goal],[data-pf],#tp-ln input,#tp-ln select';
         function isLk(m) { return !!(S.months[m] && S.months[m].locked) }
         function lockApply() {
             const M = S.months[S.cur], lk = !!(M && M.locked), ow = !!me && me.r === 'owner';
@@ -8464,7 +8561,7 @@
         };
         function applyRO() {
             const ro = !isAd();
-            document.querySelectorAll('#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#bulkpaid,#pay [data-editp],#add,#addp,#reset,#bk,#rs,#rsa,#newm,#nm,#rate,#kgp,#getrate,#bill,#delm').forEach(e => e.disabled = ro); try { lockApply() } catch (e) { console.error(e) }
+            document.querySelectorAll('#tb input,#tb select,#pay input,#pay select,#tb .x,#pay .x,#tb .dl,#pay .dl,#tb [data-edit],#tb [data-dv],#bulkpaid,#pay [data-editp],#add,#addp,#reset,#bk,#rs,#rsa,#newm,#nm,#rate,#kgp,#getrate,#bill,#delm').forEach(e => e.disabled = ro); try { lockApply() } catch (e) { console.error(e) }
         }
         [['rate', 'tỷ giá'], ['kgp', 'đơn giá cước/kg']].forEach(([id, nm]) => {
             const el = $(id); el.readOnly = true; el.title = 'Bấm để chỉnh (có xác nhận)';
