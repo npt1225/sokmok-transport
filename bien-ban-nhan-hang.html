@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Biên bản nhận hàng – Sokmok Transport</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap">
+    <style>
+        :root {
+            --bg: #f3f5f8;
+            --cd: #fff;
+            --tx: #17212b;
+            --mu: #5f6b7a;
+            --bd: #d5dbe3;
+            --pr: #c8102e;
+            --in: #f9fbfd;
+            --ng: #c0392b;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px)
+        }
+
+        @media(prefers-color-scheme:dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #10151b;
+                --cd: #18202a;
+                --tx: #e6ebf1;
+                --mu: #93a0b0;
+                --bd: #2c3745;
+                --pr: #ff6670;
+                --in: #1d2733
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #10151b;
+            --cd: #18202a;
+            --tx: #e6ebf1;
+            --mu: #93a0b0;
+            --bd: #2c3745;
+            --pr: #ff6670;
+            --in: #1d2733
+        }
+
+        html,
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--tx);
+            font: 15px/1.5 'Be Vietnam Pro', 'Segoe UI', Roboto, Arial, sans-serif
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        .top {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 18px 16px 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .top img {
+            width: 88px;
+            height: auto;
+            border-radius: 10px;
+            background: #fff;
+            flex: none
+        }
+
+        .top h1 {
+            font-size: 22px;
+            margin: 0 0 2px;
+            color: var(--pr)
+        }
+
+        .top span {
+            font-size: 12.5px;
+            color: var(--mu)
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            background: var(--in);
+            color: var(--tx)
+        }
+
+        button {
+            padding: 7px 14px;
+            cursor: pointer;
+            background: var(--cd)
+        }
+
+        button.p {
+            background: var(--pr);
+            border-color: var(--pr);
+            color: #fff;
+            font-weight: 600
+        }
+
+        button:disabled {
+            opacity: .55;
+            cursor: default
+        }
+
+        #bbnh {
+            padding: 13px 26px;
+            font-size: 16px;
+            border-radius: 12px
+        }
+
+        .hid {
+            display: none !important
+        }
+
+        #md {
+            padding: 0 16px 24px
+        }
+
+        .dlg {
+            background: var(--cd);
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            padding: 22px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 92vh;
+            overflow: auto;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .35)
+        }
+
+        .dlg h3 {
+            margin: 0 0 14px;
+            font-size: 19px;
+            color: var(--pr)
+        }
+
+        .dlg p {
+            margin: 0
+        }
+
+        .act {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px
+        }
+
+        .act button {
+            padding: 8px 16px
+        }
+
+        #md .dlg.bbd {
+            max-width: 1100px;
+            margin: 0 auto;
+            max-height: none;
+            height: max(640px, calc(100vh - 130px))
+        }
+
+        @media(max-width:900px) {
+            #md {
+                padding: 0 8px 16px
+            }
+
+            #md .dlg.bbd {
+                max-height: none;
+                height: max(600px, calc(100vh - 110px))
+            }
+
+            .top img {
+                width: 64px
+            }
+
+            .top h1 {
+                font-size: 18px
+            }
+        }
+
+        #md .dlg.bbd {
+            position: relative;
+            max-width: 1100px;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 94vh
+        }
+
+        .bbd .bbh {
+            padding: 18px 56px 12px 22px;
+            border-bottom: 1px solid var(--bd)
+        }
+
+        .bbd .bbh h3 {
+            margin: 0
+        }
+
+        .bbd .bbh p {
+            font-size: 12.5px;
+            color: var(--mu);
+            margin-top: 4px
+        }
+
+        .bbd .bbb {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 390px;
+            min-height: 0;
+            flex: 1;
+            overflow: hidden
+        }
+
+        .bbd .bbf {
+            padding: 14px 22px 6px;
+            overflow: auto
+        }
+
+        .bbd .bbp {
+            background: rgba(127, 140, 160, .13);
+            border-left: 1px solid var(--bd);
+            padding: 14px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px
+        }
+
+        .bbd .bbp canvas {
+            width: 100%;
+            height: auto;
+            background: #fff;
+            border-radius: 3px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, .28)
+        }
+
+        .bbd .bbp small {
+            font-size: 11.5px;
+            color: var(--mu);
+            text-align: center
+        }
+
+        .bbd,
+        .bbd * {
+            box-sizing: border-box
+        }
+
+        .bbd .bbs {
+            border: 1px solid var(--bd);
+            border-radius: 12px;
+            padding: 12px 14px 14px;
+            margin-bottom: 12px;
+            background: var(--in)
+        }
+
+        .bbd .bbs>b {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            margin-bottom: 10px;
+            color: var(--tx)
+        }
+
+        .bbd .bbs>b i {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--pr);
+            color: #fff;
+            font-style: normal;
+            font-size: 12px;
+            display: grid;
+            place-items: center;
+            flex: none
+        }
+
+        .bbd .bbs>b span {
+            margin-left: auto;
+            font-weight: 400;
+            font-size: 12px;
+            color: var(--mu)
+        }
+
+        .bbd .bbg {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        .bbd .bbg .w {
+            grid-column: 1/-1
+        }
+
+        .bbd .bbg label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--mu);
+            min-width: 0
+        }
+
+        .bbd .bbg input,
+        .bbd .bbg select,
+        .bbd .bbg textarea {
+            width: 100%;
+            padding: 8px 9px;
+            min-width: 0;
+            font: inherit;
+            color: var(--tx)
+        }
+
+        .bbd .bbg textarea {
+            resize: vertical;
+            min-height: 54px
+        }
+
+        .bbd .bbr {
+            display: grid;
+            grid-template-columns: 22px 86px minmax(0, 1.7fr) 74px 66px minmax(0, 1fr) 30px;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 6px
+        }
+
+        .bbd .bbr input {
+            padding: 7px 8px;
+            width: 100%;
+            min-width: 0
+        }
+
+        .bbd .bbr .n {
+            font-size: 12px;
+            color: var(--mu);
+            text-align: center
+        }
+
+        .bbd .bbr .rx {
+            padding: 0;
+            height: 30px;
+            width: 30px;
+            line-height: 1
+        }
+
+        .bbd .bbrh {
+            font-size: 11px;
+            color: var(--mu);
+            margin-bottom: 4px
+        }
+
+        .bbd .bbrh span {
+            padding-left: 2px
+        }
+
+        .bbd .bbtools {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px
+        }
+
+        .bbd .bbtools button {
+            padding: 7px 12px;
+            font-size: 12.5px
+        }
+
+        .bbd .bbtot {
+            margin-left: auto;
+            font-size: 13px;
+            color: var(--tx);
+            align-self: center
+        }
+
+        .bbd .bbtot b {
+            color: var(--pr)
+        }
+
+        .bbd .bbck {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .bbd .bbck label {
+            flex-direction: row;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid var(--bd);
+            border-radius: 10px;
+            padding: 8px 11px;
+            background: var(--cd);
+            color: var(--tx);
+            font-size: 12.5px;
+            cursor: pointer
+        }
+
+        .bbd .bbck label:has(input:checked) {
+            border-color: var(--pr);
+            box-shadow: 0 0 0 1px var(--pr) inset
+        }
+
+        .bbd .bbck input {
+            width: auto;
+            padding: 0
+        }
+
+        .bbd .bbop {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--tx);
+            margin-top: 10px;
+            cursor: pointer
+        }
+
+        .bbd .bbop input {
+            width: auto;
+            padding: 0
+        }
+
+        .bbd .bba {
+            margin: 0;
+            padding: 12px 22px;
+            border-top: 1px solid var(--bd);
+            background: var(--cd);
+            flex-wrap: wrap;
+            position: static
+        }
+
+        .bbd .bba .bbmv {
+            display: none
+        }
+
+        .bbd .bbe {
+            color: var(--ng);
+            font-size: 12.5px;
+            margin-right: auto;
+            align-self: center
+        }
+
+        @media(max-width:900px) {
+            #md .dlg.bbd {
+                max-height: 96vh
+            }
+
+            .bbd .bbb {
+                grid-template-columns: 1fr
+            }
+
+            .bbd .bbp {
+                display: none;
+                border-left: 0
+            }
+
+            .bbd.pv .bbp {
+                display: flex
+            }
+
+            .bbd.pv .bbf {
+                display: none
+            }
+
+            .bbd .bba .bbmv {
+                display: inline-block
+            }
+
+            .bbd .bbg {
+                grid-template-columns: 1fr
+            }
+
+            .bbd .bbf {
+                padding: 12px 12px 4px
+            }
+
+            .bbd .bbh {
+                padding: 14px 52px 10px 14px
+            }
+
+            .bbd .bba {
+                padding: 10px 12px
+            }
+
+            .bbd .bbrh {
+                display: none
+            }
+
+            .bbd .bbr {
+                grid-template-columns: 1fr 70px 70px 30px;
+                padding: 8px;
+                border: 1px dashed var(--bd);
+                border-radius: 10px
+            }
+
+            .bbd .bbr .n {
+                display: none
+            }
+
+            .bbd .bbr .rn {
+                grid-column: 1/-1;
+                grid-row: 1
+            }
+
+            .bbd .bbr .rc {
+                grid-row: 2
+            }
+
+            .bbd .bbr .ru {
+                grid-row: 2
+            }
+
+            .bbd .bbr .rq {
+                grid-row: 2
+            }
+
+            .bbd .bbr .rx {
+                grid-row: 2
+            }
+
+            .bbd .bbr .rt {
+                grid-column: 1/-1;
+                grid-row: 3
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="top"><img class="lgo" alt="Sokmok Transport"
+            src="data:image/webp;base64,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">
+        <div>
+            <h1>Biên bản nhận hàng</h1><span>Nhập thông tin → tải PDF → in ra và ký xác nhận · Sokmok Transport ·
+                Hotline 0865 491 456</span>
+        </div>
+    </header>
+    <div id="md"></div>
+
+    <script>
+        (function () {
+            'use strict';
+            var LS = 'bbnh-v1', MAXR = 10, MINR = 7;
+            var FF = "'Be Vietnam Pro','Segoe UI',Roboto,Arial,sans-serif";
+            var NAVY = '#16212f', RED = '#c8102e', MUT = '#5f6b7a', LINE = '#cfd6e1';
+            function G(id) { return document.getElementById(id) }
+            function E(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] }) }
+            function pad(n) { return String(n).padStart(2, '0') }
+            function todayISO() { var t = new Date(); return t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()) }
+            function load() { try { return JSON.parse(localStorage.getItem(LS)) || {} } catch (e) { return {} } }
+            function store(o) { try { localStorage.setItem(LS, JSON.stringify(o)) } catch (e) { } }
+            function num(v) { var x = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0 }
+            function fmtN(x) { return (Math.round(x * 100) / 100).toString().replace('.', ',') }
+            function dparts(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? { y: m[1], m: m[2], d: m[3] } : null }
+            function dText(iso) { var p = dparts(iso); return p ? 'ngày ' + (+p.d) + ' tháng ' + (+p.m) + ' năm ' + p.y : 'ngày ...... tháng ...... năm ........' }
+            function dShort(iso) { var p = dparts(iso); return p ? p.d + '/' + p.m + '/' + p.y : '' }
+
+            /* ---- đọc số thành chữ (tiếng Việt) ---- */
+            var D = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+            function r3(n, full) {
+                var tr = Math.floor(n / 100), ch = Math.floor(n % 100 / 10), dv = n % 10, s = [];
+                if (tr > 0 || full) s.push(D[tr] + ' trăm');
+                if (ch === 0) { if (dv > 0) { if (tr > 0 || full) s.push('linh'); s.push(D[dv]) } }
+                else if (ch === 1) { s.push('mười'); if (dv === 5) s.push('lăm'); else if (dv > 0) s.push(D[dv]) }
+                else { s.push(D[ch] + ' mươi'); if (dv === 1) s.push('mốt'); else if (dv === 5) s.push('lăm'); else if (dv > 0) s.push(D[dv]) }
+                return s.join(' ')
+            }
+            function words(n) {
+                if (!(n > 0) || n >= 1e6 || Math.floor(n) !== n) return '';
+                var t = Math.floor(n / 1000), r = n % 1000, s = '';
+                if (t > 0) { s = r3(t, false) + ' nghìn'; if (r > 0) s += ' ' + r3(r, true) } else s = r3(r, false);
+                return s.charAt(0).toUpperCase() + s.slice(1)
+            }
+
+            /* ---- vẽ biên bản lên canvas (A4 = 794 x 1123, hệ toạ độ logic) ---- */
+            var W = 794, H = 1123, MX = 40, CW = W - MX * 2;
+            var STAT = ['Hàng nguyên đai, nguyên kiện, không hư hỏng', 'Có hư hỏng / ướt / móp méo', 'Thiếu hàng / sai hàng'];
+            function paint(c, d, k, logo) {
+                var x = c.getContext('2d'); c.width = Math.round(W * k); c.height = Math.round(H * k);
+                x.setTransform(k, 0, 0, k, 0, 0); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.textBaseline = 'alphabetic';
+                function f(sz, wt, it) { x.font = (it ? 'italic ' : '') + wt + ' ' + sz + 'px ' + FF }
+                function T(t, px, py, sz, wt, col, al, it) { f(sz, wt, it); x.fillStyle = col; x.textAlign = al || 'left'; x.fillText(t, px, py) }
+                function fit(t, mw, sz, wt, min, it) { var s = sz; f(s, wt, it); while (x.measureText(t).width > mw && s > min) { s -= .5; f(s, wt, it) } return s }
+                function TF(t, px, py, mw, sz, wt, col, al, it) { var s = fit(t, mw, sz, wt, 8, it); var o = t; if (x.measureText(o).width > mw) { while (o.length > 1 && x.measureText(o + '…').width > mw) o = o.slice(0, -1); o += '…' } T(o, px, py, s, wt, col, al, it) }
+                function wrap(t, mw, sz, wt, it) { f(sz, wt, it); var ws = String(t || '').split(/\s+/).filter(Boolean), L = [], cur = ''; ws.forEach(function (w) { var n = cur ? cur + ' ' + w : w; if (cur && x.measureText(n).width > mw) { L.push(cur); cur = w } else cur = n }); if (cur) L.push(cur); return L }
+                function rr(px, py, w, h, r) { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath() }
+                function ln(x1, y1, x2, y2, col, w, dash) { x.save(); x.strokeStyle = col; x.lineWidth = w || 1; x.setLineDash(dash || []); x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke(); x.restore() }
+                function dots(x1, x2, y) { ln(x1, y, x2, y, '#9aa5b4', .8, [1.2, 2.6]) }
+
+                /* dải màu đầu trang */
+                x.fillStyle = NAVY; x.fillRect(0, 0, W, 9); x.fillStyle = RED; x.fillRect(0, 0, 210, 9);
+                x.fillStyle = '#fff'; x.beginPath(); x.moveTo(200, 0); x.lineTo(216, 0); x.lineTo(206, 9); x.lineTo(190, 9); x.fill();
+
+                /* đầu trang: logo + thông tin công ty + số biên bản */
+                var ly = 24, lh = 66;
+                var lnw = logo && (logo.naturalWidth || logo.width), lnh = logo && (logo.naturalHeight || logo.height);
+                if (lnw && lnh) { var lw = lh * lnw / lnh; x.drawImage(logo, MX - 4, ly, lw, lh); var tx = MX - 4 + lw + 10 }
+                else { T('SOKMOK TRANSPORT', MX, ly + 34, 18, 800, NAVY); tx = MX }
+                T('Vận chuyển hàng hóa Việt Nam – Campuchia', tx, ly + 24, 11.5, 600, NAVY);
+                T('Hotline: 0865 491 456', tx, ly + 42, 11.5, 700, RED);
+                T('Giao nhận nhanh · Đúng hẹn · An toàn', tx, ly + 58, 10, 400, MUT, 'left', true);
+                var bx = W - MX - 214, by = 24;
+                rr(bx, by, 214, 66, 9); x.fillStyle = '#fdf1f3'; x.fill(); x.strokeStyle = '#f0c4cb'; x.lineWidth = 1; x.stroke();
+                T('SỐ BIÊN BẢN', bx + 14, by + 21, 9.5, 700, MUT);
+                TF(d.no || '............', bx + 14, by + 40, 186, 15, 800, RED);
+                T('Ngày lập: ' + (dShort(d.date) || '....../....../........'), bx + 14, by + 57, 10.5, 500, NAVY);
+                ln(MX, 104, W - MX, 104, RED, 2.2); ln(MX, 108, W - MX, 108, NAVY, .8);
+
+                /* tiêu đề */
+                T('BIÊN BẢN NHẬN HÀNG', W / 2, 146, 28, 800, NAVY, 'center');
+                x.save(); x.font = '600 10px ' + FF; x.fillStyle = MUT; x.textAlign = 'center'; if ('letterSpacing' in x) x.letterSpacing = '3px'; x.fillText('GOODS RECEIPT NOTE', W / 2 + 1.5, 164); x.restore();
+                rr(W / 2 - 26, 171, 52, 3.5, 2); x.fillStyle = RED; x.fill();
+                var place = (d.place || 'TP. HCM').trim();
+                var intro = wrap('Hôm nay, ' + dText(d.date) + ', tại ' + place + ', hai bên cùng lập biên bản giao nhận hàng hóa với nội dung như sau:', CW, 11.5, 400);
+                var y = 196; intro.forEach(function (l) { T(l, MX, y, 11.5, 400, NAVY); y += 16 });
+
+                function sec(no, title, sy) {
+                    rr(MX, sy - 12, 20, 18, 4); x.fillStyle = RED; x.fill(); T(no, MX + 10, sy + 1.5, 10.5, 800, '#fff', 'center');
+                    T(title, MX + 28, sy + 1.5, 11.5, 800, NAVY); f(11.5, 800); var w = x.measureText(title).width;
+                    ln(MX + 28 + w + 10, sy - 3, W - MX, sy - 3, LINE, 1)
+                }
+
+                /* I. các bên */
+                y += 12; sec('I', 'THÔNG TIN CÁC BÊN', y); y += 14;
+                var cw = (CW - 16) / 2, ch = 140;
+                [['BÊN GIAO (BÊN A)', NAVY, d.a, MX], ['BÊN NHẬN (BÊN B)', RED, d.b, MX + cw + 16]].forEach(function (cd) {
+                    var p = cd[2] || {}, cx = cd[3];
+                    rr(cx, y, cw, ch, 9); x.fillStyle = '#fff'; x.fill(); x.strokeStyle = '#d3dae4'; x.lineWidth = 1; x.stroke();
+                    x.save(); rr(cx, y, cw, ch, 9); x.clip(); x.fillStyle = cd[1]; x.fillRect(cx, y, cw, 25); x.restore();
+                    T(cd[0], cx + 14, y + 17, 10.5, 800, '#fff');
+                    var rows = [['Đại diện', p.name], ['Đơn vị', p.company], ['Điện thoại', p.phone], ['Địa chỉ', p.addr]], ry = y + 44;
+                    rows.forEach(function (r, i) {
+                        T(r[0] + ':', cx + 14, ry, 10.5, 500, MUT);
+                        var vx = cx + 74, vw = cw - 74 - 14;
+                        if (i === 3) {
+                            var L = wrap(r[1] || '', vw, 11.5, 600); if (L.length > 2) { L = L.slice(0, 2); L[1] = L[1] + '…' }
+                            if (L[0]) T(L[0], vx, ry, 11.5, 600, NAVY); dots(vx, vx + vw, ry + 3);
+                            if (L[1]) T(L[1], vx, ry + 17, 11.5, 600, NAVY); dots(vx, vx + vw, ry + 20)
+                        } else { if (r[1]) TF(r[1], vx, ry, vw, 12, 600, NAVY); dots(vx, vx + vw, ry + 3) }
+                        ry += 21
+                    })
+                });
+                y += ch + 24;
+
+                /* II. hàng hóa */
+                sec('II', 'THÔNG TIN HÀNG HÓA', y); y += 14;
+                var items = (d.items || []).filter(function (i) { return (i.code || i.name || i.unit || i.qty || i.note) });
+                var nrows = Math.max(MINR, items.length), SIGY = 872;
+                var below = 28 /*tổng*/ + 22 /*bằng chữ*/ + 24 + 14 /*III*/ + 22 + 44 + 12;
+                var rh = Math.max(20, Math.min(34, Math.floor((SIGY - 40 - y - 26 - below) / nrows)));
+                var cols = [38, 92, 232, 62, 64, 226], hx = [MX]; cols.forEach(function (w, i) { hx.push(hx[i] + w) });
+                var heads = ['STT', 'Mã khách hàng', 'Tên hàng', 'ĐVT', 'Số lượng', 'Ghi chú'];
+                x.save(); rr(MX, y, CW, 26, 6); x.clip(); x.fillStyle = NAVY; x.fillRect(MX, y, CW, 26); x.restore();
+                heads.forEach(function (h, i) { T(h, hx[i] + cols[i] / 2, y + 17, 10.5, 700, '#fff', 'center') });
+                y += 26; var ty0 = y;
+                for (var i = 0; i < nrows; i++) {
+                    var it = items[i] || {}, ry2 = y + i * rh;
+                    if (i % 2) { x.fillStyle = '#f5f7fb'; x.fillRect(MX, ry2, CW, rh) }
+                    var mid = ry2 + rh / 2 + 4;
+                    T(String(i + 1), hx[0] + cols[0] / 2, mid, 11, 500, MUT, 'center');
+                    if (it.code) TF(it.code, hx[1] + cols[1] / 2, mid, cols[1] - 12, 11.5, 500, NAVY, 'center');
+                    if (it.name) TF(it.name, hx[2] + 9, mid, cols[2] - 18, 12, 600, NAVY, 'left');
+                    if (it.unit) TF(it.unit, hx[3] + cols[3] / 2, mid, cols[3] - 10, 11.5, 500, NAVY, 'center');
+                    if (it.qty !== '' && it.qty != null && num(it.qty) !== 0) TF(fmtN(num(it.qty)), hx[4] + cols[4] / 2, mid, cols[4] - 10, 12.5, 800, NAVY, 'center');
+                    if (it.note) TF(it.note, hx[5] + 9, mid, cols[5] - 18, 11, 400, NAVY, 'left')
+                }
+                var ty1 = y + nrows * rh;
+                x.strokeStyle = LINE; x.lineWidth = .9;
+                for (i = 0; i <= nrows; i++) ln(MX, y + i * rh, W - MX, y + i * rh, LINE, .9);
+                for (i = 1; i < cols.length; i++) ln(hx[i], ty0 - 26, hx[i], ty1 + 28, LINE, .9);
+                ln(MX, ty0, W - MX, ty0, LINE, .9);
+                /* hàng tổng */
+                var tot = items.reduce(function (a, b) { return a + num(b.qty) }, 0);
+                x.fillStyle = '#fdf1f3'; x.fillRect(MX, ty1, CW, 28);
+                ln(MX, ty1 + 28, W - MX, ty1 + 28, RED, 1.3);
+                T('TỔNG CỘNG', hx[4] - 12, ty1 + 18, 11.5, 800, NAVY, 'right');
+                T(tot ? fmtN(tot) : '', hx[4] + cols[4] / 2, ty1 + 19, 14, 800, RED, 'center');
+                rr(MX, ty0 - 26, CW, ty1 + 28 - (ty0 - 26), 6); x.strokeStyle = '#b9c3d1'; x.lineWidth = 1; x.stroke();
+                y = ty1 + 28 + 18;
+                var us = []; items.forEach(function (i2) { var u = (i2.unit || '').trim(); if (u && us.indexOf(u) < 0) us.push(u) });
+                var wd = words(tot), unit = us.length === 1 ? us[0] : 'đơn vị hàng';
+                T('Bằng chữ:', MX, y, 11, 600, MUT); T(wd ? wd + ' ' + unit + '.' : '', MX + 64, y, 11.5, 700, NAVY, 'left', true); dots(MX + 64, W - MX, y + 3);
+                y += 30;
+
+                /* III. tình trạng */
+                sec('III', 'TÌNH TRẠNG HÀNG KHI NHẬN', y); y += 10;
+                var cx2 = MX, sw = [288, 196, 150];
+                STAT.forEach(function (s, i) {
+                    var by2 = y + 6;
+                    rr(cx2, by2, 13, 13, 3); x.fillStyle = '#fff'; x.fill(); x.strokeStyle = d.status === i ? RED : '#8d99ab'; x.lineWidth = 1.2; x.stroke();
+                    if (d.status === i) { x.strokeStyle = RED; x.lineWidth = 2.2; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx2 + 3, by2 + 7); x.lineTo(cx2 + 5.8, by2 + 10); x.lineTo(cx2 + 11, by2 + 3); x.stroke() }
+                    T(s, cx2 + 19, by2 + 11, 10.5, d.status === i ? 700 : 400, NAVY); cx2 += sw[i]
+                });
+                y += 40; T('Ghi chú:', MX, y, 10.5, 500, MUT);
+                var nl = wrap(d.note || '', CW - 52, 11.5, 600); if (nl.length > 2) { nl = nl.slice(0, 2); nl[1] += '…' }
+                if (nl[0]) T(nl[0], MX + 52, y, 11.5, 600, NAVY); dots(MX + 52, W - MX, y + 3);
+                if (nl[1]) T(nl[1], MX, y + 18, 11.5, 600, NAVY); dots(MX, W - MX, y + 21);
+
+                /* xác nhận + chữ ký */
+                var cy = SIGY - 14;
+                wrap('Bên nhận đã kiểm tra và nhận đủ hàng hóa theo số lượng nêu trên. Biên bản được lập thành 02 bản có giá trị như nhau, mỗi bên giữ 01 bản.', CW, 11, 400, true).forEach(function (l, i) { T(l, MX, cy + i * 15, 11, 400, NAVY, 'left', true) });
+                T(place + ', ' + dText(d.date), W - MX, cy + 38, 11, 400, NAVY, 'right', true);
+                var sy = cy + 62, c1 = MX + CW * .25, c2 = MX + CW * .75;
+                [[c1, 'ĐẠI DIỆN BÊN GIAO', (d.a || {}).name, ''], [c2, 'ĐẠI DIỆN BÊN NHẬN', (d.b || {}).name, d.recvLine && tot ? 'Đã nhận đủ ' + fmtN(tot) + ' ' + (us.length === 1 ? us[0] : 'kiện') : '']].forEach(function (s) {
+                    T(s[1], s[0], sy, 11.5, 800, NAVY, 'center'); T('(Ký, ghi rõ họ tên)', s[0], sy + 15, 10, 400, MUT, 'center', true);
+                    if (s[3]) T(s[3], s[0], sy + 44, 11.5, 600, '#9aa5b4', 'center', true);
+                    ln(s[0] - 90, sy + 112, s[0] + 90, sy + 112, '#9aa5b4', .8, [1.2, 2.6]);
+                    if (s[2]) TF(s[2], s[0], sy + 128, 190, 12, 700, NAVY, 'center')
+                });
+
+                /* chân trang */
+                ln(MX, H - 40, W - MX, H - 40, LINE, 1);
+                T('Sokmok Transport  ·  Hotline 0865 491 456', MX, H - 24, 9, 400, MUT);
+                T((d.no || '') + '  ·  Trang 1/1', W - MX, H - 24, 9, 400, MUT, 'right');
+                x.fillStyle = NAVY; x.fillRect(0, H - 6, W, 6); x.fillStyle = RED; x.fillRect(W - 210, H - 6, 210, 6);
+            }
+
+            /* ---- PDF 1 trang từ ảnh JPEG (không cần thư viện) ---- */
+            function pdfFrom(jpg, w, h) {
+                var enc = new TextEncoder(), parts = [], len = 0, offs = [];
+                function P(b) { var u = typeof b === 'string' ? enc.encode(b) : b; parts.push(u); len += u.length }
+                P('%PDF-1.4\n');
+                function O(n, body, stream) { offs[n] = len; P(n + ' 0 obj\n' + body); if (stream) { P('\nstream\n'); P(stream); P('\nendstream') } P('\nendobj\n') }
+                O(1, '<< /Type /Catalog /Pages 2 0 R >>');
+                O(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+                O(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+                O(4, '<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>', jpg);
+                var cs = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+                O(5, '<< /Length ' + cs.length + ' >>', cs);
+                var xr = len; P('xref\n0 6\n0000000000 65535 f \n');
+                for (var i = 1; i <= 5; i++) P(String(offs[i]).padStart(10, '0') + ' 00000 n \n');
+                P('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xr + '\n%%EOF');
+                var out = new Uint8Array(len), p = 0; parts.forEach(function (u) { out.set(u, p); p += u.length });
+                return new Blob([out], { type: 'application/pdf' })
+            }
+            function save(blob, name) {
+                return Promise.resolve(window.claude && claude.use ? claude.use('downloads') : null).catch(function () { return null }).then(function (dl) {
+                    if (dl) return dl.save({ filename: name, data: blob });
+                    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove() }, 2500)
+                })
+            }
+            var LOGO = null;
+            function getLogo() {
+                if (LOGO) return LOGO;
+                var i = document.querySelector('.hero .lgo,.lgo'); if (!i || !i.complete || !i.naturalWidth) return null;
+                try {
+                    var c = document.createElement('canvas'); c.width = i.naturalWidth; c.height = i.naturalHeight; var g = c.getContext('2d'); g.drawImage(i, 0, 0);
+                    var im = g.getImageData(0, 0, c.width, c.height), d = im.data;
+                    for (var k = 0; k < d.length; k += 4) { var m = Math.min(d[k], d[k + 1], d[k + 2]); if (m >= 232) d[k + 3] = 0; else if (m > 200) d[k + 3] = Math.round(255 * (232 - m) / 32) }
+                    g.putImageData(im, 0, 0); LOGO = c
+                } catch (e) { LOGO = i }
+                return LOGO
+            }
+            function fontsReady() { try { return Promise.race([Promise.all([document.fonts.load('800 20px "Be Vietnam Pro"'), document.fonts.load('400 14px "Be Vietnam Pro"'), document.fonts.load('italic 400 14px "Be Vietnam Pro"')]), new Promise(function (r) { setTimeout(r, 1800) })]) } catch (e) { return Promise.resolve() } }
+
+            /* ---- popup nhập thông tin ---- */
+            function open() {
+                var md = G('md'); if (!md) return;
+                var sv = load(), day = todayISO().replace(/-/g, '');
+                var seq = (sv.day === day ? sv.seq || 0 : 0) + 1, defNo = 'BBNH-' + day.slice(2) + '-' + pad(seq);
+                var B = Object.assign({}, sv.b || {}); if (!B.company) B.company = 'Sokmok Transport'; if (!B.phone) B.phone = '0865 491 456'; if (!B.addr) B.addr = 'Quận 12, TP.HCM';
+                var names = [], CT = {}, rowsAll = [];
+                try { CT = cfg().ct || {}; names = Object.keys(CT) } catch (e) { }
+                try { Object.keys(S.months).forEach(function (m) { S.months[m].rows.forEach(function (r) { var k = (r.k || '').trim(); if (k && names.indexOf(k) < 0) names.push(k) }) }) } catch (e) { }
+                names.sort();
+                function L(id, lab, val, o) { o = o || {}; return '<label' + (o.w ? ' class="w"' : '') + '>' + lab + '<input id="' + id + '" value="' + E(val) + '" ' + (o.ex || '') + '></label>' }
+                function party(p, v, list) {
+                    return '<div class="bbg">' + L(p + 'n', 'Họ tên người đại diện', v.name || '', { ex: list ? 'list="bbkl" autocomplete="off" placeholder="Gõ tên hoặc chọn khách có sẵn"' : 'placeholder="Vd: Nguyễn Văn A"' }) + L(p + 'p', 'Số điện thoại', v.phone || '', { ex: 'inputmode="tel"' }) + L(p + 'c', 'Đơn vị / Công ty (nếu có)', v.company || '', { w: 1 }) + L(p + 'a', 'Địa chỉ', v.addr || '', { w: 1 }) + '</div>'
+                }
+                md.innerHTML = '<form class="dlg bbd" role="dialog" aria-modal="true" autocomplete="off">' +
+                    '<div class="bbh"><h3>📝 Lập biên bản nhận hàng</h3><p>Nhập thông tin, xem trước bên cạnh, rồi tải file về để in ra và ký xác nhận.</p></div>' +
+                    '<div class="bbb"><div class="bbf">' +
+                    '<div class="bbs"><b><i>1</i>Thông tin biên bản</b><div class="bbg">' + L('bbno', 'Số biên bản', defNo) + L('bbdt', 'Ngày lập', todayISO(), { ex: 'type="date"' }) + L('bbpl', 'Địa điểm', sv.place || 'TP. HCM', { w: 1 }) + '</div></div>' +
+                    '<div class="bbs"><b><i>2</i>Bên giao (Bên A) · người gửi hàng</b>' + party('bba', {}, 1) + '</div>' +
+                    '<div class="bbs"><b><i>3</i>Bên nhận (Bên B)<span>tự nhớ cho lần sau</span></b>' + party('bbb', B, 0) + '</div>' +
+                    '<div class="bbs"><b><i>4</i>Thông tin hàng hóa<span id="bbcn"></span></b><div class="bbrh bbr"><span></span><span>Mã khách hàng</span><span>Tên hàng</span><span>ĐVT</span><span>Số lượng</span><span>Ghi chú</span><span></span></div><div id="bbit"></div>' +
+                    '<div class="bbtools"><button type="button" id="bbad">+ Thêm dòng hàng</button><button type="button" id="bbfo" title="Lấy các dòng hàng của người gửi trong tháng đang chọn trên trang">↧ Lấy từ đơn hàng của khách</button><span class="bbtot" id="bbtt"></span></div></div>' +
+                    '<div class="bbs"><b><i>5</i>Tình trạng hàng &amp; xác nhận</b><div class="bbck" id="bbst">' +
+                    STAT.map(function (s, i) { return '<label><input type="radio" name="bbs" value="' + i + '">' + E(s) + '</label>' }).join('') +
+                    '<label><input type="radio" name="bbs" value="-1" checked>Để trống, tick tay khi ký</label></div>' +
+                    '<div class="bbg" style="margin-top:10px"><label class="w">Ghi chú thêm (hiện trên biên bản)<textarea id="bbnt" rows="2" placeholder="Vd: thiếu 1 kiện, thùng số 3 móp góc…"></textarea></label></div>' +
+                    '<label class="bbop"><input type="checkbox" id="bbrl" checked>In sẵn dòng «Đã nhận đủ … kiện» trong ô ký của bên nhận</label></div>' +
+                    '</div><div class="bbp"><canvas id="bbcv"></canvas><small>Bản xem trước · file tải về sắc nét khổ A4</small></div></div>' +
+                    '<div class="act bba"><span class="bbe" id="bbfe"></span><button type="button" id="mc">Làm mới</button><button type="button" class="bbmv" id="bbmv">👁 Xem trước</button><button type="button" id="bbpr">🖨 In ngay</button><button type="button" id="bbpg">⬇ Tải ảnh PNG</button><button type="submit" class="p" id="bbdl">⬇ Tải file PDF</button></div>' +
+                    '<datalist id="bbkl">' + names.map(function (n) { return '<option value="' + E(n) + '">' }).join('') + '</datalist><datalist id="bbul"><option value="kiện"><option value="thùng"><option value="bao"><option value="cái"><option value="kg"></datalist></form>';
+                md.classList.remove('hid');
+                var dlg = md.querySelector('.bbd'), box = G('bbit'), cv = G('bbcv'), logo = getLogo(), raf = 0;
+                function close() { md.classList.add('hid'); md.innerHTML = '' }
+                G('mc').onclick = function () { open() };
+
+                function addRow(v) {
+                    v = v || {}; var n = box.children.length; if (n >= MAXR) { G('bbfe').textContent = 'Tối đa ' + MAXR + ' dòng hàng cho 1 biên bản.'; return }
+                    var r = document.createElement('div'); r.className = 'bbr';
+                    r.innerHTML = '<span class="n"></span><input class="rc" placeholder="Mã KH" value="' + E(v.code) + '"><input class="rn" placeholder="Tên hàng" value="' + E(v.name) + '"><input class="ru" list="bbul" placeholder="ĐVT" value="' + E(v.unit || 'kiện') + '"><input class="rq" type="number" min="0" step="any" placeholder="SL" value="' + E(v.qty) + '"><input class="rt" placeholder="Ghi chú" value="' + E(v.note) + '"><button type="button" class="rx" title="Xóa dòng">×</button>';
+                    r.querySelector('.rx').onclick = function () { if (box.children.length > 1) { r.remove(); renum(); draw() } else { r.querySelectorAll('input').forEach(function (i) { i.value = '' }); r.querySelector('.ru').value = 'kiện'; draw() } };
+                    box.appendChild(r); renum()
+                }
+                function renum() { [].forEach.call(box.children, function (r, i) { r.querySelector('.n').textContent = i + 1 }); G('bbad').disabled = box.children.length >= MAXR }
+                function items() { return [].map.call(box.children, function (r) { return { code: r.querySelector('.rc').value.trim(), name: r.querySelector('.rn').value.trim(), unit: r.querySelector('.ru').value.trim(), qty: r.querySelector('.rq').value, note: r.querySelector('.rt').value.trim() } }) }
+                function data() {
+                    var st = dlg.querySelector('input[name=bbs]:checked');
+                    return { no: G('bbno').value.trim(), date: G('bbdt').value, place: G('bbpl').value.trim(), a: { name: G('bban').value.trim(), phone: G('bbap').value.trim(), company: G('bbac').value.trim(), addr: G('bbaa').value.trim() }, b: { name: G('bbbn').value.trim(), phone: G('bbbp').value.trim(), company: G('bbbc').value.trim(), addr: G('bbba').value.trim() }, items: items(), status: st ? +st.value : -1, note: G('bbnt').value.trim(), recvLine: G('bbrl').checked }
+                }
+                function draw() {
+                    cancelAnimationFrame(raf); raf = requestAnimationFrame(function () {
+                        var d = data(), t = d.items.reduce(function (a, b) { return a + num(b.qty) }, 0), n = d.items.filter(function (i) { return i.name || i.qty }).length;
+                        G('bbtt').innerHTML = t ? 'Tổng: <b>' + fmtN(t) + '</b> · ' + n + ' dòng' : ''; G('bbcn').textContent = box.children.length + '/' + MAXR + ' dòng';
+                        paint(cv, d, 1.6, logo)
+                    })
+                }
+                addRow({}); draw(); if (!logo) { var li = document.querySelector('.lgo'); if (li) li.onload = function () { logo = getLogo(); draw() } }
+                fontsReady().then(function () { if (G('bbcv')) draw() });
+                dlg.addEventListener('input', function () { G('bbfe').textContent = ''; draw() }); dlg.addEventListener('change', draw);
+                G('bbad').onclick = function () { addRow({}); draw(); var l = box.lastChild; if (l) l.querySelector('.rn').focus() };
+                G('bbmv').onclick = function () { dlg.classList.toggle('pv'); G('bbmv').textContent = dlg.classList.contains('pv') ? '✎ Quay lại nhập' : '👁 Xem trước'; draw() };
+
+                /* chọn khách có sẵn → tự điền SĐT / địa chỉ */
+                G('bban').addEventListener('input', function () { this.dataset.key = '' });
+                G('bban').addEventListener('change', function () {
+                    var k = this.value.trim(), c = CT[k]; if (!c) return; this.dataset.key = k;
+                    this.value = ((c.g ? c.g + ' ' : '') + (c.n || k)).trim();
+                    if (!G('bbap').value) G('bbap').value = c.p || ''; if (!G('bbaa').value) G('bbaa').value = c.a || ''; draw()
+                });
+                /* lấy dòng hàng từ đơn hàng của khách trong tháng đang chọn */
+                G('bbfo').onclick = function () {
+                    var key = (G('bban').dataset.key || G('bban').value).trim().toLowerCase(), fe = G('bbfe'); if (!key) { fe.textContent = 'Nhập tên bên giao trước để lấy đơn hàng của khách đó.'; return }
+                    var rs = []; try { rs = (S.months[S.cur].rows || []).filter(function (r) { var k = (r.k || '').trim().toLowerCase(); return k && (k === key || k.indexOf(key) >= 0 || key.indexOf(k) >= 0) }) } catch (e) { }
+                    if (!rs.length) { fe.textContent = 'Không thấy đơn nào của «' + G('bban').value.trim() + '» trong tháng đang chọn. Bạn có thể nhập tay.'; return }
+                    box.innerHTML = ''; rs.slice(0, MAXR).forEach(function (r) { addRow({ name: (r.note || '').trim() || 'Hàng hóa', unit: r.u || 'kiện', qty: r.q || '', note: r.d ? 'Hàng về ' + dShort(r.d).slice(0, 5) : '' }) });
+                    if (rs.length > MAXR) fe.textContent = 'Khách có ' + rs.length + ' đơn, chỉ lấy ' + MAXR + ' dòng đầu.'; draw()
+                };
+
+                /* xuất file */
+                function render(k) {
+                    return fontsReady().then(function () { var c = document.createElement('canvas'); paint(c, data(), k, getLogo() || logo); return c })
+                }
+                function check() {
+                    var d = data(); if (!d.a.name) { G('bbfe').textContent = 'Nhập họ tên người giao (Bên A).'; G('bban').focus(); return null }
+                    if (!d.items.some(function (i) { return i.name || num(i.qty) })) { G('bbfe').textContent = 'Nhập ít nhất 1 dòng hàng hóa.'; return null }
+                    return d
+                }
+                function commit(d) {
+                    var o = load(); o.b = d.b; o.place = d.place; if (d.no === defNo) { o.day = day; o.seq = seq } store(o); defNoUsed = true
+                }
+                var defNoUsed = false;
+                function fname(d, ext) { return 'Bien-ban-nhan-hang-' + (d.no || 'moi').replace(/[^A-Za-z0-9_-]+/g, '-') + '.' + ext }
+                function busy(b, on, t) { b.disabled = on; if (on) { b._t = b.textContent; b.textContent = t } else if (b._t) b.textContent = b._t }
+                dlg.onsubmit = function (e) {
+                    e.preventDefault(); var d = check(); if (!d) return; var b = G('bbdl'); busy(b, 1, 'Đang tạo PDF…');
+                    render(3).then(function (c) { return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', .93) }).then(function (bl) { return bl.arrayBuffer().then(function (ab) { return { ab: ab, c: c } }) }) })
+                        .then(function (r) { return save(pdfFrom(new Uint8Array(r.ab), r.c.width, r.c.height), fname(d, 'pdf')).then(function () { commit(d); var m = G('bbfe'); m.style.color = '#15803d'; m.textContent = '✔ Đã tải file PDF. Mở file và in ra khổ A4 để ký.' }) })
+                        .catch(function () { G('bbfe').textContent = 'Không tạo được file, hãy thử lại.' }).then(function () { busy(b, 0) })
+                };
+                G('bbpg').onclick = function () {
+                    var d = check(); if (!d) return; var b = G('bbpg'); busy(b, 1, 'Đang tạo…');
+                    render(3).then(function (c) { c.toBlob(function (bl) { save(bl, fname(d, 'png')).then(function () { commit(d) }).catch(function () { }).then(function () { busy(b, 0) }) }, 'image/png') }).catch(function () { busy(b, 0) })
+                };
+                G('bbpr').onclick = function () {
+                    var d = check(); if (!d) return; var b = G('bbpr'); busy(b, 1, 'Đang mở…');
+                    render(2.6).then(function (c) {
+                        var u = c.toDataURL('image/jpeg', .92), w = window.open('', '_blank');
+                        if (!w) { G('bbfe').textContent = 'Trình duyệt chặn cửa sổ in. Hãy dùng nút «Tải file PDF» rồi in từ file.'; return }
+                        w.document.write('<!doctype html><title>' + E(fname(d, 'pdf')) + '</title><style>@page{size:A4;margin:0}html,body{margin:0;background:#fff}img{display:block;width:210mm;height:297mm}</style><img src="' + u + '">');
+                        w.document.close(); var go = function () { w.focus(); w.print() }; var im = w.document.querySelector('img'); if (im.complete) setTimeout(go, 200); else im.onload = go; commit(d)
+                    }).then(function () { busy(b, 0) })
+                };
+                var f0 = G('bban'); if (f0) f0.focus()
+            }
+
+            function mount() { open() }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+        })();
+    </script>
+</body>
+
+</html>
