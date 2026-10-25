@@ -7990,7 +7990,7 @@
             const old = Object.entries(g).map(([no, rs]) => {
                 const k = (rs[0].k || '').trim(), rk = C.rv[k] || '';
                 const s = C.ct[k] || { n: strip(k), p: '', a: '' }, r = C.ct[rk] || { n: strip(rk), p: '', a: '' }, sn = rs.map(snap);
-                return { no, dt: '', k, rk, s, r, rows: sn.slice(0, 7), v: en(sn.reduce((a, x) => a + x.f, 0)), u: ru(sn.reduce((a, x) => a + x.usd, 0)), veh: ((rs.find(r => r.trip) || {}).trip || '').trim(), old: 1, t: 0 }
+                return { no, dt: '', k, rk, s, r, rows: sn.slice(0, 8), v: en(sn.reduce((a, x) => a + x.f, 0)), u: ru(sn.reduce((a, x) => a + x.usd, 0)), veh: ((rs.find(r => r.trip) || {}).trip || '').trim(), old: 1, t: 0 }
             });
             return [...C.bills, ...old].sort((a, b) => (b.t || 0) - (a.t || 0) || b.no.localeCompare(a.no, 'vi', { numeric: true }))
         }
@@ -8047,11 +8047,11 @@
                 ${L('bv', 'Tiền VND (tự tính, sửa được)', E ? E.v || '' : '')}${L('bu', 'Tiền USD (tự tính, sửa được)', E ? ru(E.u) : '')}
                 ${L('bveh', 'Chuyến xe (nhiều phiếu đi chung 1 xe thì ghi giống nhau)', E ? E.veh || '' : '', 1, 'list="tl" autocomplete="off" placeholder="Vd: 01/10 hoặc biển số xe"')}<div class="w"><p class="hint bvh" id="bvh"></p></div><div class="w bdlw"><button type="button" class="schip" id="bdlt" aria-pressed="false">🚚 Ghi ngày giao &amp; số lượng giao lên phiếu</button><div class="bsel-hint">Không bấm thì phiếu không ghi chuyến xe, ngày giao hay số lượng giao nào. Bấm chọn thì hiện ô ghi ngày giao và số lượng giao cho từng đơn, từng chuyến xe.</div><div class="bdlf" id="bdlf" hidden></div></div></div>
                 <datalist id="bkl">${names.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="tl">${[...new Set([...A.flatMap(x => spTrips(x.r)), ...C.bills.map(b => (b.veh || '').trim())].filter(Boolean))].map(x => `<option value="${esc(x)}">`).join('')}</datalist>
-                <p class="hint">Mỗi phiếu có tối đa 7 dòng hàng. Nhiều phiếu đi chung 1 xe: ghi cùng một «Chuyến xe», trên phiếu sẽ tự hiện «Chung xe với …». Phiếu có dòng tính theo khối sẽ tự dùng mẫu «Giao hàng tính theo khối». Dòng nhập tay có thể tính theo kg hoặc theo khối (kiện máy 220 USD/khối, kiện thường 150 hoặc 140 USD/khối, hoặc nhập giá khác). Phiếu được lưu lại, xem, sửa và in lại ở nút «Phiếu đã lập». Thông tin người gửi/nhận được nhớ cho lần sau.</p><div class="err" id="fe"></div>
+                <p class="hint">Mỗi phiếu có tối đa 8 dòng hàng. Nhiều phiếu đi chung 1 xe: ghi cùng một «Chuyến xe», trên phiếu sẽ tự hiện «Chung xe với …». Phiếu có dòng tính theo khối sẽ tự dùng mẫu «Giao hàng tính theo khối». Dòng nhập tay có thể tính theo kg hoặc theo khối (kiện máy 220 USD/khối, kiện thường 150 hoặc 140 USD/khối, hoặc nhập giá khác). Phiếu được lưu lại, xem, sửa và in lại ở nút «Phiếu đã lập». Thông tin người gửi/nhận được nhớ cho lần sau.</p><div class="err" id="fe"></div>
                 <div class="act"><button type="button" id="mc">Hủy</button><button class="p">${E ? 'Lưu thay đổi' : 'Tạo phiếu'}</button></div></form>`;
             md.classList.remove('hid'); const close = () => { md.classList.add('hid'); md.innerHTML = '' };
             $('mc').onclick = close; md.onclick = e => { if (e.target === md) close() };
-            const sel = $('bss'), box = $('bl'), mb = $('bm'), MAX = 7, SEL = new Set(); let MO = E && (E.mo || ((E.man || []).length && !A.some(x => x.r.bill === E.no))) ? 1 : 0, first = true;
+            const sel = $('bss'), box = $('bl'), mb = $('bm'), MAX = 8, SEL = new Set(); let MO = E && (E.mo || ((E.man || []).length && !A.some(x => x.r.bill === E.no))) ? 1 : 0, first = true;
             const keys = () => MO ? [...new Set($('bs').value.split(/[,;&]/).map(x => x.trim()).filter(Boolean))] : [...SEL];
             const key = () => keys()[0] || '';
             /* thứ tự: đơn của phiếu đang sửa → chưa thu & chưa lập phiếu → chưa thu & đã lập phiếu → không thu → đã thu; trong mỗi nhóm đơn cũ (hàng về sớm) lên trên */
@@ -8164,7 +8164,7 @@
                 const ks = keys(), sk = ks.join(', '); if (!ks.length) { $('fe').textContent = 'Chọn ít nhất 1 người gửi.'; return }
                 if (!P.length && !M.length) { $('fe').textContent = MO ? 'Nhập ít nhất 1 dòng hàng (số lượng hoặc kg).' : 'Chọn ít nhất 1 đơn hàng.'; return }
                 if (M.some(x => x.by === 'M3' && x.m3 && !x.pm3)) { $('fe').textContent = 'Dòng tính theo khối cần chọn hoặc nhập đơn giá USD/khối.'; return }
-                if (P.length + M.length > MAX) { $('fe').textContent = 'Phiếu chỉ có 7 dòng hàng, hãy chọn tối đa 7 dòng (hoặc tạo 2 phiếu).'; return }
+                if (P.length + M.length > MAX) { $('fe').textContent = 'Phiếu chỉ có 8 dòng hàng, hãy chọn tối đa 8 dòng (hoặc tạo 2 phiếu).'; return }
                 let dl = null; if (DL) { dlRead(); const it = [], GG = dlGroups(); GG.forEach((g, gi) => g.rows.forEach(r => { const v = dlVal(r); let q = (v.q || '').trim(); if (/^[\d.,]+$/.test(q)) q += ' ' + (r.u || 'kiện'); if (v.d || q) it.push({ k: r.key, t: r.trip, d: v.d || '', q, gi }) })); if (!it.length) { $('fe').textContent = 'Bạn đã bật «Ghi ngày giao & số lượng giao»: hãy nhập ngày giao hoặc số lượng giao cho ít nhất 1 chuyến (hoặc bấm tắt nút này).'; return } dl = { items: it, d: it[0].d, q: it[0].q, groups: GG.map(g => g.info) } }
                 const no = $('bno').value.trim(), s = { g: $('bsg').value, n: $('bsn').value.trim(), p: $('bsp').value.trim(), a: $('bsa').value.trim() }, rc = { g: $('brg').value, n: $('brn').value.trim(), p: $('brp').value.trim(), a: $('bra').value.trim() }, rk = $('brk').value.trim();
                 if (!no) { $('fe').textContent = 'Nhập số phiếu.'; return }
@@ -8231,7 +8231,7 @@
             const hk = d.rows.some(bBm), hg = d.rows.some(r => !bBm(r)), hd = ['STT', 'MÔ TẢ HÀNG HÓA', 'SỐ LƯỢNG', hk && hg ? 'KHỐI LƯỢNG / SỐ KHỐI' : hk ? 'SỐ KHỐI' : 'KHỐI LƯỢNG', 'HÀNG VỀ'], CX = [116, 305, 1000, 1700, 2108], AL = ['left', 'left', 'left', 'right', 'right'];
             const party = (px, py, w, lab, p, lc) => { txt(lab, px, py, 26, 'left', 0, 700, lc, 3); txt(nm(p), px, py + 72, 66, 'left', w, 800); const A = bFit(x, pa(p), w, 36, 500, 2, 26, FF); A.l.forEach((l, i) => txt(l, px, py + 128 + i * 46, A.s, 'left', w, 500, MU)) };
             const table = (ty, hh, rh0, hc, fh) => {
-                const nr = Math.min(7, Math.max(3, d.rows.length)), rh = nr > 5 ? Math.floor(rh0 * 5 / nr) : rh0, fk = nr > 5 ? .86 : 1, F = q => Math.round(q * fk); fh(ty, hh, hh + nr * rh);
+                const nr = Math.min(8, Math.max(1, d.rows.length)), rh = nr > 5 ? Math.floor(rh0 * 5 / nr) : rh0, fk = nr > 7 ? .8 : nr > 5 ? .86 : 1, F = q => Math.round(q * fk); fh(ty, hh, hh + nr * rh);
                 hd.forEach((t, i) => txt(t, CX[i], ty + hh / 2 + 9, 25, AL[i], i == 3 ? 400 : i == 4 ? 300 : 0, 700, hc, 1.5));
                 for (let i = 0; i < nr; i++) {
                     const y = ty + hh + i * rh, r = d.rows[i], b = y + rh / 2 + F(13); if (i < nr - 1 || V != 4) { x.fillStyle = LN; x.fillRect(80, y + rh - 2, 2052, 2) } if (!r) continue;
@@ -8320,8 +8320,8 @@
             const hk = d.rows.some(bBm), hg = d.rows.some(r => !bBm(r));
             if (hk) { white(1204, 897, 482, 78); txt(hg ? 'Khối lượng / Số khối' : 'Số khối (m³)', 1445, 948, 30, 'center', 440, 600, '#A81E1E') }
             let kg = 0, m3 = 0; d.rows.forEach(r => { if (bBm(r)) m3 += n(r.m3); else kg += n(r.kg) });
-            const NR = Math.min(7, d.rows.length), big = NR > 5, PT = 267 / Math.max(NR, 1), FS = big ? Math.floor(PT * .76) : 38;
-            if (big) { /* mẫu gốc chỉ có 5 dòng: xóa thân bảng cũ rồi kẻ lại NR dòng (giữ nguyên khung ngoài, tiêu đề cột) */
+            const NR = Math.min(8, d.rows.length), big = NR !== 5, PT = 267 / Math.max(NR, 1), FS = big ? Math.min(38, Math.floor(PT * .76)) : 38;
+            if (big) { /* mẫu gốc có sẵn 5 dòng: nếu số dòng khác 5 thì xóa thân bảng cũ rồi kẻ lại đúng NR dòng (giữ nguyên khung ngoài, tiêu đề cột) */
                 white(31, 981, 2151, 235); white(52, 1216, 2108, 28);
                 x.save(); x.strokeStyle = '#9b9b9b'; x.lineWidth = 3; x.lineCap = 'butt'; x.beginPath();
                 for (let k = 1; k < NR; k++) { const yy = Math.round(979 + PT * k); x.moveTo(30, yy); x.lineTo(2182, yy) }
