@@ -6452,6 +6452,17 @@
             padding: 2px 8px
         }
 
+        .dlr-p {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--bd)
+        }
+
+        .dlr.drg {
+            outline: 2px dashed #1f4e9e;
+            outline-offset: 2px
+        }
+
         .dlx-f {
             display: flex;
             flex-wrap: wrap;
@@ -7686,22 +7697,96 @@
         }
 
         /* ===== Giao nhiều đợt: 1 đơn có thể đi nhiều xe, nhiều ngày. r.sp = [{g, trip, xe, q, kg, m3, note}] ===== */
-        function spl(r) { return r && Array.isArray(r.sp) ? r.sp.filter(s => s && (s.g || (s.trip || '').trim() || n(s.q) || n(s.kg) || n(s.m3))) : [] }
+        function spl(r) { return r && Array.isArray(r.sp) ? r.sp.filter(s => s && (s.g || (s.trip || '').trim() || n(s.q) || n(s.kg) || n(s.m3) || (Array.isArray(s.ph) && s.ph.length))) : [] }
+        /* ảnh giao hàng của từng đợt: s.ph = [id ảnh]. spPh = mọi ảnh của các đợt; phAll = ảnh của đơn + ảnh các đợt */
+        function spPh(r) { const o = []; spl(r).forEach((s, k) => (s.ph || []).forEach(id => o.push({ id, s, k }))); return o }
+        const phAll = r => [...((r && r.ph) || []), ...spPh(r).map(x => x.id)]
         function spTrips(r) { const S2 = spl(r); if (S2.length) return [...new Set(S2.map(s => (s.trip || '').trim()).filter(Boolean))]; const t = ((r && r.trip) || '').trim(); return t ? [t] : [] }
         /* tỷ lệ cước của từng đợt: theo kg, nếu không có thì theo số lượng, rồi m³, cuối cùng chia đều */
         function spShare(r, S2) { S2 = S2 || spl(r); for (const k of ['kg', 'q', 'm3']) { const T = S2.reduce((a, s) => a + n(s[k]), 0); if (T > 0) return S2.map(s => n(s[k]) / T) } return S2.map(() => 1 / S2.length) }
         function spNote(r) { const S2 = spl(r); if (!S2.length) return ''; return 'Giao ' + S2.length + ' đợt: ' + S2.map((s, k) => 'Đ' + (k + 1) + ' ' + (s.g ? fd(s.g) : 'chưa rõ ngày') + (s.trip ? ' xe ' + s.trip : '') + (n(s.q) ? ' ' + f2(s.q) + ' ' + (r.u || '') : '') + (n(s.kg) ? ' ' + f2(s.kg) + 'kg' : '') + (s.note ? ' (' + s.note + ')' : '')).join('; ') }
-        function spDetail(r) { const S2 = spl(r); return S2.map((s, k) => 'Đợt ' + (k + 1) + '/' + S2.length + ' · ' + (s.g ? fd(s.g) : 'chưa rõ ngày') + (s.trip ? ' · xe ' + esc(s.trip) : '') + (n(s.xe) > 1 ? ' (' + f2(s.xe) + ' xe)' : '') + (n(s.q) ? ' · ' + f2(s.q) + ' ' + esc(r.u || '') : '') + (n(s.kg) ? ' · ' + f2(s.kg) + ' kg' : '') + (n(s.m3) ? ' · ' + f2(s.m3) + ' m³' : '') + (s.note ? ' · ' + esc(s.note) : '')).join('<br>') }
+        function spDetail(r) { const S2 = spl(r); return S2.map((s, k) => 'Đợt ' + (k + 1) + '/' + S2.length + ' · ' + (s.g ? fd(s.g) : 'chưa rõ ngày') + (s.trip ? ' · xe ' + esc(s.trip) : '') + (n(s.xe) > 1 ? ' (' + f2(s.xe) + ' xe)' : '') + (n(s.q) ? ' · ' + f2(s.q) + ' ' + esc(r.u || '') : '') + (n(s.kg) ? ' · ' + f2(s.kg) + ' kg' : '') + (n(s.m3) ? ' · ' + f2(s.m3) + ' m³' : '') + (s.note ? ' · ' + esc(s.note) : '') + ((s.ph || []).length ? ' · 📷 ' + s.ph.length + ' ảnh' : '')).join('<br>') }
         function dgCell(r) { const S2 = spl(r); if (!S2.length) return fd(r.g) || '–'; return S2.map((s, k) => `<div class="dlr-d" title="Đợt ${k + 1}/${S2.length}${s.trip ? ' · xe ' + esc(s.trip) : ''}${n(s.q) ? ' · ' + f2(s.q) + ' ' + esc(r.u || '') : ''}"><i>Đ${k + 1}</i>${fd(s.g) || '–'}</div>`).join('') }
         function xeSplit(r, v, S2) { const ch = spTrips(r).map(t => `<div class="trip" data-trip="${esc(t)}" style="cursor:pointer" title="Bấm để xem tất cả đơn cùng chuyến xe này">${esc(t)}</div>`).join(''); return (v ? `<b>${f2(v)}</b>` : '<span class="trip sh">chung xe</span>') + ch + `<div class="dlr-n">${S2.length} đợt giao</div>` }
+        /* ===== Ảnh bill cho khoản thu (chi phí đã thu): p.ph = [id ảnh], đối chiếu với số tiền đã nhận ===== */
+        function payWire(init) {
+            const fg = md.querySelector('.fg'), X = window.__phx; if (!fg) return;
+            const box = document.createElement('div'); box.className = 'dlx';
+            box.innerHTML = '<div class="dlx-h"><b>🧾 Ảnh bill</b><small>Đính kèm bill chuyển khoản / biên nhận để đối chiếu số tiền đã nhận.</small></div><div class="phg"></div><div class="phb"><button type="button" id="pyadd">📷 Thêm ảnh bill</button><span class="phm" id="pym">Chọn, kéo thả hoặc dán (Ctrl+V) ảnh</span><input type="file" accept="image/*" multiple hidden></div>';
+            fg.after(box);
+            let ids = Array.isArray(init.ph) ? init.ph.slice() : []; const added = new Set(), gone = new Set();
+            const g = box.querySelector('.phg'), m = box.querySelector('#pym'), ad = box.querySelector('#pyadd'), fi = box.querySelector('input[type=file]');
+            const draw = () => { g.innerHTML = ids.map((id, k) => `<div class="phw"><button type="button" class="pht" data-pv="${id}" aria-label="Xem ảnh ${k + 1}">${X && X.PH[id] ? `<img src="${X.PH[id]}" alt="Bill ${k + 1}">` : X && X.FAIL[id] ? '<span title="Bấm để tải lại">⟳</span>' : '<i class="phs"></i>'}</button><b class="phx" data-pdel="${id}" title="Xóa ảnh này" role="button" aria-label="Xóa ảnh ${k + 1}">✕</b></div>`).join('') };
+            const drop = id => { if (added.has(id)) { added.delete(id); if (X) X.rm(id) } else gone.add(id) };
+            draw();
+            if (!X) { ad.disabled = true; m.textContent = 'Chưa dùng được ảnh, hãy tải lại trang.' } else if (ids.length) X.load(ids).then(() => { if (document.body.contains(box)) draw() });
+            async function put(F) {
+                F = [...F].filter(x => /^image\//.test(x.type)); if (!F.length || !X) return; ad.disabled = true; let c = 0;
+                try {
+                    for (const x of F) {
+                        if (ids.length >= X.MX) { toast('err', 'Tối đa ' + X.MX + ' ảnh bill mỗi khoản thu.'); break }
+                        if (!X.ready()) { toast('err', 'Chưa kết nối máy chủ nên không lưu được ảnh. Hãy tải lại trang.'); break }
+                        m.textContent = 'Đang nén và tải lên ' + (c + 1) + '/' + F.length + '…';
+                        const r = await X.add(x); if (!r.ok) { toast('err', 'Không lưu được ảnh (' + r.err + ').'); break }
+                        if (!document.body.contains(box)) { X.rm(r.id); break }
+                        ids.push(r.id); added.add(r.id); c++; draw()
+                    }
+                } catch (e) { toast('err', e.message) }
+                ad.disabled = false; if (document.body.contains(box)) m.textContent = c ? 'Đã thêm ' + c + ' ảnh.' : 'Chọn, kéo thả hoặc dán (Ctrl+V) ảnh'
+            }
+            ad.onclick = () => fi.click(); fi.onchange = e => { put(e.target.files); fi.value = '' };
+            box.ondragover = e => { e.preventDefault(); box.classList.add('drg') }; box.ondragleave = () => box.classList.remove('drg'); box.ondrop = e => { e.preventDefault(); box.classList.remove('drg'); put(e.dataTransfer.files) };
+            const onp = e => { if (!document.body.contains(box)) { document.removeEventListener('paste', onp); return } if (e.clipboardData && e.clipboardData.files.length) { e.preventDefault(); put(e.clipboardData.files) } }; document.addEventListener('paste', onp);
+            box.addEventListener('click', async e => {
+                const x = e.target.closest('.phx');
+                if (x) { if (!confirm('Xóa ảnh bill này?')) return; const id = x.dataset.pdel; ids = ids.filter(z => z !== id); drop(id); draw(); return }
+                const t = e.target.closest('.pht'); if (!t || !X) return; const id = t.dataset.pv;
+                if (!X.PH[id]) { t.innerHTML = '<i class="phs"></i>'; delete X.FAIL[id]; await X.load([id]); draw() }
+                if (!X.PH[id]) { toast('err', 'Không tải được ảnh này từ máy chủ. Bấm lại để thử lần nữa.'); return }
+                X.view({ k: 'Bill ' + (($('ff_w') || {}).value || ''), get ph() { return ids } }, ids.indexOf(id), -1, { del: id2 => { ids = ids.filter(z => z !== id2); drop(id2); draw() } })
+            });
+            md._payPh = { ids: () => ids, save: () => { gone.forEach(id => X && X.rm(id)); gone.clear(); added.clear() } };
+            const cancel = () => { added.forEach(id => X && X.rm(id)); added.clear(); md._payPh = null };
+            const mc = $('mc'), oc = mc.onclick, om = md.onclick;
+            mc.onclick = e => { if (document.querySelector('.plb')) return; cancel(); if (oc) oc.call(mc, e) };
+            md.onclick = e => { if (e.target === md) cancel(); if (om) om.call(md, e) }
+        }
+        function payFinish(o) { const P = md._payPh; if (!P) return; const ids = P.ids(); o.ph = ids.length ? ids : undefined; P.save(); md._payPh = null }
         /* Form: khối nhập các đợt giao */
         function spWire(init) {
             const fg = md.querySelector('.fg'); if (!fg) return;
             const box = document.createElement('div'); box.className = 'dlx';
-            box.innerHTML = '<div class="dlx-h"><b>🚚 Giao nhiều đợt</b><small>Một đơn đi nhiều xe hoặc nhiều ngày: bấm «Thêm đợt giao», mỗi đợt có ngày và xe riêng. Cước vẫn tính 1 lần cho cả đơn. Ngày giao của đơn = ngày đợt cuối.</small></div><div id="dlx-l"></div><div class="dlx-f"><button type="button" id="dlx-add">+ Thêm đợt giao</button><span id="dlx-s"></span></div>';
+            box.innerHTML = '<div class="dlx-h"><b>🚚 Giao nhiều đợt</b><small>Một đơn đi nhiều xe hoặc nhiều ngày: bấm «Thêm đợt giao», mỗi đợt có ngày và xe riêng. Cước vẫn tính 1 lần cho cả đơn. Ngày giao của đơn = ngày đợt cuối. Mỗi đợt có thể đính kèm ảnh giao hàng.</small></div><div id="dlx-l"></div><div class="dlx-f"><button type="button" id="dlx-add">+ Thêm đợt giao</button><span id="dlx-s"></span></div>';
             fg.after(box);
             const L = $('dlx-l'), fG = $('ff_g'), fT = $('ff_trip'), fX = $('ff_xe');
             const num = v => n(v) ? String(n(v)) : '';
+            /* ảnh từng đợt: dùng lại cơ chế ảnh của đơn (nén, lưu máy chủ). added = ảnh mới thêm trong lần mở form này; gone = ảnh cũ đã bị gỡ */
+            const X = window.__phx, added = new Set(), gone = new Set();
+            const thumbsH = ids => ids.map((id, k) => `<div class="phw"><button type="button" class="pht" data-pv="${id}" aria-label="Xem ảnh ${k + 1}">${X && X.PH[id] ? `<img src="${X.PH[id]}" alt="Ảnh ${k + 1}">` : X && X.FAIL[id] ? '<span title="Bấm để tải lại">⟳</span>' : '<i class="phs"></i>'}</button><b class="phx" data-pdel="${id}" title="Xóa ảnh này" role="button" aria-label="Xóa ảnh ${k + 1}">✕</b></div>`).join('');
+            const drawPh = d => { const g = d.querySelector('.phg'); if (g) g.innerHTML = thumbsH(d._ph || []) };
+            const dropPh = id => { if (added.has(id)) { added.delete(id); if (X) X.rm(id) } else gone.add(id) };
+            const wirePh = d => {
+                const m = d.querySelector('.phm'), fi = d.querySelector('input[type=file]'), ad = d.querySelector('.dlr-pa');
+                if (!X) { ad.disabled = true; m.textContent = 'Chưa dùng được ảnh, hãy tải lại trang.'; return }
+                if (d._ph.length) X.load(d._ph).then(() => { if (document.body.contains(d)) drawPh(d) });
+                async function put(F) {
+                    F = [...F].filter(x => /^image\//.test(x.type)); if (!F.length) return; ad.disabled = true; let c = 0;
+                    try {
+                        for (const x of F) {
+                            if (d._ph.length >= X.MX) { toast('err', 'Tối đa ' + X.MX + ' ảnh mỗi đợt.'); break }
+                            if (!X.ready()) { toast('err', 'Chưa kết nối máy chủ nên không lưu được ảnh. Hãy tải lại trang.'); break }
+                            m.textContent = 'Đang nén và tải lên ' + (c + 1) + '/' + F.length + '…';
+                            const r = await X.add(x); if (!r.ok) { toast('err', 'Không lưu được ảnh (' + r.err + ').'); break }
+                            if (!document.body.contains(d)) { X.rm(r.id); break } /* đợt hoặc form đã đóng trong lúc tải */
+                            d._ph.push(r.id); added.add(r.id); c++; drawPh(d)
+                        }
+                    } catch (e) { toast('err', e.message) }
+                    ad.disabled = false; if (document.body.contains(d)) m.textContent = c ? 'Đã thêm ' + c + ' ảnh.' : 'Chọn, kéo thả hoặc dán (Ctrl+V) ảnh'
+                }
+                ad.onclick = () => fi.click(); fi.onchange = e => { put(e.target.files); fi.value = '' };
+                d.ondragover = e => { e.preventDefault(); d.classList.add('drg') }; d.ondragleave = () => d.classList.remove('drg'); d.ondrop = e => { e.preventDefault(); d.classList.remove('drg'); put(e.dataTransfer.files) };
+                d.addEventListener('paste', e => { if (e.clipboardData && e.clipboardData.files.length) { e.preventDefault(); put(e.clipboardData.files) } })
+            };
             const addRow = s => {
                 s = s || {}; const d = document.createElement('div'); d.className = 'dlr';
                 d.innerHTML = `<div class="dlr-t"><b>Đợt <span class="dlr-no"></span></b><button type="button" class="dlr-x" title="Xóa đợt này" aria-label="Xóa đợt này">✕</button></div><div class="dlr-g">
@@ -7711,12 +7796,13 @@
 <label>Số lượng<input type="number" data-f="q" step="any" min="0" value="${num(s.q)}"></label>
 <label>Kg<input type="number" data-f="kg" step="any" min="0" value="${num(s.kg)}"></label>
 <label>m³<input type="number" data-f="m3" step="any" min="0" value="${num(s.m3)}"></label>
-<label class="w">Ghi chú đợt<input type="text" data-f="note" value="${esc(s.note || '')}"></label></div>`;
-                L.appendChild(d); renum(); sync(); return d
+<label class="w">Ghi chú đợt<input type="text" data-f="note" value="${esc(s.note || '')}"></label></div><div class="dlr-p"><div class="phg"></div><div class="phb"><button type="button" class="dlr-pa">📷 Thêm ảnh giao hàng</button><span class="phm">Chọn, kéo thả hoặc dán (Ctrl+V) ảnh</span><input type="file" accept="image/*" multiple hidden></div></div>`;
+                d._ph = Array.isArray(s.ph) ? s.ph.slice() : [];
+                L.appendChild(d); renum(); sync(); drawPh(d); wirePh(d); return d
             };
             const rows = () => [...L.querySelectorAll('.dlr')];
             const renum = () => rows().forEach((d, i) => { d.querySelector('.dlr-no').textContent = (i + 1) + '/' + rows().length });
-            const read = () => rows().map(d => { const o = {}; d.querySelectorAll('[data-f]').forEach(i => { const k = i.dataset.f, v = i.value.trim(); if (v !== '') o[k] = (k === 'g' || k === 'trip' || k === 'note') ? v : n(v) }); return o }).filter(o => o.g || o.trip || o.q || o.kg || o.m3);
+            const read = () => rows().map(d => { const o = {}; d.querySelectorAll('[data-f]').forEach(i => { const k = i.dataset.f, v = i.value.trim(); if (v !== '') o[k] = (k === 'g' || k === 'trip' || k === 'note') ? v : n(v) }); if (d._ph && d._ph.length) o.ph = d._ph.slice(); return o }).filter(o => o.g || o.trip || o.q || o.kg || o.m3 || o.ph);
             const sync = () => {
                 const R = read(), has = R.length > 0;
                 [fG, fT, fX].forEach(e => { if (e) e.disabled = has });
@@ -7731,16 +7817,32 @@
             };
             L.addEventListener('input', sync);
             ['ff_q', 'ff_kg', 'ff_m3', 'ff_loai'].forEach(i => { const e = $(i); if (e) e.addEventListener('input', sync) });
-            L.addEventListener('click', e => { const b = e.target.closest('.dlr-x'); if (!b) return; b.closest('.dlr').remove(); renum(); sync() });
+            L.addEventListener('click', async e => {
+                const b = e.target.closest('.dlr-x'), d = e.target.closest('.dlr'); if (!d) return;
+                if (b) { if ((d._ph || []).length && !confirm('Đợt này có ' + d._ph.length + ' ảnh. Xóa đợt sẽ xóa luôn các ảnh này. Tiếp tục?')) return; (d._ph || []).forEach(dropPh); d.remove(); renum(); sync(); return }
+                const x = e.target.closest('.phx');
+                if (x) { if (!confirm('Xóa ảnh này khỏi đợt giao?')) return; const id = x.dataset.pdel; d._ph = d._ph.filter(z => z !== id); dropPh(id); drawPh(d); return }
+                const t = e.target.closest('.pht'); if (!t || !X) return; const id = t.dataset.pv;
+                if (!X.PH[id]) { t.innerHTML = '<i class="phs"></i>'; delete X.FAIL[id]; await X.load([id]); drawPh(d) }
+                if (!X.PH[id]) { toast('err', 'Không tải được ảnh này từ máy chủ. Bấm lại để thử lần nữa.'); return }
+                const pr = { k: (($('ff_k') || {}).value || 'Đơn hàng') + ' · Đợt', get ph() { return d._ph } };
+                X.view(pr, d._ph.indexOf(id), -1, { del: id2 => { d._ph = d._ph.filter(z => z !== id2); dropPh(id2); drawPh(d) } })
+            });
             $('dlx-add').onclick = () => {
                 if (!rows().length) { addRow({ g: fG.value, trip: fT.value, xe: n(fX.value) || 1 }); addRow({}) } else addRow({});
                 const last = rows().pop(); const i = last && last.querySelector('input'); if (i) i.focus()
             };
-            const old = spl(init); old.forEach(addRow)
+            const old = spl(init); old.forEach(addRow);
+            md._spPh = { save: () => { gone.forEach(id => X && X.rm(id)); gone.clear(); added.clear() } };
+            const cancelPh = () => { added.forEach(id => X && X.rm(id)); added.clear(); md._spPh = null };
+            const mc = $('mc'), oc = mc.onclick, om = md.onclick;
+            mc.onclick = e => { if (document.querySelector('.plb')) return; cancelPh(); if (oc) oc.call(mc, e) };
+            md.onclick = e => { if (e.target === md) cancelPh(); if (om) om.call(md, e) }
         }
         /* khi bấm Lưu: gom các đợt, tự tính ngày giao / mã xe / số xe của cả đơn */
         function spFinish(o) {
-            const R = [...md.querySelectorAll('.dlr')].map(d => { const x = {}; d.querySelectorAll('[data-f]').forEach(i => { const k = i.dataset.f, v = i.value.trim(); if (v !== '') x[k] = (k === 'g' || k === 'trip' || k === 'note') ? v : n(v) }); return x }).filter(x => x.g || x.trip || x.q || x.kg || x.m3);
+            const R = [...md.querySelectorAll('.dlr')].map(d => { const x = {}; d.querySelectorAll('[data-f]').forEach(i => { const k = i.dataset.f, v = i.value.trim(); if (v !== '') x[k] = (k === 'g' || k === 'trip' || k === 'note') ? v : n(v) }); if (d._ph && d._ph.length) x.ph = d._ph.slice(); return x }).filter(x => x.g || x.trip || x.q || x.kg || x.m3 || x.ph);
+            if (md._spPh) { md._spPh.save(); md._spPh = null }
             if (!R.length) { o.sp = undefined; return true }
             o.sp = R;
             const ds = R.map(x => x.g).filter(Boolean).sort(); o.g = ds.length ? ds[ds.length - 1] : '';
@@ -7825,7 +7927,7 @@
         function renderPay() {
             let h = '<thead><tr><th>STT</th><th>Ngày thu</th><th>Người thu</th><th>Tiền Việt (VND)</th><th>Đô (USD)</th><th>Quy đổi (VND)</th><th>Ghi chú</th><th>Thao tác</th></tr></thead><tbody>';
             S.pays.forEach((p, i) => {
-                h += `<tr data-prow="${i}"><td class="stt">${i + 1}</td><td>${fd(p.d) || '–'}</td><td><b>${esc(p.w)}</b></td><td class="num">${f(n(p.vnd))}</td><td class="num">${f2(p.usd)}</td><td class="num">${f(n(p.vnd) + n(p.usd) * S.rate)}</td><td class="nt" title="${esc(p.note)}">${esc(p.note)}</td><td><div class="ed"><button class="ib" data-editp="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-delp="${i}" title="Xóa" aria-label="Xóa khoản thu">${ID}</button></div></td></tr>`
+                h += `<tr data-prow="${i}"><td class="stt">${i + 1}</td><td>${fd(p.d) || '–'}</td><td><b>${esc(p.w)}</b></td><td class="num">${f(n(p.vnd))}</td><td class="num">${f2(p.usd)}</td><td class="num">${f(n(p.vnd) + n(p.usd) * S.rate)}</td><td class="nt" title="${esc(p.note)}">${esc(p.note)}${(p.ph || []).length ? ` <span class="phc" title="${p.ph.length} ảnh bill">🧾 ${p.ph.length}</span>` : ''}</td><td><div class="ed"><button class="ib" data-editp="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-delp="${i}" title="Xóa" aria-label="Xóa khoản thu">${ID}</button></div></td></tr>`
             });
             if (!S.pays.length) h += '<tr><td colspan="8" style="padding:14px;color:var(--mu)">Chưa có khoản thu nào.</td></tr>';
             const a = S.pays.reduce((s, p) => s + n(p.vnd), 0), b = S.pays.reduce((s, p) => s + n(p.usd), 0);
@@ -8475,7 +8577,7 @@
             }
             if (t.dataset.delp !== undefined) {
                 const i = +t.dataset.delp, x = S.pays[i];
-                ask(`Xóa khoản thu của <b>${esc(x.w || '(chưa ghi tên)')}</b>${x.d ? ', ngày ' + esc(x.d.split('-').reverse().join('/')) : ''}?`).then(ok => { if (ok) { S.pays.splice(i, 1); save(); all() } })
+                ask(`Xóa khoản thu của <b>${esc(x.w || '(chưa ghi tên)')}</b>${x.d ? ', ngày ' + esc(x.d.split('-').reverse().join('/')) : ''}?`).then(ok => { if (ok) { (x.ph || []).forEach(id => window.__phx && window.__phx.rm(id)); S.pays.splice(i, 1); save(); all() } })
             }
             if (t.dataset.trip !== undefined) { $('ftrip').value = t.dataset.trip; showTab('don'); renderTable(); return }
             if (t.dataset.cust !== undefined) { $('fc').value = t.dataset.cust; $('q').value = ''; showTab('don'); renderTable(); scrollTo(0, 0) }
@@ -8557,11 +8659,11 @@
             md.classList.remove('hid'); const close = () => { md.classList.add('hid'); md.innerHTML = '' };
             $('mc').onclick = close; md.onclick = e => { if (e.target === md) close() };
             const first = md.querySelector('input,select'); if (first) first.focus();
-            if (fields === RF) { usdWire(); spWire(init) }
+            if (fields === RF) { usdWire(); spWire(init) } if (fields === PF) payWire(init)
             md.querySelector('form').onsubmit = e => {
                 e.preventDefault(); const o = {};
                 for (const x of fields) { const raw = $('ff_' + x.k).value, v = x.t === 'password' ? raw : raw.trim(); if (x.req && !v) { $('fe').textContent = 'Nhập ' + x.l.toLowerCase() + '.'; $('ff_' + x.k).focus(); return } if (x.min && v.length < x.min) { $('fe').textContent = x.l + ' cần từ ' + x.min + ' ký tự.'; $('ff_' + x.k).focus(); return } o[x.k] = x.t === 'number' ? n(v) : v }
-                if (fields === RF) spFinish(o); commit(o); close(); save(); all()
+                if (fields === RF) spFinish(o); if (fields === PF) payFinish(o); commit(o); close(); save(); all()
             }
         }
         const short = v => v >= 1e9 ? (v / 1e9).toFixed(1) + ' tỷ' : v >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + ' tr' : f(v);
@@ -9724,6 +9826,11 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
             /* lưu ảnh lên máy chủ và CHỜ kết quả thật (bản cũ bắn rồi quên nên lỗi vẫn tưởng đã lưu) */
             async function up(id, u) { SB_G[id] = () => u; delete SB_REV[id]; const t0 = TOAST_ON; TOAST_ON = false; let ok; try { ok = await sbSend(id) } finally { TOAST_ON = t0 } delete SB_G[id]; if (ok !== true) safe(() => stamp()); return ok === true }
             async function load(ids) { const miss = ids.filter(i => !PH[i]); if (!miss.length || !SB_ON || OFFLINE) return; try { const o = await sbPullKeys(miss); miss.forEach(i => { if (typeof o[i] === 'string' && o[i]) { PH[i] = o[i]; delete FAIL[i] } else FAIL[i] = 1 }) } catch (e) { console.warn(e); miss.forEach(i => FAIL[i] = 1) } }
+            window.__phx = {
+                PH, FAIL, MX, load, view: (...a) => view(...a), ready: () => SB_READY && !SB_DEAD,
+                rm: id => { delete PH[id]; if (SB_REV[id] != null && SB_READY && !SB_DEAD) sbPush(id, () => '') },
+                add: async f => { const u = await comp(f), id = 'ph-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); if (!await up(id, u)) return { ok: false, err: SB_ERR || 'lỗi mạng' }; PH[id] = u; return { ok: true, id } }
+            };
             /* ===== Chat AI hỏi đáp về đơn hàng (gọi Edge Function "ai-chat"; khóa API nằm trên máy chủ) ===== */
             (function () {
                 const H = []; let busy = false, built = false;
@@ -9809,7 +9916,7 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
                 const r = S.rows[+b.dataset.tg]; if (!r) return;
                 if (!isAd()) { toast('err', 'Chỉ tài khoản quản trị mới báo Telegram.'); return }
                 if (!SB_ON) { toast('err', 'Chưa kết nối máy chủ.'); return }
-                const ids = r.ph || []; if (!ids.length) { toast('err', 'Đơn này chưa có ảnh hàng. Mở đơn, thêm ảnh đính kèm rồi báo lại.'); return }
+                const ids = phAll(r); if (!ids.length) { toast('err', 'Đơn này chưa có ảnh hàng. Mở đơn, thêm ảnh đính kèm rồi báo lại.'); return }
                 b.disabled = true;
                 try {
                     await load(ids); const imgs = ids.filter(i => PH[i]).map(i => PH[i].split(',')[1]);
@@ -9822,7 +9929,7 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
             const thumbs = ids => ids.map((id, k) => `<div class="phw"><button type="button" class="pht" data-ph="${id}" aria-label="Xem ảnh ${k + 1}">${PH[id] ? `<img src="${PH[id]}" alt="Ảnh ${k + 1}">` : FAIL[id] ? '<span title="Bấm để tải lại">⟳</span>' : '<i class="phs"></i>'}</button>${isAd() ? `<b class="phx" data-del="${id}" title="Xóa ảnh này" role="button" aria-label="Xóa ảnh ${k + 1}">✕</b>` : ''}</div>`).join('');
 
             /* trình xem ảnh: chuyển ảnh, vuốt, phím mũi tên, phóng to, tải về, xóa */
-            function view(r, k, i) {
+            function view(r, k, i, XO) {
                 let zm = false; const L = () => r.ph || [], o = document.createElement('div'); o.className = 'plb';
                 o.innerHTML = '<div class="plt"><b id="plc"></b><span><a id="pld">⬇ Tải về</a>' + (isAd() ? '<button type="button" id="plx">🗑 Xóa</button>' : '') + '<button type="button" id="plq" aria-label="Đóng">✕</button></span></div><button type="button" id="plp" class="pln" aria-label="Ảnh trước">‹</button><div class="plm" id="plm"><img id="pli" alt="Ảnh đơn"></div><button type="button" id="pln" class="pln" aria-label="Ảnh sau">›</button>';
                 document.body.appendChild(o); const $$ = s => o.querySelector(s);
@@ -9833,12 +9940,61 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
                 $$('#plq').onclick = close; $$('#plp').onclick = e => { e.stopPropagation(); show(k - 1) }; $$('#pln').onclick = e => { e.stopPropagation(); show(k + 1) };
                 $$('#plm').onclick = e => { if (e.target.id === 'pli') { zm = !zm; $$('#plm').classList.toggle('zm', zm) } else close() };
                 let x0 = null; o.ontouchstart = e => { x0 = zm ? null : e.touches[0].clientX }; o.ontouchend = e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 60) show(k + (dx < 0 ? 1 : -1)); x0 = null };
-                const del = $$('#plx'); if (del) del.onclick = () => { if (!confirm('Xóa ảnh này khỏi đơn?')) return; const id = L()[k]; r.ph = L().filter(x => x !== id); if (SB_REV[id] != null && SB_READY && !SB_DEAD) sbPush(id, () => ''); save(); all(); showRow(i); if (!L().length) close(); else show(Math.min(k, L().length - 1)) };
+                const del = $$('#plx'); if (del) del.onclick = () => { if (!confirm('Xóa ảnh này khỏi đơn?')) return; const id = L()[k]; if (XO && XO.del) XO.del(id); else { r.ph = L().filter(x => x !== id); if (SB_REV[id] != null && SB_READY && !SB_DEAD) sbPush(id, () => ''); save(); all(); showRow(i) } if (!L().length) close(); else show(Math.min(k, L().length - 1)) };
                 show(k)
             }
 
+            /* ảnh giao hàng theo từng đợt, hiện trong chi tiết đơn */
+            function boxSp(r, i, act) {
+                if (!spPh(r).length) return;
+                const bx = document.createElement('div'); bx.className = 'dn';
+                const draw = () => { if (!document.body.contains(bx)) return; const S2 = spl(r); bx.innerHTML = '<small>Ảnh theo đợt giao (' + spPh(r).length + ')</small>' + S2.map((s, k) => (s.ph || []).length ? `<div style="margin-top:8px"><small>Đợt ${k + 1}/${S2.length} · ${s.g ? fd(s.g) : 'chưa rõ ngày'}${s.trip ? ' · xe ' + esc(s.trip) : ''}</small><div class="phg">${(s.ph || []).map((id, j) => `<div class="phw"><button type="button" class="pht" data-pv="${id}" data-sk="${k}" aria-label="Xem ảnh ${j + 1}">${PH[id] ? `<img src="${PH[id]}" alt="Ảnh ${j + 1}">` : FAIL[id] ? '<span title="Bấm để tải lại">⟳</span>' : '<i class="phs"></i>'}</button></div>`).join('')}</div></div>` : '').join('') };
+                draw(); act.parentNode.insertBefore(bx, act); load(spPh(r).map(x => x.id)).then(draw);
+                bx.onclick = async e => {
+                    const b = e.target.closest('[data-pv]'); if (!b) return; const id = b.dataset.pv, k = +b.dataset.sk, s = spl(r)[k]; if (!s) return;
+                    if (!PH[id]) { b.innerHTML = '<i class="phs"></i>'; delete FAIL[id]; await load([id]); draw() }
+                    if (!PH[id]) { toast('err', 'Không tải được ảnh này từ máy chủ. Bấm lại để thử lần nữa.'); return }
+                    view({ k: (r.k || 'Đơn hàng') + ' · Đợt ' + (k + 1), get ph() { return s.ph || [] } }, (s.ph || []).indexOf(id), i, { del: id2 => { s.ph = (s.ph || []).filter(z => z !== id2); delete PH[id2]; if (SB_REV[id2] != null && SB_READY && !SB_DEAD) sbPush(id2, () => ''); save(); all(); showRow(i) } })
+                }
+            }
+            /* ảnh bill của khoản thu, trong chi tiết khoản thu */
+            function payBox(i) {
+                const p = S.pays[i], act = document.querySelector('#md .dlg .act'); if (!p || !act) return; const ids = p.ph || []; if (!ids.length && !isAd()) return;
+                const bx = document.createElement('div'); bx.className = 'dn';
+                bx.innerHTML = '<small>Ảnh bill (' + ids.length + '/' + MX + ')</small><div class="phg">' + thumbs(ids) + '</div>' + (isAd() ? '<div class="phb"><button type="button" id="pbadd">📷 Thêm ảnh bill</button><span class="phm" id="pbm">Chọn, kéo thả hoặc dán (Ctrl+V) ảnh</span><input type="file" id="pbf" accept="image/*" multiple hidden></div>' : '');
+                act.parentNode.insertBefore(bx, act);
+                const g = bx.querySelector('.phg'), redraw = () => { if (document.body.contains(g)) g.innerHTML = thumbs(p.ph || []) }; load(ids).then(redraw);
+                const rmId = id => { p.ph = (p.ph || []).filter(x => x !== id); delete PH[id]; if (SB_REV[id] != null && SB_READY && !SB_DEAD) sbPush(id, () => '') };
+                const ttl = () => 'Bill · ' + (p.w || '') + ' · ' + f(n(p.vnd)) + ' đ' + (n(p.usd) ? ' + ' + f2(p.usd) + ' USD' : '');
+                bx.onclick = async e => {
+                    const dx = e.target.closest('[data-del]');
+                    if (dx) { if (!confirm('Xóa ảnh bill này?')) return; rmId(dx.dataset.del); save(); all(); showPay(i); return }
+                    const b = e.target.closest('[data-ph]'); if (!b) return; const id = b.dataset.ph;
+                    if (!PH[id]) { b.innerHTML = '<i class="phs"></i>'; delete FAIL[id]; await load([id]); redraw() }
+                    if (PH[id]) view({ k: ttl(), get ph() { return p.ph || [] } }, (p.ph || []).indexOf(id), i, { del: id2 => { rmId(id2); save(); all(); showPay(i) } }); else toast('err', 'Không tải được ảnh này từ máy chủ. Bấm lại để thử lần nữa.')
+                };
+                const add = bx.querySelector('#pbadd'); if (!add) return;
+                async function put(F) {
+                    F = [...F].filter(f => /^image\//.test(f.type)); if (!F.length) return; add.disabled = true; const m = bx.querySelector('#pbm'); let n2 = 0;
+                    try {
+                        for (const f of F) {
+                            if ((p.ph || []).length >= MX) { toast('err', 'Tối đa ' + MX + ' ảnh bill mỗi khoản thu.'); break }
+                            if (!SB_READY || SB_DEAD) { toast('err', 'Chưa kết nối máy chủ nên không lưu được ảnh. Hãy tải lại trang.'); break }
+                            m.textContent = 'Đang nén và tải lên ' + (n2 + 1) + '/' + F.length + '…';
+                            const u = await comp(f), id = 'ph-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+                            if (!await up(id, u)) { toast('err', 'Không lưu được ảnh (' + (SB_ERR || 'lỗi mạng') + ').'); break }
+                            PH[id] = u; (p.ph = p.ph || []).push(id); n2++
+                        }
+                    } catch (x) { toast('err', x.message) }
+                    if (n2) { save(); toast('ok', 'Đã thêm ' + n2 + ' ảnh bill.') } all(); showPay(i)
+                }
+                add.onclick = () => bx.querySelector('#pbf').click(); bx.querySelector('#pbf').onchange = e => put(e.target.files);
+                bx.ondragover = e => { e.preventDefault(); bx.classList.add('drg') }; bx.ondragleave = () => bx.classList.remove('drg'); bx.ondrop = e => { e.preventDefault(); bx.classList.remove('drg'); put(e.dataTransfer.files) };
+                const onp = e => { if (!document.body.contains(bx)) { document.removeEventListener('paste', onp); return } if (e.clipboardData && e.clipboardData.files.length) { e.preventDefault(); put(e.clipboardData.files) } }; document.addEventListener('paste', onp)
+            }
+            const _sp = showPay; showPay = function (i) { _sp(i); safe(() => payBox(i)) };
             function box(i) {
-                const r = S.rows[i], act = document.querySelector('#md .dlg .act'); if (!r || !act) return; if (!act.querySelector('#cpf')) { [['cpf', '👤 Hồ sơ', () => profile(key(r.k))], ['cqr', '🔳 QR', () => qrBox(r)], ['cbl', '🧾 Bill', () => payBill([r], key(r.k))]].reverse().forEach(([id, tx, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = tx; b.onclick = fn; act.insertBefore(b, act.firstChild) }) } tagUI(r, i, act); const ids = r.ph || []; if (!ids.length && !isAd()) return;
+                const r = S.rows[i], act = document.querySelector('#md .dlg .act'); if (!r || !act) return; if (!act.querySelector('#cpf')) { [['cpf', '👤 Hồ sơ', () => profile(key(r.k))], ['cqr', '🔳 QR', () => qrBox(r)], ['cbl', '🧾 Bill', () => payBill([r], key(r.k))]].reverse().forEach(([id, tx, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = tx; b.onclick = fn; act.insertBefore(b, act.firstChild) }) } tagUI(r, i, act); safe(() => boxSp(r, i, act)); const ids = r.ph || []; if (!ids.length && !isAd()) return;
                 const bx = document.createElement('div'); bx.className = 'dn'; bx.innerHTML = '<small>Ảnh đính kèm (' + ids.length + '/' + MX + ')</small><div class="phg">' + thumbs(ids) + '</div>' + (isAd() ? '<div class="phb"><button type="button" id="phadd">📷 Thêm ảnh</button><span class="phm" id="phm">Chọn, kéo thả hoặc dán (Ctrl+V) ảnh</span><input type="file" id="phf" accept="image/*" multiple hidden></div>' : ''); act.parentNode.insertBefore(bx, act);
                 const g = bx.querySelector('.phg'), redraw = () => { if (document.body.contains(g)) g.innerHTML = thumbs(r.ph || []) }; load(ids).then(redraw);
                 bx.onclick = async e => {
@@ -9893,7 +10049,7 @@ html.dk{filter:invert(1) hue-rotate(180deg)}html.dk img,html.dk video{filter:inv
             try {
                 const _rt = renderTable; renderTable = function () {
                     const x = _rt.apply(this, arguments); safe(() => document.querySelectorAll('tr[data-row]').forEach(tr => {
-                        const r = S.rows[+tr.dataset.row]; if (!r || tr.querySelector('.mid')) return; const c = r.ph && r.ph.length, td = [...tr.cells].find(t => t.textContent.trim() === String(r.k || '').trim()) || tr.cells[1] || tr.cells[0]; if (!td) return;
+                        const r = S.rows[+tr.dataset.row]; if (!r || tr.querySelector('.mid')) return; const c = phAll(r).length, td = [...tr.cells].find(t => t.textContent.trim() === String(r.k || '').trim()) || tr.cells[1] || tr.cells[0]; if (!td) return;
                         td.insertAdjacentHTML('beforeend', '<div>' + (r.id ? '<span class="mid">' + esc(r.id) + '</span>' : '') + (r.tags || []).map(t => '<span class="tgc" data-t="' + esc(t) + '" title="Bấm để lọc theo thẻ">' + esc(t) + '</span>').join('') + (c ? '<span class="phc" title="' + c + ' ảnh đính kèm">📷 ' + c + '</span>' : '') + '</div>')
                     })); return x
                 }
@@ -9988,10 +10144,10 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
             }
             /* thư viện ảnh của tháng đang xem */
             async function gallery() {
-                const items = []; S.rows.forEach((r, i) => (r.ph || []).forEach(id => items.push({ r, i, id }))); if (!items.length) { toast('err', 'Tháng này chưa có đơn nào có ảnh.'); return }
+                const items = []; S.rows.forEach((r, i) => { (r.ph || []).forEach(id => items.push({ r, i, id })); spPh(r).forEach(x => items.push({ r, i, id: x.id, s: x.s, k: x.k })) }); if (!items.length) { toast('err', 'Tháng này chưa có đơn nào có ảnh.'); return }
                 const o = document.createElement('div'); o.className = 'rpo'; o.innerHTML = '<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b>🖼 Thư viện ảnh ' + esc(mk(S.cur)) + ' (' + items.length + ')</b><button type="button" id="glx">Đóng</button></div><div class="phg" id="glg"></div></div>'; document.body.appendChild(o);
                 const draw = () => { const g = o.querySelector('#glg'); if (g) g.innerHTML = items.map((x, k) => `<div class="phw"><button type="button" class="pht gl" data-k="${k}" title="${esc(x.r.k)}">${PH[x.id] ? `<img src="${PH[x.id]}" alt="">` : FAIL[x.id] ? '⟳' : '<i class="phs"></i>'}</button></div>`).join('') };
-                o.onclick = e => { if (e.target === o || e.target.id === 'glx') { o.remove(); return } const b = e.target.closest('[data-k]'); if (!b) return; const x = items[+b.dataset.k]; if (PH[x.id]) view(x.r, (x.r.ph || []).indexOf(x.id), x.i) };
+                o.onclick = e => { if (e.target === o || e.target.id === 'glx') { o.remove(); return } const b = e.target.closest('[data-k]'); if (!b) return; const x = items[+b.dataset.k]; if (PH[x.id]) { if (x.s) view({ k: (x.r.k || 'Đơn hàng') + ' · Đợt ' + (x.k + 1), get ph() { return x.s.ph || [] } }, (x.s.ph || []).indexOf(x.id), x.i, { del: id2 => { x.s.ph = (x.s.ph || []).filter(z => z !== id2); delete PH[id2]; if (SB_REV[id2] != null && SB_READY && !SB_DEAD) sbPush(id2, () => ''); save(); all() } }); else view(x.r, (x.r.ph || []).indexOf(x.id), x.i) } };
                 draw(); const all2 = items.map(x => x.id); for (let k = 0; k < all2.length; k += 30) { await load(all2.slice(k, k + 30)); if (!document.body.contains(o)) return; draw() }
             }
             const fab = document.getElementById('fab'); if (fab) { fab.insertAdjacentHTML('beforeend', '<button type="button" id="glbtn" title="Thư viện ảnh của tháng đang xem">🖼</button>'); document.getElementById('glbtn').onclick = () => safe(gallery); fab.insertAdjacentHTML('beforeend', '<button type="button" id="cubtn" title="Hồ sơ khách hàng">👥</button><button type="button" id="mrbtn" title="Báo cáo cuối tháng">📑</button>'); document.getElementById('cubtn').onclick = () => safe(customers); document.getElementById('mrbtn').onclick = () => safe(() => mreport()) }
