@@ -7857,11 +7857,24 @@
         const BY = { KG: 'Theo kg', VND: 'VND', USD: 'USD', M3: 'Theo khối' };
         const IE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
         const ID = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+        /* ===== Phân trang: chọn số dòng mỗi trang (nhớ lại trên máy), áp dụng cho bảng đơn hàng và bảng khoản thu ===== */
+        function pgState() { if (!window.__pg) { let z = {}; try { z = JSON.parse(localStorage.getItem('bc-pgs')) || {} } catch (e) { } window.__pg = { sz: z, p: {}, sig: '' }; document.head.insertAdjacentHTML('beforeend', '<style>.pgb{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:10px 0;font-size:13px;color:var(--mu)}.pgb select{padding:5px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--in,transparent);color:inherit;font:inherit}.pgb .pgn{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.pgb .pgn button{min-width:34px;height:32px;padding:0 8px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:inherit;cursor:pointer;font:inherit}.pgb .pgn button.on{background:var(--pr,#1f4e9e);border-color:var(--pr,#1f4e9e);color:#fff;font-weight:700}.pgb .pgn button:disabled{opacity:.35;cursor:default}.pgb .pgn i{font-style:normal;padding:0 2px}</style>') } return window.__pg }
+        function pgOf(k, total) { const g = pgState(), sz = g.sz[k] === 0 ? 0 : (g.sz[k] || 50), pages = sz ? Math.max(1, Math.ceil(total / sz)) : 1, p = Math.min(Math.max(1, g.p[k] || 1), pages); g.p[k] = p; return { sz, pages, p, a: sz ? (p - 1) * sz : 0, b: sz ? Math.min(total, p * sz) : total, total } }
+        function pgSig() { const g = pgState(), sig = ['q', 'fc', 'ftrip', 'fp', 'fdv', 'so', 'df', 'd1', 'd2'].map(i => ($(i) || {}).value).join('|') + '|' + S.cur; if (sig !== g.sig) { g.sig = sig; g.p.don = 1 } }
+        function pgBar(k, tbl, total, redraw) {
+            const g = pgState(), P = pgOf(k, total), wrap = tbl.parentNode; let el = document.getElementById('pg-' + k);
+            if (!el) { el = document.createElement('div'); el.id = 'pg-' + k; el.className = 'pgb'; wrap.after(el) }
+            if (!total) { el.innerHTML = ''; return }
+            const pg = []; for (let i = 1; i <= P.pages; i++) if (i === 1 || i === P.pages || Math.abs(i - P.p) <= 1) pg.push(i); const nums = []; pg.forEach((i, j) => { if (j && i - pg[j - 1] > 1) nums.push('…'); nums.push(i) });
+            el.innerHTML = `<div>Hiển thị <select data-pgs>${[10, 20, 50, 100, 200, 0].map(v => `<option value="${v}" ${v === P.sz ? 'selected' : ''}>${v || 'Tất cả'}</option>`).join('')}</select> dòng/trang · <b>${P.a + 1}–${P.b}</b> / ${total}</div>` + (P.pages > 1 ? `<div class="pgn"><button type="button" data-pg="1" ${P.p === 1 ? 'disabled' : ''} aria-label="Trang đầu">«</button><button type="button" data-pg="${P.p - 1}" ${P.p === 1 ? 'disabled' : ''} aria-label="Trang trước">‹</button>${nums.map(v => v === '…' ? '<i>…</i>' : `<button type="button" data-pg="${v}" class="${v === P.p ? 'on' : ''}">${v}</button>`).join('')}<button type="button" data-pg="${P.p + 1}" ${P.p === P.pages ? 'disabled' : ''} aria-label="Trang sau">›</button><button type="button" data-pg="${P.pages}" ${P.p === P.pages ? 'disabled' : ''} aria-label="Trang cuối">»</button></div>` : '');
+            el.onchange = e => { const sel = e.target.closest('[data-pgs]'); if (!sel) return; g.sz[k] = +sel.value; g.p[k] = 1; try { localStorage.setItem('bc-pgs', JSON.stringify(g.sz)) } catch (x) { } redraw() };
+            el.onclick = e => { const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return; g.p[k] = +b.dataset.pg; redraw(); wrap.scrollIntoView({ block: 'start', behavior: 'smooth' }) }
+        }
         function renderTable() {
-            const ix = view(), XE = effXe(ix.map(i => S.rows[i]));
+            const ix = view(), XE = effXe(ix.map(i => S.rows[i])); pgSig();
             let h = '<thead><tr>' + ['STT', 'Ngày giao', 'Khách', 'Thu tiền / Giao hàng', 'Ngày hàng về', 'SL', 'Đơn vị', 'Kg', 'm³', 'Cước VND', 'Cước USD', 'Tính theo', 'Số xe', 'Số đơn', 'Ghi chú', 'Thao tác'].map(t => `<th>${t}</th>`).join('') + '</tr></thead><tbody>';
-            let no = 0;
-            for (const i of ix) {
+            const PG = pgOf('don', ix.length); let no = PG.a;
+            for (const i of ix.slice(PG.a, PG.b)) {
                 const r = S.rows[i]; no++;
                 const Z = '<span class="zr">–</span>', zz = v => n(v) ? f2(v) : Z;
                 const vn = isU(r) ? (fee(r) ? `<span title="Tỷ giá ${f(rt(r))} VND/USD">${f(fee(r))}</span>` : Z) : r.by === 'KG' ? (fee(r) ? f(fee(r)) : Z) : !n(r.vnd) ? Z : `<span>${f(n(r.vnd))}</span>`;
@@ -7881,7 +7894,7 @@
                 ft = `<tfoot><tr><td colspan="5">Tổng ${R.length} dòng${ix.length < S.rows.length ? ' (đang lọc)' : ''}${Object.keys(un).length > 1 ? `<div style="font-size:12px;font-weight:400;opacity:.8">${esc(ub)}</div>` : ''}</td><td class="num" title="${esc(ub)}">${f2(sm('q'))}</td><td title="${esc(ub)}">${Object.keys(un).length === 1 ? esc(Object.keys(un)[0]) : ''}</td><td class="num">${f(R.reduce((a, r) => a + kgT(r), 0))}${R.some(r => kgK(r)) ? sub('Không gồm', f(R.reduce((a, r) => a + kgK(r), 0)) + ' (khối)') : ''}</td><td class="num">${f2(sm('m3'))}</td><td class="num">${f(tv)}${sub('Đã thu', f(pv))}${sub('Chưa thu', f(nv))}</td><td class="num">${f2(tu)}${sub('Đã thu', f2(pu))}${sub('Chưa thu', f2(nu))}</td><td></td><td class="num">${f(XE.reduce((a, b) => a + b, 0))}</td><td class="num">${f(sm('don'))}</td><td colspan="2"></td></tr></tfoot>`
             }
             $('tb').innerHTML = h + '</tbody>' + ft;
-            applyRO()
+            applyRO(); pgBar('don', $('tb'), ix.length, renderTable)
         }
 
         function updateSpans() { S.rows.forEach((r, i) => { const e = $('fv' + i); if (e) e.textContent = f(fee(r)) }) }
@@ -7926,12 +7939,14 @@
 
         function renderPay() {
             let h = '<thead><tr><th>STT</th><th>Ngày thu</th><th>Người thu</th><th>Tiền Việt (VND)</th><th>Đô (USD)</th><th>Quy đổi (VND)</th><th>Ghi chú</th><th>Thao tác</th></tr></thead><tbody>';
-            S.pays.forEach((p, i) => {
+            const PG = pgOf('pay', S.pays.length);
+            S.pays.slice(PG.a, PG.b).forEach((p, j) => {
+                const i = PG.a + j;
                 h += `<tr data-prow="${i}"><td class="stt">${i + 1}</td><td>${fd(p.d) || '–'}</td><td><b>${esc(p.w)}</b></td><td class="num">${f(n(p.vnd))}</td><td class="num">${f2(p.usd)}</td><td class="num">${f(n(p.vnd) + n(p.usd) * S.rate)}</td><td class="nt" title="${esc(p.note)}">${esc(p.note)}${(p.ph || []).length ? ` <span class="phc" title="${p.ph.length} ảnh bill">🧾 ${p.ph.length}</span>` : ''}</td><td><div class="ed"><button class="ib" data-editp="${i}" title="Sửa" aria-label="Sửa">${IE}</button><button class="ib dl" data-delp="${i}" title="Xóa" aria-label="Xóa khoản thu">${ID}</button></div></td></tr>`
             });
             if (!S.pays.length) h += '<tr><td colspan="8" style="padding:14px;color:var(--mu)">Chưa có khoản thu nào.</td></tr>';
             const a = S.pays.reduce((s, p) => s + n(p.vnd), 0), b = S.pays.reduce((s, p) => s + n(p.usd), 0);
-            $('pay').innerHTML = h + `</tbody><tfoot><tr><td colspan="3">Tổng đã thu</td><td class="num">${f(a)}</td><td class="num">${f2(b)}</td><td class="num">${f(a + b * S.rate)}</td><td colspan="2"></td></tr></tfoot>`; applyRO()
+            $('pay').innerHTML = h + `</tbody><tfoot><tr><td colspan="3">Tổng đã thu</td><td class="num">${f(a)}</td><td class="num">${f2(b)}</td><td class="num">${f(a + b * S.rate)}</td><td colspan="2"></td></tr></tfoot>`; applyRO(); pgBar('pay', $('pay'), S.pays.length, renderPay)
         }
 
         /* ---- tab riêng của chủ: lương và phí anh Nghĩa ---- */
