@@ -7790,16 +7790,16 @@
             const tot = vnd;
             const yes = R.filter(r => pd(r) === 'yes'), no = R.filter(r => pd(r) === 'no'), le = R.filter(r => r.loai === 'le'), nho = R.filter(r => r.loai === 'nho');
             let pv = 0, pu = 0; yes.forEach(r => { pv += fee(r) });
-            const pt = pv;
+            const pt = (S.pays || []).reduce((a, p) => a + n(p.vnd) + n(p.usd) * S.rate, 0); /* Đã thu = tổng bảng «Chi phí đã thu» (cùng tỷ giá hiện tại) */
             const sum = k => R.reduce((a, r) => a + n(r[k]), 0);
             const kgm = R.filter(r => r.by === 'KG').reduce((a, r) => a + n(r.kg), 0);
-            const left = no.reduce((a, r) => a + fee(r), 0);
+            const left = Math.max(0, tot - pt);
             const curr = A => { const v = A.reduce((a, r) => a + (!isU(r) ? fee(r) : 0), 0), u = A.reduce((a, r) => a + (isU(r) ? n(r.usd) : 0), 0), p = []; if (v) p.push(f(v) + ' VND'); if (u) p.push(f2(u) + ' USD'); return p.length ? p.join(' + ') : '0 VND' };
             const card = (t, v, s, c) => `<div class="k ${c || ''}"><small>${t}</small><b>${v}</b>${s ? `<div class="s">${s}</div>` : ''}</div>`;
             $('cards').innerHTML =
                 card('Tổng doanh số (quy đổi VND)', f(tot), momDelta(tot), 'big') +
-                card('Đã thu (quy đổi VND)', f(pt), 'Theo cột Thu tiền') +
-                card('Còn phải thu', `<span class="${left > 0 ? 'neg' : ''}">${f(left)}</span>`, 'Tổng các đơn chưa thu') +
+                card('Đã thu (quy đổi VND)', f(pt), 'Bằng tổng bảng Chi phí đã thu') +
+                card('Còn phải thu', `<span class="${left > 0 ? 'neg' : ''}">${f(left)}</span>`, 'Tổng doanh số trừ đã thu') +
                 card('Đơn đã thu', `<span class="ok">${yes.length} đơn</span>`, `${f(yes.reduce((a, r) => a + fee(r), 0))} VND, theo cột Thu tiền`) +
                 card('Đơn chưa thu', `<span class="${no.length ? 'neg' : ''}">${no.length} đơn</span>`, `${f(no.reduce((a, r) => a + fee(r), 0))} VND, theo cột Thu tiền`) +
                 card('Số xe / số đơn', `${f(effXe(R).reduce((a, b) => a + b, 0))} / ${f(sum('don'))}`, 'Đơn cùng chuyến xe chung chỉ tính 1 xe. Số đơn gồm cả hỏa tốc và kiện nhỏ') +
@@ -7941,23 +7941,22 @@
             rateLast = Date.now(); S.rate = r.rate; $('rate').value = S.rate; save(); all();
             stamp(false, `Đã cập nhật tỷ giá ${f(r.rate)} VND/USD (${r.src}, lúc ${hh}).`)
         };
-        // Tự lấy tỷ giá định kỳ (đổi số phút ở RATE_MIN). Chỉ chạy với tài khoản quản trị, tab đang mở, và không ghi đè khi đang chỉnh tay.
-        const RATE_MIN = 10; let rateLast = 0, rateBusy = false;
+        // Tự lấy tỷ giá: 1 lần ngay khi vào trang (sau khi đăng nhập quản trị), sau đó mỗi RATE_MIN phút lấy lại 1 lần. Không ghi đè khi đang chỉnh tay.
+        const RATE_MIN = 10; let rateBusy = false;
         async function autoRate() {
-            if (rateBusy || document.hidden || !isAd() || !$('rate').readOnly) return;
-            if (Date.now() - rateLast < RATE_MIN * 60000) return;
+            if (rateBusy || !isAd() || !$('rate').readOnly) return;
             rateBusy = true;
             try {
-                const r = await fetchRate(); rateLast = Date.now();
+                const r = await fetchRate();
                 if (r.rate !== S.rate && $('rate').readOnly) {
                     S.rate = r.rate; $('rate').value = S.rate; save(); all();
                     stamp(false, `Tự cập nhật tỷ giá ${f(r.rate)} VND/USD (${r.src}, lúc ${new Date().toLocaleTimeString('vi-VN')}).`)
                 }
-            } catch (e) { rateLast = Date.now() - (RATE_MIN - 1) * 60000 }
+            } catch (e) { }
             rateBusy = false
         }
-        setInterval(autoRate, 30000); setTimeout(autoRate, 3000);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) autoRate() });
+        const rateFirst = setInterval(() => { if (isAd()) { clearInterval(rateFirst); autoRate() } }, 1500);
+        setInterval(autoRate, RATE_MIN * 60000);
         /* ---- Phiếu giao nhận ---- */
         const dcfg = () => ({ no: 599, ct: { 'Anh Nghĩa': { n: 'Nghĩa', p: '0919 068 131', a: 'Công ty XNK Thảo Uyên' }, 'Anh Triết': { n: 'Triết', p: '+855 97 948 3388', a: 'Phnom Penh, Campuchia' } }, rv: { 'Anh Nghĩa': 'Anh Triết', 'Anh Trọng': 'Anh Triết' } });
         const cfg = () => S.cfg || (S.cfg = dcfg());
@@ -8579,7 +8578,7 @@
         }
         function mcalc(M) {
             let vnd = 0, usd = 0, kg = 0; M.rows.forEach(r => { vnd += fee(r); kg += kgT(r) });
-            return { n: M.rows.length, kg, tot: vnd, pt: M.rows.reduce((a, r) => a + (pd(r) === 'yes' ? fee(r) : 0), 0), left: M.rows.reduce((a, r) => a + (pd(r) === 'no' ? fee(r) : 0), 0) }
+            return { n: M.rows.length, kg, tot: vnd, pt: (M.pays || []).reduce((a, p) => a + n(p.vnd) + n(p.usd) * S.rate, 0), left: Math.max(0, vnd - (M.pays || []).reduce((a, p) => a + n(p.vnd) + n(p.usd) * S.rate, 0)) }
         }
         function renderMo() { $('mo').innerHTML = Object.keys(S.months).sort().map(m => `<option value="${m}" ${m === S.cur ? 'selected' : ''}>${mk(m)}${isLk(m) ? ' 🔒' : ''}</option>`).join('') }
         function renderMonths() {
