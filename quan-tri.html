@@ -7121,7 +7121,7 @@
                     <table id="dt"></table>
                 </div>
                 <p class="note">Gồm mọi đơn đang ở trạng thái «Chưa thu» của tất cả các tháng. Số ngày tính từ ngày
-                    giao. Bấm «Sao chép nhắc nợ» để lấy sẵn tin nhắn gửi khách qua Zalo / Telegram.</p>
+                    giao. Bấm «Sao chép nhắc nợ» để lấy sẵn tin nhắn gửi khách qua Zalo.</p>
             </section>
         </div>
         <div class="tp hid" id="tp-ln">
@@ -7708,6 +7708,8 @@
         const f2 = v => n(v).toLocaleString('vi-VN', { maximumFractionDigits: 2 });
         const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const rt = r => n(r.rate) || S.rate;
+        /* Khóa tỷ giá: đơn tính USD / theo khối chưa có tỷ giá riêng thì ghi cố định tỷ giá hiện tại vào đơn, đổi tỷ giá sau này không làm số cũ nhảy theo */
+        const lockRate = rows => { let c = 0; (rows || []).forEach(r => { if (r && !n(r.rate) && (isU(r) || r.by === 'M3')) { r.rate = S.rate; c++ } }); return c };
         const isU = r => r.by === 'USD' || r.by === 'M3';
         const fee = r => isU(r) ? n(r.usd) * rt(r) : r.by === 'KG' ? n(r.kg) * (n(r.pk) || S.kg) : n(r.vnd);
         /* kg dùng để cộng tổng: dòng «Theo khối» không cộng kg (chỉ dùng tính phí ông Nghĩa) */
@@ -8143,8 +8145,9 @@
         const bRows = () => Object.keys(S.months).sort().flatMap(m => S.months[m].rows.map((r, i) => ({ r, m, i })));
         const dm = d => d ? d.split('-').reverse().join('-') : '';
         const en = v => Math.round(v).toLocaleString('en-US');
-        const bVnd = r => r.by === 'M3' ? n(r.m3) * n(r.pm3) * (n(r.rate) || S.rate) : r.by !== 'VND' && n(r.kg) ? n(r.kg) * (n(r.pk) || S.kg) : fee(r);
-        const bUsd = r => r.by === 'M3' ? n(r.m3) * n(r.pm3) : (r.by === 'USD' && !n(r.kg)) ? n(r.usd) : (S.rate ? bVnd(r) / S.rate : 0);
+        let BRATE = 0, BOVR = 0; const brate = () => BOVR || BRATE || S.rate; /* BRATE: tỷ giá khóa của phiếu; BOVR: tỷ giá người dùng chọn (hiện tại / nhập tay) áp cho cả phiếu */
+        const bVnd = r => r.by === 'M3' ? n(r.m3) * n(r.pm3) * (BOVR || n(r.rate) || brate()) : r.by !== 'VND' && n(r.kg) ? n(r.kg) * (n(r.pk) || S.kg) : (BOVR && isU(r)) ? n(r.usd) * BOVR : fee(r);
+        const bUsd = r => r.by === 'M3' ? n(r.m3) * n(r.pm3) : (r.by === 'USD' && !n(r.kg)) ? n(r.usd) : (brate() ? bVnd(r) / brate() : 0);
         const r2 = v => String(Math.round(n(v) * 100) / 100);
         const today = () => { const t = new Date(); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') };
         const ru = u => { const v = parseFloat(String(u == null ? '' : u).replace(/,/g, '')); return isFinite(v) && Math.round(v) ? en(v) : '' };
@@ -8198,7 +8201,7 @@
             const C = cfg(), A = bRows(); C.bills = C.bills || [];
             const names = [...new Set([...A.map(x => (x.r.k || '').trim()).filter(Boolean), ...Object.keys(C.ct)])].sort();
             const L = (id, l, v, w, ex) => `<label class="f${w ? ' w' : ''}">${l}<input id="${id}" value="${esc(v)}" ${ex || ''}></label>`;
-            const E = edit || null, es = E ? E.s || {} : {}, er = E ? E.r || {} : {};
+            const E = edit || null, es = E ? E.s || {} : {}, er = E ? E.r || {} : {}; BRATE = E && n(E.rate) ? n(E.rate) : 0; BOVR = E && n(E.ro) ? n(E.ro) : 0; const RM0 = E && E.rm ? +E.rm : 0;
             md.innerHTML = `<form class="dlg" style="max-width:760px"><h3>${E ? 'Sửa phiếu ' + esc(E.no) : 'Tạo phiếu giao nhận'}</h3>
                 <div class="btabs"><button type="button" data-m="0">Từ đơn hàng</button><button type="button" data-m="1">Nhập tay (không theo đơn hàng)</button></div><div class="fg">
                 <label class="f w" id="bml">Tháng<select id="bmo"></select></label>
@@ -8214,12 +8217,12 @@
                 ${L('bno', 'Số phiếu', E ? E.no : 'TNK-' + (C.no + 1))}${L('bdt', 'Ngày', E && E.dt ? E.dt : today(), 0, 'type="date"')}
                 <label class="f">Mr / Ms người gửi<select id="bsg">${['', 'Mr', 'Ms'].map(o => `<option value="${o}"${(es.g || '') === o ? ' selected' : ''}>${o || '— (không ghi)'}</option>`).join('')}</select></label>${L('bsn', 'Người gửi', es.n || '')}${L('bsp', 'SĐT người gửi', es.p || '')}${L('bsa', 'Địa chỉ người gửi', es.a || '', 1)}
                 ${L('brk', 'Khách nhận (gõ hoặc chọn)', E ? E.rk || '' : '', 1, 'list="bkl" autocomplete="off"')}<label class="f">Mr / Ms người nhận<select id="brg">${['', 'Mr', 'Ms'].map(o => `<option value="${o}"${(er.g || '') === o ? ' selected' : ''}>${o || '— (không ghi)'}</option>`).join('')}</select></label>${L('brn', 'Người nhận', er.n || '')}${L('brp', 'SĐT người nhận', er.p || '')}${L('bra', 'Địa chỉ người nhận', er.a || '', 1)}
-                ${L('bv', 'Tiền VND (tự tính, sửa được)', E ? E.v || '' : '')}${L('bu', 'Tiền USD (tự tính, sửa được)', E ? ru(E.u) : '')}
+                ${L('bv', 'Tiền VND (tự tính, sửa được)', E ? E.v || '' : '')}${L('bu', 'Tiền USD (tự tính, sửa được)', E ? ru(E.u) : '')}<label class="f">Tỷ giá tính phiếu<select id="brm"><option value="0"${RM0 === 0 ? ' selected' : ''}>Theo từng đơn (tỷ giá lúc nhập đơn)</option><option value="1"${RM0 === 1 ? ' selected' : ''}>Tỷ giá hiện tại</option><option value="2"${RM0 === 2 ? ' selected' : ''}>Nhập tay</option></select></label><label class="f">Tỷ giá (VND / 1 USD)<input id="brin" type="number" step="any" min="0" value="${BOVR || ''}"${RM0 === 2 ? '' : ' readonly'}></label><div class="w"><p class="hint" id="brt"></p></div><div class="w"><button type="button" class="schip" id="bsrt" aria-pressed="false">💱 Ghi dòng tỷ giá USD lên phiếu</button><div class="bsel-hint">Bấm chọn thì phiếu có thêm dòng «Tỷ giá USD: 1 USD = … VND» dưới các ô cước. Không bấm thì không hiện.</div></div>
                 ${L('bveh', 'Chuyến xe (nhiều phiếu đi chung 1 xe thì ghi giống nhau)', E ? E.veh || '' : '', 1, 'list="tl" autocomplete="off" placeholder="Vd: 01/10 hoặc biển số xe"')}<div class="w"><p class="hint bvh" id="bvh"></p></div><div class="w bdlw"><button type="button" class="schip" id="bdlt" aria-pressed="false">🚚 Ghi ngày giao &amp; số lượng giao lên phiếu</button><div class="bsel-hint">Không bấm thì phiếu không ghi chuyến xe, ngày giao hay số lượng giao nào. Bấm chọn thì hiện ô ghi ngày giao và số lượng giao cho từng đơn, từng chuyến xe.</div><div class="bdlf" id="bdlf" hidden></div></div></div>
                 <datalist id="bkl">${names.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="tl">${[...new Set([...A.flatMap(x => spTrips(x.r)), ...C.bills.map(b => (b.veh || '').trim())].filter(Boolean))].map(x => `<option value="${esc(x)}">`).join('')}</datalist>
                 <p class="hint">Mỗi phiếu có tối đa 8 dòng hàng. Nhiều phiếu đi chung 1 xe: ghi cùng một «Chuyến xe», trên phiếu sẽ tự hiện «Chung xe với …». Phiếu có dòng tính theo khối sẽ tự dùng mẫu «Giao hàng tính theo khối». Dòng nhập tay có thể tính theo kg hoặc theo khối (kiện máy 220 USD/khối, kiện thường 150 hoặc 140 USD/khối, hoặc nhập giá khác). Phiếu được lưu lại, xem, sửa và in lại ở nút «Phiếu đã lập». Thông tin người gửi/nhận được nhớ cho lần sau.</p><div class="err" id="fe"></div>
                 <div class="act"><button type="button" id="mc">Hủy</button><button class="p">${E ? 'Lưu thay đổi' : 'Tạo phiếu'}</button></div></form>`;
-            md.classList.remove('hid'); const close = () => { md.classList.add('hid'); md.innerHTML = '' };
+            md.classList.remove('hid'); const close = () => { md.classList.add('hid'); md.innerHTML = ''; BOVR = 0; BRATE = 0 };
             $('mc').onclick = close; md.onclick = e => { if (e.target === md) close() };
             const sel = $('bss'), box = $('bl'), mb = $('bm'), MAX = 8, SEL = new Set(); let MO = E && (E.mo || ((E.man || []).length && !A.some(x => x.r.bill === E.no))) ? 1 : 0, first = true;
             const keys = () => MO ? [...new Set($('bs').value.split(/[,;&]/).map(x => x.trim()).filter(Boolean))] : [...SEL];
@@ -8266,6 +8269,7 @@
                 vehAuto();
                 vehHint();
                 dlPaint();
+                { const bt = $('brt'); if (bt) { const m = $('brm') ? +$('brm').value : 0; bt.textContent = 'Tỷ giá dùng cho phiếu: 1 USD = ' + f(brate()) + ' VND' + (m === 1 ? ' (tỷ giá hiện tại)' : m === 2 ? ' (nhập tay)' : BRATE ? ' (đã khóa từ lúc lập phiếu; đơn có tỷ giá riêng giữ tỷ giá của đơn)' : ' (đơn chưa có tỷ giá riêng dùng số này; sẽ khóa khi bấm Tạo phiếu)') } }
                 if (skip) { skip = false; return }
                 $('bv').value = en(vn); $('bu').value = ru(us)
             };
@@ -8320,8 +8324,11 @@
             };
             md.querySelectorAll('.btabs button').forEach(b => b.onclick = () => { MO = +b.dataset.m; if (MO && !$('bs').value) $('bs').value = [...SEL].join(', '); mode(); load(1) });
             $('bmo').onchange = () => { fillNames([]); load(0) }; $('bs').onchange = () => load(0);
-            $('bv').oninput = () => { const v = parseFloat($('bv').value.replace(/,/g, '')); if (isFinite(v)) $('bu').value = ru(S.rate ? v / S.rate : 0) };
-            $('brk').onchange = fillR; box.onchange = tot; if (!E) fetchRate().then(r => { if (r && r.rate && r.rate !== S.rate) { S.rate = r.rate; const e = $('rate'); if (e) e.value = S.rate; save(); tot() } }).catch(() => { }); $('bveh').oninput = () => { vehTouched = !!$('bveh').value.trim(); vehHint() };
+            const setRm = () => { const m = +$('brm').value, bi = $('brin'); if (m === 1) { BOVR = n(S.rate); bi.value = BOVR; bi.readOnly = true } else if (m === 2) { bi.readOnly = false; BOVR = parseFloat(bi.value) || 0 } else { BOVR = 0; bi.value = ''; bi.readOnly = true } skip = false; tot() };
+            let SR = !!(E && E.sr); const srSync = () => { $('bsrt').classList.toggle('on', SR); $('bsrt').setAttribute('aria-pressed', SR ? 'true' : 'false') }; $('bsrt').onclick = () => { SR = !SR; srSync() }; srSync();
+            $('brm').onchange = setRm; $('brin').oninput = () => { if (+$('brm').value === 2) { BOVR = parseFloat($('brin').value) || 0; skip = false; tot() } };
+            $('bv').oninput = () => { const v = parseFloat($('bv').value.replace(/,/g, '')); if (isFinite(v)) $('bu').value = ru(brate() ? v / brate() : 0) };
+            $('brk').onchange = fillR; box.onchange = tot; if (!E) fetchRate().then(r => { if (r && r.rate && r.rate !== S.rate) { S.rate = r.rate; const e = $('rate'); if (e) e.value = S.rate; if ($('brm') && $('brm').value === '1') { BOVR = n(S.rate); $('brin').value = BOVR } save(); tot() } }).catch(() => { }); $('bveh').oninput = () => { vehTouched = !!$('bveh').value.trim(); vehHint() };
             $('bua').onclick = () => { let c = mEls().length; boxes().forEach(i => { const r = A[+i.value].r; i.checked = !r.bill && pd(r) !== 'yes' && c < MAX; if (i.checked) c++ }); tot() };
             $('bun').onclick = () => { boxes().forEach(i => i.checked = false); tot() };
             if (E) if (E && MO) (E.man || []).forEach(m => addM(m));
@@ -8341,7 +8348,7 @@
                 if (billAll().some(b => b.no === no && !(E && b.no === E.no))) { $('fe').textContent = 'Số phiếu ' + no + ' đã có rồi. Hãy đổi sang số khác hoặc xóa phiếu cũ trong «Phiếu đã lập».'; return }
                 if (ks.length === 1) C.ct[sk] = fixKey(sk) ? fixSender(sk, s) : s; if (rk) { C.ct[rk] = Object.assign({}, fixRecv(rk) || rc, { g: rc.g }); ks.forEach(k => C.rv[k] = rk) }
                 const m = no.match(/(\d+)\s*$/); if (m && +m[1] > C.no) C.no = +m[1];
-                const bill = { no, dt: $('bdt').value, k: sk, ks, rk, s, r: rc, rows: [...P.map(x => snap(x.r)), ...M.map(snap)], man: M.map(x => ({ by: x.by, m3: x.m3, pm3: x.pm3, desc: x.desc, d: x.d, q: x.q, u: x.u, kg: x.kg })), veh: (DL || vehTouched) ? $('bveh').value.trim() : '', mo: MO, v: $('bv').value.trim(), u: ru($('bu').value), ...(dl ? { dl } : {}), t: E ? (E.t || Date.now()) : Date.now() };
+                const bill = { no, dt: $('bdt').value, k: sk, ks, rk, s, r: rc, rows: [...P.map(x => snap(x.r)), ...M.map(snap)], man: M.map(x => ({ by: x.by, m3: x.m3, pm3: x.pm3, desc: x.desc, d: x.d, q: x.q, u: x.u, kg: x.kg })), veh: (DL || vehTouched) ? $('bveh').value.trim() : '', mo: MO, v: $('bv').value.trim(), u: ru($('bu').value), rate: brate(), rm: +$('brm').value, ro: BOVR || 0, sr: SR ? 1 : 0, ...(dl ? { dl } : {}), t: E ? (E.t || Date.now()) : Date.now() };
                 if (E) { A.forEach(x => { if (x.r.bill === E.no) delete x.r.bill }); C.bills = C.bills.filter(b => b.no !== E.no) }
                 C.bills.push(bill); P.forEach(x => { x.r.bill = no }); save(); all(); close();
                 showBill(bill, 1)
@@ -8519,7 +8526,7 @@
             const pn = t => { const m = String(t == null ? '' : t).match(/[\d.,]+/); if (!m) return null; const v = parseFloat(m[0].replace(/\./g, '').replace(',', '.')); return isFinite(v) ? v : null };
             const blocks = G.map((g, gi) => ({ g, its: IT.filter(i => i.gi === gi) }));
             const RH = 66, GH = 84, FH = 64, TOP = 560;
-            let H = TOP + 70; blocks.forEach(b => { H += GH + Math.max(1, b.its.length) * RH + FH + 18 }); H += 450;
+            let H = TOP + 70; blocks.forEach(b => { H += GH + Math.max(1, b.its.length) * RH + FH + 18 }); H += 450 + (d.sr ? 70 : 0);
             c.width = W; c.height = H; const x = c.getContext('2d');
             const rr = (px, py, w, h, r) => { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath() };
             const txt = (t, px, py, sz, al, mw, wt, col) => { t = String(t == null ? '' : t); if (!t) return 0; let s = sz; if ('letterSpacing' in x) x.letterSpacing = '0px'; const f = q => x.font = `${wt || 600} ${q}px ${FF}`; f(s); if (mw) while (s > sz * .55 && x.measureText(t).width > mw) f(--s); x.fillStyle = col || BK; x.textAlign = al || 'left'; x.textBaseline = 'alphabetic'; x.fillText(t, px, py); return x.measureText(t).width };
@@ -8535,7 +8542,7 @@
             const box = (px, col, lab, p) => { rr(px, 316, 1010, 216, 22); x.lineWidth = 3; x.strokeStyle = col; x.stroke(); p = p || {}; txt(lab, px + 32, 360, 24, 'left', 0, 700, RED); txt(nm(p), px + 32, 416, 48, 'left', 940, 800); txt(p.p ? 'ĐT: ' + p.p : '', px + 32, 466, 32, 'left', 940, 600, BK); txt(p.a || '', px + 32, 508, 30, 'left', 940, 500, MU) };
             box(80, BK, 'BÊN GỬI', d.s); box(1122, RED, 'BÊN NHẬN', d.r);
             /* cột */
-            const CX = { stt: 100, don: 170, sl: 1130, xe: 1250, ng: 1500, giao: 2132 };
+            const CX = { stt: 122, don: 190, sl: 1130, xe: 1250, ng: 1500, giao: 2132 };
             const head = y => { x.fillStyle = BK; rr(80, y, 2052, 64, 12); x.fill(); txt('STT', CX.stt, y + 43, 26, 'center', 0, 700, '#fff'); txt('ĐƠN HÀNG', CX.don, y + 43, 26, 'left', 0, 700, '#fff'); txt('NGÀY GIAO', CX.ng, y + 43, 26, 'center', 0, 700, '#fff'); txt('SỐ LƯỢNG GIAO', CX.giao - 20, y + 43, 26, 'right', 0, 700, '#fff') };
             let y = TOP; head(y); y += 64 + 14;
             let sumOrd = {}, sumDel = {}, allOk = true, anyCmp = false;
@@ -8543,7 +8550,7 @@
                 const g = b.g, u = g.u || 'kiện', w = (g.kg ? r2(g.kg) + ' kg' : g.m3 ? r2(g.m3) + ' m³' : '');
                 x.fillStyle = '#f3f4f6'; rr(80, y, 2052, GH - 8, 14); x.fill(); x.fillStyle = RED; x.fillRect(80, y + 8, 10, GH - 24);
                 txt(bi + 1, CX.stt, y + 54, 40, 'center', 0, 800, RED);
-                txt((g.k || 'Đơn hàng') + (g.d ? '  ·  hàng về ' + dm(g.d) : ''), CX.don, y + 54, 38, 'left', 1180, 800, BK);
+                txt((g.k || 'Đơn hàng') + (g.d ? '  ·  hàng vào kho ' + dm(g.d) : ''), CX.don, y + 54, 38, 'left', 1180, 800, BK);
                 txt('TỔNG ĐƠN: ' + r2(g.q) + ' ' + u + (w ? '  ·  ' + w : ''), 2132 - 20, y + 54, 34, 'right', 860, 800, BK);
                 y += GH;
                 let dsum = 0, cmp = true;
@@ -8551,7 +8558,7 @@
                 b.its.forEach((it, k) => {
                     if (k % 2) { x.fillStyle = '#fafafb'; x.fillRect(80, y, 2052, RH) }
                     x.fillStyle = LN; x.fillRect(80, y + RH - 2, 2052, 2);
-                    txt('Đợt ' + (k + 1), CX.don + 40, y + 45, 32, 'left', 300, 500, MU);
+                    txt('Giao đợt ' + (k + 1), CX.don + 40, y + 45, 32, 'left', 300, 500, MU);
                     txt(it.d ? dm(it.d) : '–', CX.ng, y + 45, 36, 'center', 340, 700);
                     if (!it.d) { txt('Chưa giao', CX.giao - 20, y + 45, 36, 'right', 340, 700, MU); y += RH; return }
                     txt(it.q || '–', CX.giao - 20, y + 47, 42, 'right', 340, 800, RED);
@@ -8574,7 +8581,8 @@
             /* tính tiền */
             y += 156; let kg = 0, m3 = 0; (d.rows || []).forEach(r => { if (bBm(r)) m3 += n(r.m3); else kg += n(r.kg) });
             const wt = [kg ? r2(kg) + ' kg' : '', m3 ? r2(m3) + ' m³' : ''].filter(Boolean).join(' + ') || '–', vnd = d.v && d.v !== '0' ? d.v + ' VND' : '–', usd = ru(d.u) ? ru(d.u) + ' USD' : '–';
-            [['TỔNG SỐ KIỆN', bUnits(d.rows || []), 80, 640, BK], ['TỔNG TRỌNG LƯỢNG', wt, 750, 640, BK], ['CƯỚC VND', vnd, 1420, 340, RED], ['CƯỚC USD', usd, 1790, 342, RED]].forEach(([lab, val, px, w, col]) => { rr(px, y, w, 150, 18); x.lineWidth = 3; x.strokeStyle = col; x.stroke(); txt(lab, px + 26, y + 46, 24, 'left', 0, 700, MU); txt(val, px + 26, y + 112, 46, 'left', w - 52, 800, col) });
+            [['TỔNG SỐ KIỆN', bUnits(d.rows || []), 80, 380, BK, 0], ['TỔNG TRỌNG LƯỢNG', wt, 490, 380, BK, 0], ['CƯỚC VND', vnd, 900, 600, RED, 1], ['CƯỚC USD', usd, 1530, 602, RED, 1]].forEach(([lab, val, px, w, col, big]) => { rr(px, y, w, 150, 18); if (big) { x.fillStyle = '#FFF1F0'; x.fill() } x.lineWidth = big ? 5 : 3; x.strokeStyle = col; x.stroke(); txt(lab, px + 26, y + 44, big ? 28 : 24, 'left', 0, 700, big ? RED : MU); txt(val, px + 26, y + (big ? 118 : 112), big ? 64 : 46, 'left', w - 52, 800, col) });
+            if (d.sr && n(d.rate)) txt('TỶ GIÁ USD:  1 USD = ' + f(n(d.rate)) + ' VND', 2132, y + 150 + 62, 40, 'right', 2052, 800, BK);
             txt('(+84) 981 491 456   ·   (+855) 92 889 198', 80, H - 50, 32, 'left', 1100, 600, MU); txt('sokmoktransport.com', 2132, H - 50, 32, 'right', 0, 600, MU)
         }
         let bImg;
@@ -9163,7 +9171,7 @@ ${t}`
         function renderExtra() {
             const own = !!me && me.r === 'owner'; $('tabln').classList.toggle('hid', !own);
             if (!own) { if (tab === 'ln') showTab('tong') } else lnRender();
-            renderStrip(); try { renderDebtTab() } catch (e) { console.error(e) } debtCheck()
+            renderStrip(); try { renderDebtTab() } catch (e) { console.error(e) }
         }
         function lnRender() {
             const x = lnData(), M = S.months[S.cur], inp = (k, v) => `<input data-pf="${k}" inputmode="numeric" value="${v ? vn(v) : ''}" placeholder="0">`, row = (l, v, c) => `<div class="lnr ${c || ''}"><span>${l}</span><span>${v}</span></div>`;
@@ -9204,36 +9212,9 @@ ${t}`
             const el = $('dstrip'); if (!el) return; let c = 0, t = 0;
             Object.values(S.months).forEach(M => (M.rows || []).forEach(r => { if (pd(r) === 'no' && fee(r)) { c++; t += fee(r) } }));
             const G = overdue(10), ks = Object.keys(G), co = ks.reduce((a, k) => a + G[k].length, 0), to = ks.reduce((a, k) => a + G[k].reduce((b, x) => b + fee(x.r), 0), 0);
-            el.innerHTML = `<span class="chip">Chưa thu: <b>${c}</b> đơn · ${vn(t)} đ</span> <span class="chip" style="${co ? 'background:#fde8e7;color:#b3261e' : ''}">Quá 10 ngày từ ngày giao: <b>${co}</b> đơn · ${vn(to)} đ</span> ${me && me.r === 'owner' ? `<span class="chip">Chi phí chuyển hàng tháng này: <b>${vn(shipCost(S.months[S.cur]).tot)} đ</b></span>` : ''} ${co && isAd() ? '<button id="dnow">Gửi nhắc nợ Telegram ngay</button>' : ''}`
+            el.innerHTML = `<span class="chip">Chưa thu: <b>${c}</b> đơn · ${vn(t)} đ</span> <span class="chip" style="${co ? 'background:#fde8e7;color:#b3261e' : ''}">Quá 10 ngày từ ngày giao: <b>${co}</b> đơn · ${vn(to)} đ</span> ${me && me.r === 'owner' ? `<span class="chip">Chi phí chuyển hàng tháng này: <b>${vn(shipCost(S.months[S.cur]).tot)} đ</b></span>` : ''}`
         }
-        document.addEventListener('click', e => {
-            if (e.target.id !== 'dnow') return; const G = overdue(10);
-            ask('Gửi nhắc nợ Telegram cho ' + Object.keys(G).length + ' khách đang quá 10 ngày?', 'Gửi ngay').then(ok => {
-                if (!ok) return; Object.entries(G).forEach(([k, a]) => { const tot = a.reduce((b, x) => b + fee(x.r), 0); tgNotify('debt', { user: me.u, k, days: 10, total: tot, text: `⏰ NHẮC CÔNG NỢ – ${k}\n` + a.map(x => `• Giao ${fd(x.r.g)} (${x.dd} ngày): ${vn(fee(x.r))} VNĐ`).join('\n') + `\nTổng: ${vn(tot)} VNĐ` }) }); toast('ok', 'Đã gửi nhắc nợ.')
-            })
-        });
         $('lncp').onclick = () => { const t = lnText(); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('ok', 'Đã sao chép báo cáo.'), () => prompt('Sao chép báo cáo:', t)) };
-        /* Nhắc công nợ: khách khớp tên + đã giao đủ số ngày mà vẫn «Chưa thu» thì báo Telegram 1 lần.
-           Đổi khách / số ngày ở DEBT_RULES. Lưu ý: chỉ chạy khi có tài khoản quản trị đang mở trang. */
-        const DEBT_RULES = [{ m: /chả cá/i, days: 10 }];
-        let DB_T = 0;
-        function debtCheck() {
-            if (!SB_ON || !me || !isAd() || !S.months || Date.now() - DB_T < 6e4) return; DB_T = Date.now();
-            S.cfg = S.cfg || {}; const sent = S.cfg.dn = S.cfg.dn || {}, G = {}, now = new Date(); now.setHours(0, 0, 0, 0);
-            Object.entries(S.months).forEach(([mo, M]) => (M.rows || []).forEach(r => {
-                const rule = DEBT_RULES.find(x => x.m.test(r.k || '')); if (!rule || !r.g || pd(r) !== 'no' || !fee(r)) return;
-                const days = Math.floor((now - new Date(r.g)) / 864e5), key = [mo, r.k, r.g, r.d, r.q, r.kg, r.m3].join('|');
-                if (days < rule.days || sent[key]) return; (G[r.k] = G[r.k] || { rule, a: [] }).a.push({ key, r, days })
-            }));
-            const ks = Object.keys(G); if (!ks.length) return;
-            ks.forEach(k => {
-                const g = G[k], tot = g.a.reduce((a, x) => a + fee(x.r), 0);
-                const text = `⏰ NHẮC CÔNG NỢ – ${k}\nĐã quá ${g.rule.days} ngày kể từ khi giao, chưa thu tiền:\n` + g.a.map(x => `• Giao ${fd(x.r.g)} (${x.days} ngày): ${vn(fee(x.r))} VNĐ`).join('\n') + `\nTổng: ${vn(tot)} VNĐ`;
-                tgNotify('debt', { user: me.u, k, days: g.rule.days, total: tot, text }); g.a.forEach(x => sent[x.key] = new Date().toISOString().slice(0, 10))
-            });
-            save()
-        }
-
         function momDelta(tot) {
             const ks = Object.keys(S.months).sort(), i = ks.indexOf(S.cur); if (i < 1) return '';
             const pk = ks[i - 1], pv = mcalc(S.months[pk]).tot; if (!pv) return '';
@@ -9260,10 +9241,12 @@ ${t}`
             const card = (t, v, s, c) => `<div class="k ${c || ''}"><small>${t}</small><b>${v}</b>${s ? `<div class="s">${s}</div>` : ''}</div>`;
             $('dcards').innerHTML = card('Tổng công nợ', vn(T) + ' đ', N + ' đơn · ' + D.length + ' khách', 'big') + card('Dưới 10 ngày', vn(B[0]) + ' đ') + card('10–30 ngày', `<span class="${B[1] ? 'neg' : ''}">${vn(B[1])} đ</span>`) + card('Trên 30 ngày', `<span class="${B[2] ? 'neg' : ''}">${vn(B[2])} đ</span>`) + card('Chưa có ngày giao', vn(B[3]) + ' đ');
             el.innerHTML = '<thead><tr><th>Khách</th><th>Số đơn</th><th>Dưới 10 ngày</th><th>10–30 ngày</th><th>Trên 30 ngày</th><th>Chưa giao</th><th>Tổng nợ (VND)</th><th>Lâu nhất</th><th></th></tr></thead><tbody>' +
-                (D.map(o => `<tr><td><b>${esc(o.k)}</b></td><td class="num">${o.n}</td><td class="num">${o.b[0] ? vn(o.b[0]) : '–'}</td><td class="num">${o.b[1] ? vn(o.b[1]) : '–'}</td><td class="num">${o.b[2] ? `<b class="neg">${vn(o.b[2])}</b>` : '–'}</td><td class="num">${o.b[3] ? vn(o.b[3]) : '–'}</td><td class="num"><b>${vn(o.tot)}</b></td><td class="num">${o.max >= 0 ? o.max + ' ngày' : '–'}</td><td><button data-dcp="${esc(o.k)}">Sao chép nhắc nợ</button></td></tr>`).join('') || '<tr><td colspan="9" style="padding:14px;color:var(--mu)">Không có công nợ. Tất cả đơn đã thu.</td></tr>') +
+                (D.map(o => `<tr><td><b>${esc(o.k)}</b></td><td class="num">${o.n}</td><td class="num">${o.b[0] ? vn(o.b[0]) : '–'}</td><td class="num">${o.b[1] ? vn(o.b[1]) : '–'}</td><td class="num">${o.b[2] ? `<b class="neg">${vn(o.b[2])}</b>` : '–'}</td><td class="num">${o.b[3] ? vn(o.b[3]) : '–'}</td><td class="num"><b>${vn(o.tot)}</b></td><td class="num">${o.max >= 0 ? o.max + ' ngày' : '–'}</td><td><button data-dcp="${esc(o.k)}">Sao chép nhắc nợ</button> ${isAd() ? `<button data-dpaid="${esc(o.k)}" title="Đánh dấu tất cả đơn chưa thu của khách này là Đã thu">✔ Đã thu hết</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="9" style="padding:14px;color:var(--mu)">Không có công nợ. Tất cả đơn đã thu.</td></tr>') +
                 (D.length ? `</tbody><tfoot><tr><td>Tổng</td><td class="num">${N}</td><td class="num">${vn(B[0])}</td><td class="num">${vn(B[1])}</td><td class="num">${vn(B[2])}</td><td class="num">${vn(B[3])}</td><td class="num">${vn(T)}</td><td colspan="2"></td></tr></tfoot>` : '</tbody>')
         }
-        $('tp-no').addEventListener('click', e => {
+        $('tp-no').addEventListener('click', async e => {
+            const pb = e.target.closest('[data-dpaid]');
+            if (pb) { if (!isAd()) return; const o = debtData().find(x => x.k === pb.dataset.dpaid); if (!o) return; if (!await ask('Đánh dấu <b>Đã thu</b> cho <b>' + o.n + '</b> đơn của <b>' + esc(o.k) + '</b> (tổng ' + vn(o.tot) + ' đ)?', 'Đã thu hết')) return; quickPaid(o.L.map(x => x.r), ''); return }
             const b = e.target.closest('[data-dcp]'); if (!b) return;
             const o = debtData().find(x => x.k === b.dataset.dcp); if (!o) return; const t = debtText(o);
             (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('ok', 'Đã sao chép nhắc nợ ' + o.k + '.'), () => prompt('Sao chép tin nhắn:', t))
@@ -9279,6 +9262,12 @@ ${t}`
             return { kg, kgK, nK, m3, nho, a, b, c, tot: a + b + c }
         }
         /* ---- Chức năng đơn hàng: đổi nhanh thu tiền, nhân bản, đã thu hết (đang lọc), xuất CSV ---- */
+        /* Đánh dấu đã thu nhanh: ghi trạng thái «Đã thu» + hình thức + ngày thu cho các đơn */
+        window.quickPaid = function (rows, method) {
+            const T = (rows || []).filter(r => r && pd(r) === 'no'); if (!T.length) { toast('err', 'Không có đơn «Chưa thu» nào để đánh dấu.'); return 0 }
+            const d = today(); T.forEach(r => { r.paid = 'yes'; r.pdt = d; if (method) r.pm = method });
+            save(); all(); toast('ok', 'Đã đánh dấu Đã thu ' + T.length + ' đơn' + (method ? ' (' + method + ')' : '') + '.'); return T.length
+        };
         $('bulkpaid').onclick = async () => {
             if (!isAd()) return; const T = view().map(i => S.rows[i]).filter(r => pd(r) === 'no');
             if (!T.length) { await ask('Không có đơn «Chưa thu» nào trong danh sách đang lọc.', 'Đóng'); return }
@@ -10472,7 +10461,7 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                     + `<details class="bsel noprt"><summary>☑ Chọn đơn đưa vào bill · đang chọn <span id="ttn"></span>/<span id="ttt"></span></summary><div class="bsq"><button type="button" data-q="all">Chọn tất cả</button><button type="button" data-q="no">Chỉ đơn chưa thu</button><button type="button" data-q="none">Bỏ chọn</button><button type="button" data-q="paid" id="ttpd"></button></div><div class="bsl"></div></details>`
                     + (rcvList.length ? `<div class="bbk brc noprt"><b>📥 Người nhận (in trên bill)</b><div class="bko"><button type="button" data-rk="-1">Không ghi</button>${rcvList.map((x, i) => `<button type="button" data-rk="${i}">${esc(x)}</button>`).join('')}</div></div>` : '')
                     + (typeof BANKQR !== 'undefined' && BANKQR.length ? `<div class="bbk bbq noprt"><b>💳 Mã ngân hàng in trên bill (để khách chuyển khoản)</b><div class="bko"><button type="button" data-bk="-1">Không in mã</button>${BANKQR.map((x, i) => `<button type="button" data-bk="${i}">${esc(x.k)} · ${esc(x.t)}</button>`).join('')}</div></div>` : '')
-                    + '</div><div class="bright"><div id="ttb"></div><div class="noprt bact"><button type="button" class="p" id="ttp">🖨 In / Lưu PDF</button><button type="button" id="ttd">🖼 Tải ảnh PNG</button><button type="button" id="ttc">🔗 Sao chép link bill</button></div></div></div>'; document.body.appendChild(o);
+                    + '</div><div class="bright"><div id="ttb"></div><div class="noprt bact bpay"><span style="width:100%;text-align:center;color:#fff;font-size:12.5px;font-weight:600">Khách đã trả? Đánh dấu «Đã thu» cho các đơn đang chọn:</span><button type="button" id="ttk1">💵 Đã thu · Tiền mặt</button><button type="button" id="ttk2">🏦 Đã thu · Chuyển khoản</button></div><div class="noprt bact"><button type="button" class="p" id="ttp">🖨 In / Lưu PDF</button><button type="button" id="ttd">🖼 Tải ảnh PNG</button><button type="button" id="ttc">🔗 Sao chép link bill</button></div></div></div>'; document.body.appendChild(o);
                 const det = o.querySelector('.bsel'), bsl = o.querySelector('.bsl');
                 const drawList = () => {
                     const vs = ALL.filter(vis); bsl.innerHTML = vs.length ? vs.map(rowH).join('') : '<p style="text-align:center;color:#667085;font-size:13px;padding:14px 0 8px;margin:0">Không còn đơn chưa thu nào của người gửi đã chọn.</p>';
@@ -10507,10 +10496,18 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                     sel.clear(); if (q !== 'none') ALL.filter(vis).forEach(r => { if (q === 'all' || pd(r) === 'no') sel.add(r.id) }); refresh()
                 });
                 o.onclick = e => { if (e.target === o) o.remove() }; o.querySelector('.xw').onclick = () => o.remove();
-                o.querySelector('#ttp').onclick = () => { if (url) prt(); else toast('err', 'Hãy chọn ít nhất 1 đơn.') }; o.querySelector('#ttc').onclick = () => { if (url) copy(url); else toast('err', 'Hãy chọn ít nhất 1 đơn.') }
+                const lockBill = () => { const L2 = ALL.filter(r => vis(r) && sel.has(r.id)); if (lockRate(L2)) { try { save() } catch (e) { } } };
+                o.querySelector('#ttp').onclick = () => { if (url) { lockBill(); prt() } else toast('err', 'Hãy chọn ít nhất 1 đơn.') }; o.querySelector('#ttc').onclick = () => { if (url) { lockBill(); copy(url) } else toast('err', 'Hãy chọn ít nhất 1 đơn.') }
+                const markPaid = async mt => {
+                    const list = ALL.filter(r => vis(r) && sel.has(r.id) && pd(r) === 'no'); if (!list.length) { toast('err', 'Không có đơn «Chưa thu» nào đang chọn.'); return }
+                    if (!isAd()) { toast('err', 'Chỉ tài khoản quản trị mới đánh dấu đã thu.'); return }
+                    if (!await ask('Đánh dấu <b>Đã thu</b> (' + mt.toLowerCase() + ') cho <b>' + list.length + '</b> đơn đang chọn?', 'Đã thu')) return;
+                    list.forEach(r => forced.add(r.id)); quickPaid(list, mt); refresh()
+                };
+                o.querySelector('#ttk1').onclick = () => markPaid('Tiền mặt'); o.querySelector('#ttk2').onclick = () => markPaid('Chuyển khoản');
                 o.querySelector('#ttd').onclick = async () => {
                     const list = ALL.filter(r => vis(r) && sel.has(r.id)); if (!list.length) { toast('err', 'Hãy chọn ít nhất 1 đơn.'); return }
-                    const bt = o.querySelector('#ttd'), t0 = bt.textContent; bt.disabled = true; bt.textContent = '⏳ Đang tạo ảnh…';
+                    lockBill(); const bt = o.querySelector('#ttd'), t0 = bt.textContent; bt.disabled = true; bt.textContent = '⏳ Đang tạo ảnh…';
                     try {
                         const P = partyOf(list), BK = bank >= 0 && typeof BANKQR !== 'undefined' ? BANKQR[bank] || null : null, R = await billPng({ no, name: P.snm, date: fd(today()), rows: list, bank: BK, senders: P.sI, recv: P.rcv });
                         const ok = await new Promise(res => R.canvas.toBlob(b => { if (!b) return res(false); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'bill-' + no + '-' + vnSlug(P.snm) + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); res(true) }, 'image/png'));
