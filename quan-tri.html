@@ -6587,6 +6587,54 @@
             background: #c8201c;
             color: #fff
         }
+
+        /* máy tính: chọn bên trái, bill bên phải */
+        .bleft,
+        .bright {
+            min-width: 0
+        }
+
+        @media (min-width: 900px) {
+            .rpo {
+                overflow: auto
+            }
+
+            .rpo>.bwrap {
+                width: min(940px, 100%);
+                max-height: none;
+                overflow: visible;
+                display: grid;
+                grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+                gap: 18px;
+                align-items: start;
+                padding: 0 4px 24px
+            }
+
+            .rpo>.bwrap .bleft {
+                position: sticky;
+                top: 0;
+                max-height: 92vh;
+                overflow: auto;
+                padding: 2px 4px 2px 0
+            }
+
+            .rpo>.bwrap .bleft>:last-child {
+                margin-bottom: 0
+            }
+
+            .rpo>.bwrap .bright {
+                max-width: 480px;
+                width: 100%
+            }
+
+            .rpo>.bwrap .bbk .bko {
+                max-height: 200px
+            }
+
+            .rpo>.bwrap .bsel .bsl {
+                max-height: 38vh
+            }
+        }
     </style>
 <style id="khoa-so">
 #lockbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid #e0b252;background:#fff6e0;color:#6b4a00;font-size:14px}
@@ -10222,6 +10270,14 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
                 for (let r = 0; r < c; r++)for (let k = 0; k < c; k++)if (q.isDark(r, k)) x.fillRect(ox + (k + z) * m, oy + (r + z) * m, m, m);
                 x.restore()
             }
+            /* ===== Tiền tệ trên bill: đơn tính theo USD (Theo USD / Theo khối) ra bill bằng USD, đơn VND ra bill bằng VND ===== */
+            const tcCur = r => isU(r) ? 'USD' : 'VND';
+            const tcR2 = v => Math.round(n(v) * 100) / 100; /* cộng số lẻ, chỉ làm tròn khi hiển thị (tcUsd): từ .50 lên, dưới .50 xuống */
+            const tcAmt = r => isU(r) ? tcR2(r.usd) : Math.round(fee(r));
+            const tcUsd = v => '$' + n(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            const tcMon = (v, c) => c === 'USD' ? tcUsd(v) + ' USD' : f(v) + ' VND';
+            /* gom tổng theo từng loại tiền: g.VND / g.USD = { c: số đơn, T: tổng cước, P: đã thu, U: còn phải thu } */
+            const tcSums = list => { const g = { VND: { c: 0, T: 0, P: 0, U: 0 }, USD: { c: 0, T: 0, P: 0, U: 0 } }; list.forEach(r => { const k = g[tcCur(r)], a = tcAmt(r); k.c++; k.T += a; if (pd(r) === 'yes') k.P += a; else if (pd(r) === 'no') k.U += a }); ['T', 'P', 'U'].forEach(z => { g.USD[z] = tcR2(g.USD[z]) }); return g };
             /* o = { no, name, date, rows: [các đơn], bank: phần tử BANKQR hoặc null } → { canvas, dyn, bank, hasQ } */
             async function billPng(o) {
                 const S = 2, M = 28, LW = 800, W = LW + 500, CW = W - 2 * M, X0 = M + 28, XR = X0 + LW, RX = XR + 28, RW = W - M - 28 - RX;
@@ -10229,11 +10285,11 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
                 const C = { id: X0, d: X0 + 196, q: X0 + 326, w: X0 + 450, fee: X0 + 690 };
                 try { if (document.fonts && document.fonts.load) await Promise.all(['400', '500', '600', '700', '800'].map(w => document.fonts.load(w + ' 16px "Be Vietnam Pro"'))) } catch (e) { }
                 const L = o.rows.slice(), CAP = 80, shown = L.slice(0, CAP), rest = L.slice(CAP);
-                const val = r => Math.round(fee(r)), sum = a => a.reduce((s, r) => s + val(r), 0);
-                const T = sum(L), P = sum(L.filter(r => pd(r) === 'yes')), U = sum(L.filter(r => pd(r) === 'no'));
+                const val = r => tcAmt(r), G = tcSums(L), UV = G.VND.U, UU = G.USD.U, U = UV + UU, curs = ['VND', 'USD'].filter(c => G[c].c > 0), owe = ['VND', 'USD'].filter(c => G[c].U > 0).map(c => tcMon(G[c].U, c)).join(' + ');
+                
                 const KG = L.reduce((a, r) => a + n(r.kg), 0), M3 = L.reduce((a, r) => a + n(r.m3), 0);
                 /* Nội dung chuyển khoản để TRỐNG: người chuyển tự nhập (mã QR không điền sẵn nội dung) */
-                const BK = o.bank || null, vq = BK ? vietQr(BK, U, '') : '';
+                const BK = (o.bank && !(G.USD.c > 0 && !UV)) ? o.bank : null, vq = BK ? vietQr(BK, UV, '') : '';
                 let dyn = false, stImg = null;
                 if (BK) { if (vq) dyn = await qrReady(); if (!dyn && BK.img) stImg = await new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = BK.img }) }
                 const hasQ = dyn || !!stImg;
@@ -10244,7 +10300,8 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
                 const mc = document.createElement('canvas').getContext('2d'), font = (w, s) => w + ' ' + s + 'px ' + FF, tw = (t, w, s) => { mc.font = font(w, s); return mc.measureText(String(t)).width };
                 const wrap = (t, mw, w, s) => { const out = []; let cur = ''; String(t).split(/\s+/).forEach(wd => { const nx = cur ? cur + ' ' + wd : wd; if (cur && tw(nx, w, s) > mw) { out.push(cur); cur = wd } else cur = nx }); if (cur) out.push(cur); return out };
                 const HDR = 124, TOP = 32, ROW = 72, CUST = 92, THEAD = 34, TOT = 72, FOOT = 78, PADB = 26, PNL = 172, QS = 296;
-                const howT = !BK || !hasQ || U <= 0 ? [] : wrap(dyn ? 'Mở app ngân hàng, chọn quét mã QR ở bên phải. Tài khoản nhận và số tiền đã được điền sẵn; phần nội dung chuyển khoản quý khách tự nhập, rồi kiểm tra lại và xác nhận.' : 'Mở app ngân hàng, quét mã QR ở bên phải rồi nhập số tiền ' + f(U) + ' VND và nội dung chuyển khoản.', LW - 44, 500, 15.5);
+                const TOTH = TOT + (curs.length - 1) * 38, PNLH = curs.length * PNL + (curs.length - 1) * 14;
+                const howT = !BK || !hasQ || U <= 0 ? [] : wrap(dyn ? 'Mở app ngân hàng, chọn quét mã QR ở bên phải. Tài khoản nhận' + (UV > 0 ? ' và số tiền VND' : '') + ' đã được điền sẵn; phần nội dung chuyển khoản quý khách tự nhập, rồi kiểm tra lại và xác nhận.' + (UU > 0 ? ' Phần cước USD vui lòng thanh toán đúng số tiền USD ghi trên bill.' : '') : 'Mở app ngân hàng, quét mã QR ở bên phải rồi nhập số tiền ' + owe + ' và nội dung chuyển khoản.', LW - 44, 500, 15.5);
                 const HOW = howT.length ? 58 + howT.length * 23 : 0;
                 /* khung thông tin bổ sung cho đủ bill */
                 const rng = a => { a = a.filter(Boolean).sort(); return !a.length ? '' : a[0] === a[a.length - 1] ? fd(a[0]) : fd(a[0]) + ' – ' + fd(a[a.length - 1]) };
@@ -10252,12 +10309,18 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
                 const nNo = L.filter(r => pd(r) === 'no').length;
                 const cells = [['Ngày hàng về', rng(L.map(r => r.d))], ['Ngày giao', rng(L.map(r => r.g))], ['Xe / chuyến', trips.join(', ')], ['Đơn chưa thu', nNo + ' / ' + L.length + ' đơn']].filter(c => c[1]);
                 const INFOH = cells.length ? 22 + Math.ceil(cells.length / 2) * 58 : 0;
-                const LH = CUST + THEAD + shown.length * ROW + (rest.length ? 48 : 0) + TOT + (INFOH ? 24 + INFOH : 0) + (HOW ? 24 + HOW : 0);
-                const brows = BK ? [['Ngân hàng', BK.k], ['Chủ tài khoản', BK.t], ['Số tài khoản', BK.s], U > 0 ? ['Số tiền', f(U) + ' VND'] : null].filter(Boolean) : [];
+                /* khung người gửi / người nhận */
+                const PADX = 18, PGAP = 14, snd0 = (o.senders || []).filter(s => s && (s.name || s.p || s.a)), rcv0 = o.recv && (o.recv.name || o.recv.p || o.recv.a) ? o.recv : null, both = snd0.length && rcv0, PW = both ? (LW - PGAP) / 2 : LW;
+                const pLines = (title, arr) => { const out = [{ t: title, k: 'h' }]; arr.forEach((p, i) => { if (i) out.push({ k: 'g' }); out.push({ t: p.name || '–', k: 'n' }); if (p.p) out.push({ t: p.p, k: 'p' }); wrap(p.a || '', PW - 2 * PADX, 500, 15).forEach(t => { if (t) out.push({ t, k: 'a' }) }) }); return out };
+                const PLH = { h: 30, n: 28, p: 22, a: 21, g: 8 }, plH = ls => 14 + ls.reduce((s, l) => s + PLH[l.k], 0) + 10;
+                const sndL = snd0.length ? pLines('NGƯỜI GỬI', snd0) : null, rcvL = rcv0 ? pLines('NGƯỜI NHẬN', [rcv0]) : null;
+                const PH = sndL || rcvL ? Math.max(sndL ? plH(sndL) : 0, rcvL ? plH(rcvL) : 0) : 0, PARTY = PH;
+                const LH = CUST + PARTY + THEAD + shown.length * ROW + (rest.length ? 48 : 0) + TOTH + (INFOH ? 24 + INFOH : 0) + (HOW ? 24 + HOW : 0);
+                const brows = BK ? [['Ngân hàng', BK.k], ['Chủ tài khoản', BK.t], ['Số tài khoản', BK.s], UV > 0 ? ['Số tiền VND', f(UV) + ' VND'] : null, UU > 0 ? ['Số tiền USD', tcUsd(UU) + ' USD'] : null].filter(Boolean) : [];
                 const qh = dyn ? QS : stImg ? Math.min(Math.round(QS * stImg.height / stImg.width), Math.round(QS * 1.3)) : 0;
-                const hint = dyn ? 'Quét bằng app ngân hàng: tài khoản và số tiền đã được điền sẵn. Nội dung chuyển khoản quý khách tự nhập.' : stImg ? 'Mã QR tài khoản (chưa điền sẵn số tiền, vui lòng nhập đúng số tiền ở trên và nội dung chuyển khoản).' : 'Chưa tạo được mã QR, vui lòng chuyển khoản theo thông tin ở trên.';
+                const hint = dyn ? 'Quét bằng app ngân hàng: tài khoản' + (UV > 0 ? ' và số tiền VND' : '') + ' đã được điền sẵn. Nội dung chuyển khoản quý khách tự nhập.' : stImg ? 'Mã QR tài khoản (chưa điền sẵn số tiền, vui lòng nhập đúng số tiền ở trên và nội dung chuyển khoản).' : 'Chưa tạo được mã QR, vui lòng chuyển khoản theo thông tin ở trên.';
                 const hintL = BK ? wrap(hint, RW - 40, 500, 12) : [], QOFF = 50, ROWS0 = QOFF + (qh ? qh + 18 : 0);
-                const BH = ROWS0 + brows.length * 28 + 8 + hintL.length * 17 + 14, RH = PNL + (BK ? 20 + BH : 0);
+                const BH = ROWS0 + brows.length * 28 + 8 + hintL.length * 17 + 14, RH = PNLH + (BK ? 20 + BH : 0);
                 const BODY = Math.max(LH, RH), cardH = HDR + TOP + BODY + PADB + FOOT, H = cardH + 2 * M;
                 /* ---- vẽ ---- */
                 const cv = document.createElement('canvas'); cv.width = W * S; cv.height = H * S; const x = cv.getContext('2d'); x.scale(S, S);
@@ -10285,24 +10348,25 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
                 let y = by;
                 tx('Khách hàng', X0, y + 14, 15, 500, MU); tx(o.name, X0, y + 58, 40, 800, INK, 'left', 520);
                 { let cx = XR; [L.length + ' đơn', KG ? f2(KG) + ' kg' : '', M3 ? f2(M3) + ' m³' : ''].filter(Boolean).reverse().forEach(t => { const w = tw(t, 600, 15) + 28; cx -= w; rr(cx, y + 26, w, 34, 17); x.fillStyle = '#f2f4f7'; x.fill(); tx(t, cx + w / 2, y + 49, 15, 600, '#475467', 'center'); cx -= 8 }) }
-                const tt = y + CUST;
-                tx('Mã đơn', C.id, tt + 16, 14, 600, MU); tx('Ngày về', C.d, tt + 16, 14, 600, MU); tx('Số lượng', C.q, tt + 16, 14, 600, MU); tx('Khối lượng', C.w, tt + 16, 14, 600, MU); tx('Cước (VND)', C.fee, tt + 16, 14, 600, MU, 'right'); tx('Trạng thái', XR, tt + 16, 14, 600, MU, 'right');
+                if (PH) { const top = y + CUST - 14; [[sndL, X0], [rcvL, both ? X0 + PW + PGAP : X0]].forEach(([ls, bx]) => { if (!ls) return; rr(bx, top, PW, PH, 14); x.fillStyle = '#f7f8fa'; x.fill(); x.lineWidth = 1; x.strokeStyle = LN; x.stroke(); let cy = top + 14; ls.forEach(l => { const px = bx + PADX, mw = PW - 2 * PADX; if (l.k === 'h') tx(l.t, px, cy + 17, 13, 700, MU); else if (l.k === 'n') tx(l.t, px, cy + 20, 20, 800, INK, 'left', mw); else if (l.k === 'p') tx(l.t, px, cy + 16, 16, 600, '#475467', 'left', mw); else if (l.k === 'a') tx(l.t, px, cy + 15, 15, 500, '#475467', 'left', mw); cy += PLH[l.k] }) }) }
+                const tt = y + CUST + PARTY;
+                tx('Mã đơn', C.id, tt + 16, 14, 600, MU); tx('Ngày về', C.d, tt + 16, 14, 600, MU); tx('Số lượng', C.q, tt + 16, 14, 600, MU); tx('Khối lượng', C.w, tt + 16, 14, 600, MU); tx('Cước', C.fee, tt + 16, 14, 600, MU, 'right'); tx('Trạng thái', XR, tt + 16, 14, 600, MU, 'right');
                 ln(X0, tt + 28, XR, tt + 28, INK, 2);
                 let ry = tt + THEAD;
                 shown.forEach((r, i) => {
-                    const mid = ry + ROW / 2, st = PB[pd(r)] || PB.no, sub = r.g ? 'Giao ' + fd(r.g) : '', usd = isU(r) ? f2(r.usd) + ' USD × ' + f(rt(r)) : '';
+                    const mid = ry + ROW / 2, st = PB[pd(r)] || PB.no, sub = r.g ? 'Giao ' + fd(r.g) : '', uc = isU(r), usd = uc ? 'USD × ' + f(rt(r)) : '';
                     if (i) ln(X0, ry, XR, ry, LN, 1);
                     tx(r.id || '–', C.id, sub ? ry + 31 : mid + 7, 19, 700, INK, 'left', 188); if (sub) tx(sub, C.id, ry + 54, 14, 500, MU, 'left', 188);
                     tx(fd(r.d) || '–', C.d, mid + 6, 17, 500, INK, 'left', 118); tx(f2(r.q) + ' ' + (r.u || ''), C.q, mid + 6, 17, 500, INK, 'left', 118);
                     const wp = [n(r.kg) ? f2(r.kg) + ' kg' : '', n(r.m3) ? f2(r.m3) + ' m³' : ''].filter(Boolean);
                     if (wp.length === 2) { tx(wp[0], C.w, mid - 3, 17, 500, INK, 'left', 108); tx(wp[1], C.w, mid + 19, 17, 500, INK, 'left', 108) } else tx(wp[0] || '–', C.w, mid + 6, 17, 500, INK, 'left', 108);
-                    tx(f(val(r)), C.fee, usd ? ry + 31 : mid + 7, 19, 700, INK, 'right', 124); if (usd) tx(usd, C.fee, ry + 54, 12, 500, MU, 'right', 124);
+                    if (uc) { tx(tcUsd(val(r)), C.fee, ry + 34, 24, 800, INK, 'right', 140); tx(usd, C.fee, ry + 57, 12, 500, MU, 'right', 140) } else tx(f(val(r)), C.fee, mid + 7, 19, 700, INK, 'right', 124);
                     pill(st[0], XR, mid, st[1], st[2]); ry += ROW
                 });
-                if (rest.length) { ln(X0, ry, XR, ry, LN, 1); tx('… và ' + rest.length + ' đơn khác · ' + f(sum(rest)) + ' VND (đã tính vào các số tiền tổng)', X0, ry + 30, 15, 500, MU, 'left', LW); ry += 48 }
+                if (rest.length) { ln(X0, ry, XR, ry, LN, 1); tx('… và ' + rest.length + ' đơn khác · ' + ['VND', 'USD'].filter(c => tcSums(rest)[c].c > 0).map(c => tcMon(tcSums(rest)[c].T, c)).join(' + ') + ' (đã tính vào các số tiền tổng)', X0, ry + 30, 15, 500, MU, 'left', LW); ry += 48 }
                 ln(X0, ry, XR, ry, INK, 2);
-                tx('Tổng cộng · ' + L.length + ' đơn', X0, ry + 44, 18, 700, INK, 'left', 300); tx([KG ? f2(KG) + ' kg' : '', M3 ? f2(M3) + ' m³' : ''].filter(Boolean).join(' · ') || '', C.w, ry + 44, 17, 700, INK, 'left', 130); tx(f(T), C.fee + 6, ry + 45, 21, 800, INK, 'right', 140);
-                ry += TOT;
+                tx('Tổng cộng · ' + L.length + ' đơn', X0, ry + 44, 18, 700, INK, 'left', 300); tx([KG ? f2(KG) + ' kg' : '', M3 ? f2(M3) + ' m³' : ''].filter(Boolean).join(' · ') || '', C.w, ry + 44, 17, 700, INK, 'left', 130); curs.forEach((c, ci) => { const yy = ry + 46 + ci * 38; tx(c === 'USD' ? tcUsd(G.USD.T) : f(G.VND.T), C.fee + 6, yy, c === 'USD' ? 25 : 21, 800, INK, 'right', 140); if (curs.length > 1 || c === 'USD') tx(c, XR, yy, 14, 700, MU, 'right') });
+                ry += TOTH;
                 if (INFOH) {
                     const iy = ry + 24; rr(X0, iy, LW, INFOH, 12); x.fillStyle = '#f7f8fa'; x.fill(); x.lineWidth = 1; x.strokeStyle = LN; x.stroke();
                     cells.forEach((c, k) => { const cx = X0 + 22 + (k % 2) * (LW / 2), cy = iy + 14 + Math.floor(k / 2) * 58; tx(c[0], cx, cy + 20, 14, 500, MU); tx(c[1], cx, cy + 47, 18, 700, INK, 'left', LW / 2 - 40) });
@@ -10310,12 +10374,15 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
                 }
                 if (HOW) { const hy = ry + 24; rr(X0, hy, LW, HOW, 12); x.fillStyle = '#f7f8fa'; x.fill(); x.lineWidth = 1; x.strokeStyle = LN; x.stroke(); tx('Hướng dẫn thanh toán', X0 + 22, hy + 35, 16, 700, INK); howT.forEach((t, i) => tx(t, X0 + 22, hy + 63 + i * 23, 15.5, 500, '#475467')) }
                 /* ---- cột phải: tổng tiền + QR chuyển khoản ---- */
-                { const py = by, pr = RX + RW - 20, pl = RX + 20; rr(RX, py, RW, PNL, 16); x.fillStyle = U > 0 ? '#fff3f2' : '#ecf8f1'; x.fill();
-                    tx('Tổng cước', pl, py + 34, 14, 500, '#475467'); tx(f(T), pr, py + 34, 16, 700, INK, 'right'); tx('Đã thu', pl, py + 64, 14, 500, '#475467'); tx(f(P), pr, py + 64, 16, 700, OK, 'right');
-                    ln(pl, py + 84, pr, py + 84, U > 0 ? '#f0b8b5' : '#a9d9bd', 1.5, [6, 5]);
-                    if (U > 0) { tx('Còn phải thanh toán', pl, py + 112, 15, 600, INK); const t = f(U) + ' VND'; let s = 46; while (s > 24 && tw(t, 800, s) > RW - 40) s--; tx(t, pl, py + 124 + s * .8, s, 800, RED) } else tx('✓ Đã thanh toán đủ', pl, py + 130, 26, 800, OK, 'left', RW - 40) }
+                curs.forEach((c, ci) => {
+                    const g = G[c], py = by + ci * (PNL + 14), pr = RX + RW - 20, pl = RX + 20, mm = v => c === 'USD' ? tcUsd(v) : f(v), ou = g.U > 0;
+                    rr(RX, py, RW, PNL, 16); x.fillStyle = ou ? '#fff3f2' : '#ecf8f1'; x.fill();
+                    tx('Tổng cước' + (curs.length > 1 ? ' (' + c + ')' : ''), pl, py + 34, 14, 500, '#475467'); tx(mm(g.T), pr, py + 34, 16, 700, INK, 'right'); tx('Đã thu', pl, py + 64, 14, 500, '#475467'); tx(mm(g.P), pr, py + 64, 16, 700, OK, 'right');
+                    ln(pl, py + 84, pr, py + 84, ou ? '#f0b8b5' : '#a9d9bd', 1.5, [6, 5]);
+                    if (ou) { tx('Còn phải thanh toán', pl, py + 112, 15, 600, INK); const t = mm(g.U) + (c === 'USD' ? ' USD' : ' VND'); let s = 46; while (s > 24 && tw(t, 800, s) > RW - 40) s--; tx(t, pl, py + 124 + s * .8, s, 800, RED) } else tx('✓ Đã thanh toán đủ', pl, py + 130, 26, 800, OK, 'left', RW - 40)
+                });
                 if (BK) {
-                    const b0 = by + PNL + 20; rr(RX, b0, RW, BH, 16); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 1.5; x.strokeStyle = LN; x.stroke();
+                    const b0 = by + PNLH + 20; rr(RX, b0, RW, BH, 16); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 1.5; x.strokeStyle = LN; x.stroke();
                     tx('Chuyển khoản thanh toán', RX + RW / 2, b0 + 34, 15, 800, INK, 'center', RW - 32);
                     if (qh) {
                         const qx = RX + (RW - QS) / 2, qy = b0 + QOFF;
@@ -10334,70 +10401,122 @@ ${ut.length ? `<h4 style="margin:12px 0 4px">Đơn chưa thu lớn nhất</h4><t
             const billLogoSrc = () => { try { const e = document.querySelector('img.lgo'); return e && e.src || '' } catch (x) { return '' } };
             function billHtml(B, qr) {
                 const lg = billLogoSrc();
-                const I = B.i.map(x => ({ id: String(x[0] || ''), d: String(x[1] || ''), q: String(x[2] || ''), v: n(x[3]), s: x[4] })), E = Array.isArray(B.e) ? B.e.map(n) : [0, 0, 0], T = I.reduce((a, x) => a + x.v, 0) + (E[0] || 0), P = I.filter(x => x.s === 'yes').reduce((a, x) => a + x.v, 0) + (E[1] || 0), U = I.filter(x => x.s === 'no').reduce((a, x) => a + x.v, 0) + (E[2] || 0), SL = { yes: 'Đã thu', no: 'Chưa thu', free: 'Không thu' };
+                const I = B.i.map(x => ({ id: String(x[0] || ''), d: String(x[1] || ''), q: String(x[2] || ''), v: n(x[3]), s: x[4], c: (x[5] === 1 || x[5] === 'U') ? 'USD' : 'VND' }));
+                const E = { VND: Array.isArray(B.e) ? B.e.map(n) : [0, 0, 0], USD: Array.isArray(B.f) ? B.f.map(n) : [0, 0, 0] }, G = {};
+                ['VND', 'USD'].forEach(c => { const a = I.filter(x => x.c === c), e = E[c], sm = z => a.filter(x => z ? x.s === z : true).reduce((s, x) => s + x.v, 0); G[c] = { has: a.length > 0 || e[0] > 0, T: sm('') + (e[0] || 0), P: sm('yes') + (e[1] || 0), U: sm('no') + (e[2] || 0) }; if (c === 'USD') { G[c].T = tcR2(G[c].T); G[c].P = tcR2(G[c].P); G[c].U = tcR2(G[c].U) } });
+                let curs = ['VND', 'USD'].filter(c => G[c].has); if (!curs.length) curs = ['VND'];
+                const U = G.VND.U, UU = G.USD.U, SL = { yes: 'Đã thu', no: 'Chưa thu', free: 'Không thu' };
                 const PB = { yes: 'background:#e6f6ec;color:#15803d', no: 'background:#fdeceb;color:#c8201c', free: 'background:#eef0f4;color:#667085' }, FN = "font-family:'Be Vietnam Pro',system-ui,Arial,sans-serif", fl = 'display:flex;justify-content:space-between;align-items:center;gap:12px';
-                const list = I.map((x, k) => `<div style="${fl};padding:12px 0;${k ? 'border-top:1px solid #eceff4' : ''}"><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(x.id)}</div><div style="font-size:14px;color:#667085;margin-top:2px">${esc([x.d ? 'Về ' + fd(x.d) : '', x.q].filter(Boolean).join(' · '))}</div></div><div style="text-align:right;flex:none"><div style="font-weight:700;font-size:17px;font-variant-numeric:tabular-nums">${f(x.v)}</div><span style="display:inline-block;margin-top:3px;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:600;${PB[x.s] || PB.no}">${SL[x.s] || SL.no}</span></div></div>`).join('');
-                const BK = (typeof BANKQR !== 'undefined' && Number.isInteger(B.b) && BANKQR[B.b]) || null, vNote = '', vq = BK ? vietQr(BK, U, vNote) : '', vs = vq ? qrSvg(vq) : '';
-                const bankH = BK ? `<div style="margin-top:16px;text-align:center"><div style="font-weight:700;font-size:14px;margin-bottom:8px">Chuyển khoản thanh toán · ${esc(BK.k)}</div><img src="${vs ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(vs) : BK.img}" alt="Mã QR ${esc(BK.k)}" style="width:100%;max-width:300px;border-radius:12px;border:1px solid #eceff4;background:#fff"><div style="font-size:13px;line-height:1.55;margin-top:8px"><b>${esc(BK.t)}</b> · ${esc(BK.s)}${U ? '<br>Số tiền <b>' + f(U) + ' VND</b>'  : ''}</div><div style="font-size:12px;color:#667085;margin-top:4px">${vs ? 'Quét mã bằng app ngân hàng: tài khoản' + (U ? ' và số tiền' : '') + ' được điền sẵn · nội dung chuyển khoản quý khách tự nhập' : 'Mở app ngân hàng và quét mã để chuyển khoản' + (U ? ' · số tiền ' + f(U) + ' VND' : '')}</div></div>` : '';
+                const amt = x => x.c === 'USD' ? `<div style="font-weight:800;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums">${tcUsd(x.v)}<span style="font-size:12px;font-weight:700;color:#667085;margin-left:4px">USD</span></div>` : `<div style="font-weight:700;font-size:17px;font-variant-numeric:tabular-nums">${f(x.v)}${curs.length > 1 ? '<span style="font-size:11px;font-weight:700;color:#98a2b3;margin-left:4px">VND</span>' : ''}</div>`;
+                const list = I.map((x, k) => `<div style="${fl};padding:12px 0;${k ? 'border-top:1px solid #eceff4' : ''}"><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(x.id)}</div><div style="font-size:14px;color:#667085;margin-top:2px">${esc([x.d ? 'Về ' + fd(x.d) : '', x.q].filter(Boolean).join(' · '))}</div></div><div style="text-align:right;flex:none">${amt(x)}<span style="display:inline-block;margin-top:3px;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:600;${PB[x.s] || PB.no}">${SL[x.s] || SL.no}</span></div></div>`).join('');
+                /* khung người gửi / người nhận */
+                const S0 = (Array.isArray(B.s) ? B.s : []).filter(p => Array.isArray(p) && (p[0] || p[1] || p[2])), R0 = Array.isArray(B.r) && (B.r[0] || B.r[1] || B.r[2]) ? B.r : null;
+                const pcell = (title, arr) => `<div style="flex:1 1 200px;min-width:0;background:#f7f8fa;border:1px solid #eceff4;border-radius:12px;padding:10px 12px"><div style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#667085;text-transform:uppercase">${title}</div>${arr.map(p => `<div style="margin-top:6px"><div style="font-weight:700;font-size:15px">${esc(p[0] || '')}</div>${p[1] ? `<div style="font-size:13px;color:#475467">${esc(p[1])}</div>` : ''}${p[2] ? `<div style="font-size:13px;color:#475467;line-height:1.35">${esc(p[2])}</div>` : ''}</div>`).join('')}</div>`;
+                const parties = S0.length || R0 ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 12px">${S0.length ? pcell('Người gửi', S0) : ''}${R0 ? pcell('Người nhận', [R0]) : ''}</div>` : '';
+                const BK = (G.USD.has && !U) ? null : ((typeof BANKQR !== 'undefined' && Number.isInteger(B.b) && BANKQR[B.b]) || null), vNote = '', vq = BK ? vietQr(BK, U, vNote) : '', vs = vq ? qrSvg(vq) : '';
+                const bankH = BK ? `<div style="margin-top:16px;text-align:center"><div style="font-weight:700;font-size:14px;margin-bottom:8px">Chuyển khoản thanh toán · ${esc(BK.k)}</div><img src="${vs ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(vs) : BK.img}" alt="Mã QR ${esc(BK.k)}" style="width:100%;max-width:300px;border-radius:12px;border:1px solid #eceff4;background:#fff"><div style="font-size:13px;line-height:1.55;margin-top:8px"><b>${esc(BK.t)}</b> · ${esc(BK.s)}${U ? '<br>Số tiền <b>' + f(U) + ' VND</b>' : ''}${UU ? '<br>Số tiền USD <b>' + tcUsd(UU) + ' USD</b>' : ''}</div><div style="font-size:12px;color:#667085;margin-top:4px">${vs ? 'Quét mã bằng app ngân hàng: tài khoản' + (U ? ' và số tiền VND' : '') + ' được điền sẵn · nội dung chuyển khoản quý khách tự nhập' : 'Mở app ngân hàng và quét mã để chuyển khoản' + (U ? ' · số tiền ' + f(U) + ' VND' : '')}</div></div>` : '';
+                const pnl = c => { const g = G[c], o = g.U > 0, m = v => c === 'USD' ? tcUsd(v) : f(v), un = c === 'USD' ? ' USD' : ' VND', ln = o ? '#f0b8b5' : '#a9d9bd';
+                    return `<div style="margin-top:10px;border-radius:14px;padding:14px 16px;background:${o ? '#fff3f2' : '#ecf8f1'}">${curs.length > 1 ? `<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#667085;margin-bottom:6px">CƯỚC TÍNH BẰNG ${c}</div>` : ''}<div style="${fl};font-size:13px;color:#475467"><span>Tổng cước</span><b style="color:#1c1f24">${m(g.T)}</b></div><div style="${fl};font-size:13px;color:#475467;margin-top:4px"><span>Đã thu</span><b style="color:#15803d">${m(g.P)}</b></div><div style="border-top:1px dashed ${ln};margin:10px 0 8px"></div><div style="${fl}"><span style="font-weight:600">${o ? 'Còn phải thanh toán' : 'Đã thanh toán đủ'}</span><span style="font-weight:800;font-size:${o ? (c === 'USD' ? 30 : 24) : 20}px;color:${o ? '#c8201c' : '#15803d'};font-variant-numeric:tabular-nums">${o ? m(g.U) + un : '✓'}</span></div></div>` };
                 const qrH = qr ? `<div style="margin:18px -22px 0;border-top:2px dashed #d5dae3;padding:16px 22px 2px;display:flex;gap:14px;align-items:center"><canvas id="ttq" width="480" height="480" style="width:116px;height:116px;flex:none;border-radius:8px"></canvas><div style="font-size:13px;line-height:1.5;color:#475467"><b style="color:#1c1f24;display:block;font-size:14px">Xem bill trên điện thoại</b>Quét mã QR để mở bill này, không cần đăng nhập.</div></div>` : '';
                 return `<div style="max-width:560px;margin:0 auto;background:#fff;color:#1c1f24;border-radius:18px;overflow:hidden;${FN};font-size:14px;line-height:1.5;box-shadow:0 12px 36px rgba(0,0,0,.2)">
 <div style="background:linear-gradient(135deg,#C8201C,#8f1411);color:#fff;padding:16px 60px 16px 18px;display:flex;align-items:center;gap:14px">${lg ? `<img src="${lg}" alt="Sokmok Transport" style="width:84px;height:62px;object-fit:contain;background:#fff;border-radius:12px;padding:4px;flex:none">` : ''}<div style="min-width:0"><div style="font-size:20px;font-weight:800;letter-spacing:.04em">SOKMOK TRANSPORT</div><div style="font-size:12.5px;opacity:.92;margin-top:3px">Bill thanh toán · ${esc(String(B.n || ''))} · ${esc(String(B.t || ''))}</div><div style="font-size:12px;opacity:.8;margin-top:1px">Hotline 0865 491 456</div></div></div>
-<div style="padding:16px 22px 20px"><div style="font-size:12px;color:#667085">Khách hàng</div><div style="font-size:26px;font-weight:800;margin-bottom:6px">${esc(String(B.k || ''))}</div>
-<div style="border-top:2px solid #1c1f24">${list}</div>
+<div style="padding:16px 22px 20px"><div style="font-size:12px;color:#667085">Khách hàng</div><div style="font-size:26px;font-weight:800;margin-bottom:8px">${esc(String(B.k || ''))}</div>
+${parties}<div style="border-top:2px solid #1c1f24">${list}</div>
 ${n(B.x) ? `<p style="font-size:12px;color:#667085;margin:6px 0 0">… và ${n(B.x)} đơn khác, đã cộng vào các số tiền bên dưới.</p>` : ''}
-<div style="margin-top:10px;border-radius:14px;padding:14px 16px;background:${U ? '#fff3f2' : '#ecf8f1'}"><div style="${fl};font-size:13px;color:#475467"><span>Tổng cước</span><b style="color:#1c1f24">${f(T)}</b></div><div style="${fl};font-size:13px;color:#475467;margin-top:4px"><span>Đã thu</span><b style="color:#15803d">${f(P)}</b></div><div style="border-top:1px dashed ${U ? '#f0b8b5' : '#a9d9bd'};margin:10px 0 8px"></div><div style="${fl}"><span style="font-weight:600">${U ? 'Còn phải thanh toán' : 'Đã thanh toán đủ'}</span><span style="font-weight:800;font-size:${U ? 24 : 20}px;color:${U ? '#c8201c' : '#15803d'};font-variant-numeric:tabular-nums">${U ? f(U) + ' VND' : '✓'}</span></div></div>
+${curs.map(pnl).join('')}
 ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14px 0 0">Cảm ơn quý khách đã sử dụng dịch vụ SOKMOK Transport</p><p style="text-align:center;font-size:12px;color:#98a2b3;margin:4px 0 0">Hotline 0865 491 456 · (+84) 981 491 456 · (+855) 92 889 198</p></div></div>`
             }
-            /* Bill thanh toán: chọn nhiều đơn của cùng 1 khách → xuất chung 1 bill, mã QR mở đúng danh sách đơn đã chọn */
+            /* Bill thanh toán: chọn 1 hoặc nhiều người gửi (cùng giao cho 1 người nhận) → xuất chung 1 bill; đơn đã thu được ẩn; đơn tính USD ra bill bằng USD; mã QR mở đúng danh sách đơn đã chọn */
             function payBill(rows, name) {
                 ensureIds(); if (!rows.length) { toast('err', 'Không có đơn nào để lập bill.'); return }
-                const k0 = key(rows[0].k), pool = [], seen = new Set();
-                Object.keys(S.months).sort().forEach(m => (S.months[m].rows || []).forEach(r => { if (key(r.k) === k0 && r.id && !seen.has(r.id)) { seen.add(r.id); pool.push(r) } }));
-                rows.forEach(r => { if (r.id && !seen.has(r.id)) { seen.add(r.id); pool.push(r) } });
-                pool.sort((x, y) => String(x.d || '').localeCompare(String(y.d || '')) || String(x.id || '').localeCompare(String(y.id || '')));
-                /* tên trên bill = tên NGƯỜI GỬI đúng như ghi ở «Bên gửi» của phiếu giao nhận (Mr/Ms + tên); chưa có hồ sơ người gửi thì giữ tên khách */
-                const sndName = (k, fb) => { try { k = (k || '').trim(); const ct = cfg().ct || {}; if (!ct[k] && !fixKey(k)) return fb; const c = ct[k] || { n: strip(k), p: '', a: '' }, s2 = fixSender(k, c) || c, nm = ((s2.g ? s2.g + '. ' : '') + (s2.n || '')).trim(); return nm || fb } catch (e) { return fb } };
+                const C = cfg(); C.ct = C.ct || {}; C.rv = C.rv || {};
+                /* tất cả đơn của mọi khách (mọi tháng); đơn đã thu sẽ được ẩn khỏi danh sách chọn */
+                const ALL = [], seen = new Set();
+                Object.keys(S.months).sort().forEach(m => (S.months[m].rows || []).forEach(r => { if (r.id && !seen.has(r.id)) { seen.add(r.id); ALL.push(r) } }));
+                rows.forEach(r => { if (r.id && !seen.has(r.id)) { seen.add(r.id); ALL.push(r) } });
+                ALL.sort((x, y) => String(x.d || '').localeCompare(String(y.d || '')) || String(x.id || '').localeCompare(String(y.id || '')));
+                const forced = new Set(rows.map(r => r.id)), sel = new Set(forced), SND = new Set(rows.map(r => key(r.k)));
+                let showPaid = false;
+                const vis = r => SND.has(key(r.k)) && (pd(r) === 'no' || forced.has(r.id) || showPaid);
+                const cnt = {}; ALL.forEach(r => { const k1 = key(r.k), c = cnt[k1] || (cnt[k1] = { u: 0 }); if (pd(r) === 'no') c.u++ });
+                const SK = Object.keys(cnt).filter(k1 => cnt[k1].u > 0 || SND.has(k1)).sort((a, b) => (SND.has(b) ? 1 : 0) - (SND.has(a) ? 1 : 0) || cnt[b].u - cnt[a].u || a.localeCompare(b, 'vi'));
+                const raw = k1 => k1 === '(chưa ghi khách)' ? '' : k1;
+                /* thông tin người gửi: đúng như ghi ở «Bên gửi» của phiếu giao nhận (Mr/Ms + tên, SĐT, địa chỉ) */
+                const sndInfo = k1 => { const k2 = raw(k1).trim(); if (!k2) return { name: name || '', p: '', a: '' }; if (!C.ct[k2] && !fixKey(k2)) return { name: k2, p: '', a: '' }; const c = C.ct[k2] || { n: strip(k2), p: '', a: '' }; let s2 = c; try { s2 = fixSender(k2, c) || c } catch (e) { } return { name: ((s2.g ? s2.g + '. ' : '') + (s2.n || '')).trim() || k2, p: s2.p || '', a: s2.a || '' } };
+                /* người nhận: mặc định theo người gửi (anh Nghĩa / anh Trọng → anh Triết, Chả cá → Mr Heang, còn lại theo lần lập phiếu trước) */
+                const rcvDef = () => { for (const k1 of SND) { const k2 = raw(k1).trim(), m = fixKey(k2), v = m ? FIXR[m][0] : (C.rv[k2] || ''); if (v) return String(v).trim() } return '' };
+                let rk = rcvDef(), rkTouched = false;
+                const rcvList = [...new Set([...Object.values(FIXR).map(v => v[0]), ...Object.values(C.rv).filter(Boolean).map(v => String(v).trim()), rk].filter(Boolean))];
+                const rcvInfo = r1 => { r1 = (r1 || '').trim(); if (!r1) return null; const c = fixRecv(r1) || C.ct[r1] || { n: strip(r1), p: '', a: '' }, nm = strip(r1).toLowerCase() === String(c.n || '').toLowerCase() ? r1 : (c.n || r1); return { name: ((c.g ? c.g + '. ' : '') + nm).trim(), p: c.p || '', a: c.a || '' } };
+                const partyOf = list => { const ks = [...new Set([...SK.filter(k1 => list.some(r => key(r.k) === k1)), ...list.map(r => key(r.k))])], sI = ks.map(sndInfo); return { sI, rcv: rcvInfo(rk), snm: sI.map(s => s.name).filter(Boolean).join(' & ') || name || '' } };
                 let bank = -1; try { const v = localStorage.getItem('bc-bankqr'); bank = v !== null && v !== '' && typeof BANKQR !== 'undefined' && BANKQR[+v] ? +v : -1 } catch (e) { }
-                const sname = sndName(rows[0].k, name), sel = new Set(rows.map(r => r.id)), no = 'TT' + Date.now().toString(36).slice(-5).toUpperCase(), ST = { yes: ['Đã thu', '#15803d'], no: ['Chưa thu', '#c8201c'], free: ['Không thu', '#667085'] };
-                const mkB = list => {
-                    let lim = Math.min(list.length, 40), B, url;
-                    for (; ;) {
-                        const rest = list.slice(lim); B = { n: no, k: sname, t: fd(today()), i: list.slice(0, lim).map(r => [r.id || '', r.d || '', f2(r.q) + ' ' + (r.u || ''), Math.round(fee(r)), pd(r)]) }; if (bank >= 0) B.b = bank;
-                        if (rest.length) { B.x = rest.length; B.e = [0, 'yes', 'no'].map((st, j) => rest.filter(r => !j || pd(r) === st).reduce((a, r) => a + Math.round(fee(r)), 0)) }
-                        url = baseUrl() + '#tt=' + b64e(JSON.stringify(B)); if (url.length <= 2300 || lim <= 1) break; lim--
-                    }
+                const no = 'TT' + Date.now().toString(36).slice(-5).toUpperCase(), ST = { yes: ['Đã thu', '#15803d'], no: ['Chưa thu', '#c8201c'], free: ['Không thu', '#667085'] };
+                const mkB = (list, P) => {
+                    const build = (lim, addr) => {
+                        const rest = list.slice(lim), B = { n: no, k: P.snm, t: fd(today()), i: list.slice(0, lim).map(r => [r.id || '', r.d || '', f2(r.q) + ' ' + (r.u || ''), tcAmt(r), pd(r), isU(r) ? 1 : 0]) };
+                        if (bank >= 0) B.b = bank;
+                        if (P.sI.length) B.s = P.sI.map(s => [s.name, s.p, addr ? s.a : '']);
+                        if (P.rcv) B.r = [P.rcv.name, P.rcv.p, addr ? P.rcv.a : ''];
+                        if (rest.length) { B.x = rest.length; const agg = c => [0, 'yes', 'no'].map((st, j) => tcR2(rest.filter(r => tcCur(r) === c && (!j || pd(r) === st)).reduce((a, r) => a + tcAmt(r), 0))); B.e = agg('VND'); const au = agg('USD'); if (au.some(Boolean)) B.f = au }
+                        return B
+                    };
+                    let B, url;
+                    for (const addr of [1, 0]) { let lim = Math.min(list.length, 40); for (; ;) { B = build(lim, addr); url = baseUrl() + '#tt=' + b64e(JSON.stringify(B)); if (url.length <= 2300 || lim <= 1) break; lim-- } if (url.length <= 2300) break }
                     return { B, url }
                 };
-                if (!document.getElementById('bsel-css')) document.head.insertAdjacentHTML('beforeend', '<style id="bsel-css">.bsel{background:#fff;color:#1c1f24;border-radius:16px;margin:0 0 12px;box-shadow:0 6px 20px rgba(0,0,0,.14)}.bsel>summary{list-style:none;cursor:pointer;padding:11px 16px;font-weight:700;text-align:center;border-radius:16px}.bsel>summary::-webkit-details-marker{display:none}.bsel[open]>summary{border-bottom:1px solid #eceff4;border-radius:16px 16px 0 0}.bsel .bsq{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px 4px}.bsel .bsq button{border:1px solid #d5dae3;background:#f7f8fa;color:#1c1f24;border-radius:99px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer}.bsel .bsl{max-height:260px;overflow:auto;padding:0 12px 6px}.bbk{background:#fff;color:#1c1f24;border-radius:16px;margin:0 0 12px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.14)}.bbk b{display:block;font-size:13px;margin-bottom:7px}.bbk .bko{display:flex;gap:6px;flex-wrap:wrap}.bbk button{border:1px solid #d5dae3;background:#f7f8fa;color:#1c1f24;border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer}.bbk button.on{background:#c8201c;border-color:#c8201c;color:#fff}</style>');
-                const rowH = r => { const s2 = ST[pd(r)] || ST.no; return `<label style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid #eceff4;cursor:pointer"><input type="checkbox" data-id="${esc(r.id)}" ${sel.has(r.id) ? 'checked' : ''} style="width:19px;height:19px;flex:none"><span style="flex:1;min-width:0"><b style="font-size:13px">${esc(r.id)}</b><span style="display:block;font-size:11.5px;color:#667085">${esc([r.d ? 'Về ' + fd(r.d) : '', f2(r.q) + ' ' + (r.u || '')].join(' · '))}</span></span><span style="text-align:right;flex:none;font-size:13px;font-weight:700">${f(fee(r))}<span style="display:block;font-size:11px;font-weight:600;color:${s2[1]}">${s2[0]}</span></span></label>` };
+                if (!document.getElementById('bsel-css')) document.head.insertAdjacentHTML('beforeend', '<style id="bsel-css">.bsel{background:#fff;color:#1c1f24;border-radius:16px;margin:0 0 12px;box-shadow:0 6px 20px rgba(0,0,0,.14)}.bsel>summary{list-style:none;cursor:pointer;padding:11px 16px;font-weight:700;text-align:center;border-radius:16px}.bsel>summary::-webkit-details-marker{display:none}.bsel[open]>summary{border-bottom:1px solid #eceff4;border-radius:16px 16px 0 0}.bsel .bsq{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px 4px}.bsel .bsq button{border:1px solid #d5dae3;background:#f7f8fa;color:#1c1f24;border-radius:99px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer}.bsel .bsl{max-height:260px;overflow:auto;padding:0 12px 6px}.bbk{background:#fff;color:#1c1f24;border-radius:16px;margin:0 0 12px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.14)}.bbk b{display:block;font-size:13px;margin-bottom:7px}.bbk .bko{display:flex;gap:6px;flex-wrap:wrap;max-height:150px;overflow:auto}.bbk button{border:1px solid #d5dae3;background:#f7f8fa;color:#1c1f24;border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer}.bbk button.on{background:#c8201c;border-color:#c8201c;color:#fff}</style>');
+                const rowH = r => { const c = tcCur(r), s2 = ST[pd(r)] || ST.no, am = c === 'USD' ? `<span style="font-size:16px;font-weight:800">${tcUsd(tcAmt(r))}</span><span style="font-size:10.5px;color:#667085;margin-left:3px">USD</span>` : f(tcAmt(r)); return `<label style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid #eceff4;cursor:pointer"><input type="checkbox" data-id="${esc(r.id)}" ${sel.has(r.id) ? 'checked' : ''} style="width:19px;height:19px;flex:none"><span style="flex:1;min-width:0"><b style="font-size:13px">${esc(r.id)}</b><span style="display:block;font-size:11.5px;color:#667085">${esc([SND.size > 1 ? strip(raw(key(r.k))) : '', r.d ? 'Về ' + fd(r.d) : '', f2(r.q) + ' ' + (r.u || '')].filter(Boolean).join(' · '))}</span></span><span style="text-align:right;flex:none;font-size:13px;font-weight:700">${am}<span style="display:block;font-size:11px;font-weight:600;color:${s2[1]}">${s2[0]}</span></span></label>` };
                 const o = document.createElement('div'); o.className = 'rpo mro'; o.style.zIndex = 99980; let url = '';
-                o.innerHTML = '<div class="bwrap"><button type="button" class="xc xw noprt" aria-label="Đóng" title="Đóng">×</button>'
-                    + `<details class="bsel noprt"${pool.length > 1 ? '' : ' hidden'}><summary>☑ Chọn đơn đưa vào bill · đang chọn <span id="ttn"></span>/${pool.length}</summary><div class="bsq"><button type="button" data-q="all">Chọn tất cả</button><button type="button" data-q="no">Chỉ đơn chưa thu</button><button type="button" data-q="none">Bỏ chọn</button></div><div class="bsl">${pool.map(rowH).join('')}</div></details>`
-                    + (typeof BANKQR !== 'undefined' && BANKQR.length ? `<div class="bbk noprt"><b>💳 Mã ngân hàng in trên bill (để khách chuyển khoản)</b><div class="bko"><button type="button" data-bk="-1">Không in mã</button>${BANKQR.map((x, i) => `<button type="button" data-bk="${i}">${esc(x.k)} · ${esc(x.t)}</button>`).join('')}</div></div>` : '')
-                    + '<div id="ttb"></div><div class="noprt bact"><button type="button" class="p" id="ttp">🖨 In / Lưu PDF</button><button type="button" id="ttd">🖼 Tải ảnh PNG</button><button type="button" id="ttc">🔗 Sao chép link bill</button></div></div>'; document.body.appendChild(o);
+                o.innerHTML = '<div class="bwrap"><button type="button" class="xc xw noprt" aria-label="Đóng" title="Đóng">×</button><div class="bleft">'
+                    + `<div class="bbk bsn noprt"><b>👤 Người gửi · chọn 1 hoặc nhiều người (cùng giao cho 1 người nhận thì lập chung 1 bill)</b><div class="bko">${SK.map((k1, i) => `<button type="button" data-sk="${i}">${esc(strip(raw(k1)) || k1)} · ${cnt[k1].u} đơn chưa thu</button>`).join('')}</div></div>`
+                    + `<details class="bsel noprt"><summary>☑ Chọn đơn đưa vào bill · đang chọn <span id="ttn"></span>/<span id="ttt"></span></summary><div class="bsq"><button type="button" data-q="all">Chọn tất cả</button><button type="button" data-q="no">Chỉ đơn chưa thu</button><button type="button" data-q="none">Bỏ chọn</button><button type="button" data-q="paid" id="ttpd"></button></div><div class="bsl"></div></details>`
+                    + (rcvList.length ? `<div class="bbk brc noprt"><b>📥 Người nhận (in trên bill)</b><div class="bko"><button type="button" data-rk="-1">Không ghi</button>${rcvList.map((x, i) => `<button type="button" data-rk="${i}">${esc(x)}</button>`).join('')}</div></div>` : '')
+                    + (typeof BANKQR !== 'undefined' && BANKQR.length ? `<div class="bbk bbq noprt"><b>💳 Mã ngân hàng in trên bill (để khách chuyển khoản)</b><div class="bko"><button type="button" data-bk="-1">Không in mã</button>${BANKQR.map((x, i) => `<button type="button" data-bk="${i}">${esc(x.k)} · ${esc(x.t)}</button>`).join('')}</div></div>` : '')
+                    + '</div><div class="bright"><div id="ttb"></div><div class="noprt bact"><button type="button" class="p" id="ttp">🖨 In / Lưu PDF</button><button type="button" id="ttd">🖼 Tải ảnh PNG</button><button type="button" id="ttc">🔗 Sao chép link bill</button></div></div></div>'; document.body.appendChild(o);
+                const det = o.querySelector('.bsel'), bsl = o.querySelector('.bsl');
+                const drawList = () => {
+                    const vs = ALL.filter(vis); bsl.innerHTML = vs.length ? vs.map(rowH).join('') : '<p style="text-align:center;color:#667085;font-size:13px;padding:14px 0 8px;margin:0">Không còn đơn chưa thu nào của người gửi đã chọn.</p>';
+                    const hid = ALL.filter(r => SND.has(key(r.k)) && pd(r) !== 'no' && !forced.has(r.id)).length, pb = o.querySelector('#ttpd'); pb.hidden = !hid && !showPaid; pb.textContent = showPaid ? 'Ẩn đơn đã thu' : 'Hiện đơn đã thu (' + hid + ')'
+                };
                 const paint = () => {
-                    const list = pool.filter(r => sel.has(r.id)), box = o.querySelector('#ttb'); o.querySelector('#ttn').textContent = list.length; url = '';
+                    const list = ALL.filter(r => vis(r) && sel.has(r.id)), box = o.querySelector('#ttb'); url = '';
+                    o.querySelector('#ttn').textContent = list.length; o.querySelector('#ttt').textContent = ALL.filter(vis).length;
                     if (!list.length) { box.innerHTML = '<p style="text-align:center;color:#fff;font-weight:600;padding:24px 0">Hãy chọn ít nhất 1 đơn để lập bill.</p>'; return }
-                    const R = mkB(list); url = R.url; box.innerHTML = billHtml(R.B, true); const cv = box.querySelector('#ttq');
+                    const R = mkB(list, partyOf(list)); url = R.url; box.innerHTML = billHtml(R.B, true); const cv = box.querySelector('#ttq');
                     try { if (!qrDraw(cv.getContext('2d'), url, 0, 0, 480, 'L')) cv.outerHTML = '<p>Chưa tải được thư viện QR (cần có mạng). Thử lại sau vài giây.</p>' } catch (e) { cv.outerHTML = '<p style="color:#c8201c">Bill quá dài để tạo QR, hãy chọn ít đơn hơn.</p>' }
                 };
-                const bkMark = () => o.querySelectorAll('.bbk [data-bk]').forEach(b => b.classList.toggle('on', +b.dataset.bk === bank));
-                const bkBox = o.querySelector('.bbk'); if (bkBox) bkBox.addEventListener('click', e => { const b = e.target.closest('[data-bk]'); if (!b) return; bank = +b.dataset.bk; try { localStorage.setItem('bc-bankqr', String(bank)) } catch (x) { } bkMark(); paint() });
-                bkMark(); paint();
-                const det = o.querySelector('.bsel');
+                const refresh = () => { drawList(); paint() };
+                const mark = () => {
+                    o.querySelectorAll('.bbq [data-bk]').forEach(b => b.classList.toggle('on', +b.dataset.bk === bank));
+                    o.querySelectorAll('.bsn [data-sk]').forEach(b => b.classList.toggle('on', SND.has(SK[+b.dataset.sk])));
+                    o.querySelectorAll('.brc [data-rk]').forEach(b => { const i = +b.dataset.rk; b.classList.toggle('on', i < 0 ? !rk : rk === rcvList[i]) })
+                };
+                const bkBox = o.querySelector('.bbq'); if (bkBox) bkBox.addEventListener('click', e => { const b = e.target.closest('[data-bk]'); if (!b) return; bank = +b.dataset.bk; try { localStorage.setItem('bc-bankqr', String(bank)) } catch (x) { } mark(); paint() });
+                const rcBox = o.querySelector('.brc'); if (rcBox) rcBox.addEventListener('click', e => { const b = e.target.closest('[data-rk]'); if (!b) return; const i = +b.dataset.rk; rk = i < 0 ? '' : rcvList[i]; rkTouched = true; mark(); paint() });
+                o.querySelector('.bsn').addEventListener('click', e => {
+                    const b = e.target.closest('[data-sk]'); if (!b) return; const k1 = SK[+b.dataset.sk];
+                    if (SND.has(k1)) { if (SND.size === 1) { toast('err', 'Cần giữ lại ít nhất 1 người gửi.'); return } SND.delete(k1); ALL.forEach(r => { if (key(r.k) === k1) sel.delete(r.id) }) }
+                    else { SND.add(k1); ALL.forEach(r => { if (key(r.k) === k1 && pd(r) === 'no') sel.add(r.id) }) }
+                    if (!rkTouched) rk = rcvDef(); mark(); refresh()
+                });
+                mark(); refresh();
                 det.addEventListener('change', e => { const c = e.target.closest('input[data-id]'); if (!c) return; c.checked ? sel.add(c.dataset.id) : sel.delete(c.dataset.id); paint() });
-                det.addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (!b) return; const q = b.dataset.q; sel.clear(); if (q !== 'none') pool.forEach(r => { if (q === 'all' || pd(r) === 'no') sel.add(r.id) }); det.querySelectorAll('input[data-id]').forEach(c => { c.checked = sel.has(c.dataset.id) }); paint() });
+                det.addEventListener('click', e => {
+                    const b = e.target.closest('[data-q]'); if (!b) return; const q = b.dataset.q;
+                    if (q === 'paid') { showPaid = !showPaid; refresh(); return }
+                    sel.clear(); if (q !== 'none') ALL.filter(vis).forEach(r => { if (q === 'all' || pd(r) === 'no') sel.add(r.id) }); refresh()
+                });
                 o.onclick = e => { if (e.target === o) o.remove() }; o.querySelector('.xw').onclick = () => o.remove();
                 o.querySelector('#ttp').onclick = () => { if (url) prt(); else toast('err', 'Hãy chọn ít nhất 1 đơn.') }; o.querySelector('#ttc').onclick = () => { if (url) copy(url); else toast('err', 'Hãy chọn ít nhất 1 đơn.') }
                 o.querySelector('#ttd').onclick = async () => {
-                    const list = pool.filter(r => sel.has(r.id)); if (!list.length) { toast('err', 'Hãy chọn ít nhất 1 đơn.'); return }
+                    const list = ALL.filter(r => vis(r) && sel.has(r.id)); if (!list.length) { toast('err', 'Hãy chọn ít nhất 1 đơn.'); return }
                     const bt = o.querySelector('#ttd'), t0 = bt.textContent; bt.disabled = true; bt.textContent = '⏳ Đang tạo ảnh…';
                     try {
-                        const BK = bank >= 0 && typeof BANKQR !== 'undefined' ? BANKQR[bank] || null : null, R = await billPng({ no, name: sname, date: fd(today()), rows: list, bank: BK });
-                        const ok = await new Promise(res => R.canvas.toBlob(b => { if (!b) return res(false); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'bill-' + no + '-' + vnSlug(sname) + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); res(true) }, 'image/png'));
+                        const P = partyOf(list), BK = bank >= 0 && typeof BANKQR !== 'undefined' ? BANKQR[bank] || null : null, R = await billPng({ no, name: P.snm, date: fd(today()), rows: list, bank: BK, senders: P.sI, recv: P.rcv });
+                        const ok = await new Promise(res => R.canvas.toBlob(b => { if (!b) return res(false); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'bill-' + no + '-' + vnSlug(P.snm) + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); res(true) }, 'image/png'));
                         if (!ok) toast('err', 'Không tạo được ảnh PNG, thử lại sau ít giây.');
-                        else if (!R.bank) toast('ok', 'Đã tải ảnh bill. Bill chưa chọn mã ngân hàng nên chưa có QR chuyển khoản.');
-                        else if (R.dyn) toast('ok', 'Đã tải ảnh bill, QR chuyển khoản đã điền sẵn tài khoản và số tiền (nội dung để trống cho người chuyển tự nhập).');
+                        else if (!R.bank && bank < 0) toast('ok', 'Đã tải ảnh bill. Bill chưa chọn mã ngân hàng nên chưa có QR chuyển khoản.');
+                        else if (R.dyn) toast('ok', 'Đã tải ảnh bill, QR chuyển khoản đã điền sẵn tài khoản' + (list.some(r => !isU(r) && pd(r) === 'no') ? ' và số tiền VND' : '') + ' (nội dung để trống cho người chuyển tự nhập).');
                         else toast('err', 'Đã tải ảnh bill nhưng dùng mã QR tĩnh (chưa có sẵn số tiền) vì chưa tải được thư viện QR hoặc tài khoản chưa khai báo bin.')
                     } catch (e) { console.error(e); toast('err', 'Không tạo được ảnh bill: ' + (e && e.message || e)) }
                     bt.disabled = false; bt.textContent = t0
