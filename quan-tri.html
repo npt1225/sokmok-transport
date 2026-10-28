@@ -6728,6 +6728,126 @@
   #tb tfoot td:nth-child(10)::before{content:"Số đơn"}
 }
 </style>
+<style id="x-mobile-card-v2">
+/* ===== ĐIỆN THOẠI v2: thẻ đơn có thứ bậc rõ — Khách > Số lượng + Cước > chi tiết phụ ===== */
+@media(max-width:700px){
+  #tb tbody tr[data-row]{grid-template-columns:repeat(6,1fr)!important;gap:6px 8px!important;padding:12px!important}
+  #tb tbody tr[data-row] td{font-size:12.5px!important;line-height:1.35}
+  #tb tbody tr[data-row] td::before{font-size:10px!important;font-weight:600!important;margin-bottom:0!important;opacity:.85}
+  /* dòng 1: số thứ tự (trái) + ngày giao (phải), chữ nhỏ */
+  #tb tbody tr[data-row] td:nth-child(1){grid-column:1/4!important;grid-row:1!important}
+  #tb tbody tr[data-row] td:nth-child(1)::before{display:inline!important;content:"Đơn "!important}
+  #tb tbody tr[data-row] td:nth-child(2){grid-column:4/7!important;grid-row:1!important;justify-self:end;text-align:right!important;font-weight:600}
+  #tb tbody tr[data-row] td:nth-child(2)::before{display:inline!important;content:"Giao "!important;margin-right:2px}
+  /* dòng 2: tên khách to, đậm */
+  #tb tbody tr[data-row] td:nth-child(3){grid-column:1/-1!important;grid-row:2!important;font-size:18px!important;font-weight:700;line-height:1.25}
+  /* dòng 3: trạng thái thu / giao */
+  #tb tbody tr[data-row] td:nth-child(4){grid-column:1/-1!important;grid-row:3!important}
+  #tb .stc .pill{font-size:12.5px!important;padding:5px 11px!important}
+  /* dòng 4: 2 con số chính — Số lượng | Cước VND, nằm trong khung */
+  #tb tbody tr[data-row] td:nth-child(6),#tb tbody tr[data-row] td:nth-child(10){
+    grid-row:4!important;background:var(--in)!important;border-radius:10px;padding:8px 10px!important;
+    font-size:18px!important;font-weight:700;color:var(--tx)}
+  #tb tbody tr[data-row] td:nth-child(6){grid-column:1/4!important}
+  #tb tbody tr[data-row] td:nth-child(10){grid-column:4/7!important}
+  #tb tbody tr[data-row] td:nth-child(10):not(:empty){color:var(--pr)}
+  #tb tbody tr[data-row] td:nth-child(6)::after{font-size:13px;font-weight:600;color:var(--mu)}
+  /* chi tiết phụ: 3 cột nhỏ gọn */
+  #tb tbody tr[data-row] td:nth-child(5),
+  #tb tbody tr[data-row] td:nth-child(8),
+  #tb tbody tr[data-row] td:nth-child(9),
+  #tb tbody tr[data-row] td:nth-child(11),
+  #tb tbody tr[data-row] td:nth-child(12),
+  #tb tbody tr[data-row] td:nth-child(13),
+  #tb tbody tr[data-row] td:nth-child(14){grid-column:span 2!important;grid-row:auto!important;color:var(--tx)}
+  #tb tbody tr[data-row] td:nth-child(7){display:none!important}
+  #tb tbody tr[data-row] td:nth-child(11) small,#tb tbody tr[data-row] td:nth-child(13) small{display:block;color:var(--mu);font-size:11px}
+  /* ghi chú + nút */
+  #tb tbody tr[data-row] td:nth-child(15){grid-column:1/-1!important;font-size:12.5px!important;padding-top:6px!important;border-top:1px dashed var(--bd)!important}
+  #tb tbody tr[data-row] td:nth-child(16){grid-column:1/-1!important}
+}
+</style>
+<style id="x-mobile-tabs-v2">
+/* ===== ĐIỆN THOẠI: các tab còn lại (Chi phí đã thu, Công nợ, Theo tháng, Khách hàng, Tài khoản) hiển thị dạng thẻ ===== */
+@media(max-width:700px){
+  /* thanh tab: vuốt ngang, nút to dễ bấm */
+  .tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;gap:6px;padding-bottom:4px}
+  .tabs button{flex:0 0 auto!important;white-space:nowrap;scroll-snap-align:start;min-height:40px;padding:0 14px!important}
+  /* bỏ bảng ngang, mỗi dòng là một thẻ */
+  #tp-thu .wrap,#tp-no .wrap,#tp-thang .wrap,#tp-khach .wrap,#tp-tk .wrap{overflow:visible!important;border:0!important;background:transparent!important;box-shadow:none!important}
+  #pay,#dt,#mt,#cust,#pt{display:block!important;width:100%!important;min-width:0!important}
+  #pay tbody,#dt tbody,#mt tbody,#cust tbody,#pt tbody,#pay tfoot,#dt tfoot,#mt tfoot,#cust tfoot,#pt tfoot{display:block!important;width:100%}
+  #pay thead,#dt thead,#mt thead,#cust thead,#pt thead{display:none!important}
+  #pay tbody tr,#dt tbody tr,#mt tbody tr,#cust tbody tr,#pt tbody tr,
+  #pay tfoot tr,#dt tfoot tr,#mt tfoot tr,#cust tfoot tr{display:grid!important;grid-template-columns:repeat(6,1fr);gap:6px 8px;margin:0 0 10px;padding:12px;border:1px solid var(--bd);border-left:5px solid var(--bd);border-radius:14px;background:var(--cd)!important;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+  #pay tfoot tr,#dt tfoot tr,#cust tfoot tr{background:var(--in)!important;border-left-color:var(--pr)}
+  #mt tbody tr.c1{border-left-color:var(--pr)}
+  :is(#pay,#dt,#mt,#cust,#pt) :is(tbody,tfoot) td{display:block!important;position:static!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;text-align:left!important;min-width:0;max-width:none!important;white-space:normal!important;font-size:12.5px;line-height:1.35;word-break:break-word;grid-column:span 2}
+  :is(#pay,#dt,#mt,#cust,#pt) :is(tbody,tfoot) td[data-l]::before{content:attr(data-l);display:block;font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--mu);margin-bottom:1px}
+  :is(#pay,#dt,#mt,#cust,#pt) :is(tbody,tfoot) td.xe{display:none!important}
+  :is(#pay,#dt,#mt,#cust,#pt) :is(tbody,tfoot) td[colspan]{grid-column:1/-1}
+  /* nút trong thẻ */
+  :is(#pay,#dt,#mt,#cust,#pt) tbody td button:not(.lk){min-height:40px;border-radius:10px;font-size:13px}
+  :is(#pay,#dt,#mt,#cust,#pt) tbody td.ac{grid-column:1/-1!important;display:flex!important;flex-wrap:wrap;gap:8px;padding-top:8px!important;border-top:1px dashed var(--bd)!important}
+  :is(#pay,#dt,#mt,#cust,#pt) tbody td.ac>*{flex:1 1 auto}
+  :is(#pay,#dt,#mt,#cust,#pt) .ed{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  :is(#pay,#dt,#mt,#cust,#pt) .ed .ib{width:100%;height:42px;border-radius:10px}
+
+  /* --- CHI PHÍ ĐÃ THU: Người trả (to) + ngày; VND | Quy đổi; USD, ghi chú --- */
+  #pay tbody td:nth-child(1){grid-column:1/3;grid-row:1;font-size:11.5px;color:var(--mu);font-weight:700}
+  #pay tbody td:nth-child(1)::before{display:inline!important;content:"Khoản thu "!important;text-transform:none;letter-spacing:0}
+  #pay tbody td:nth-child(2){grid-column:3/-1;grid-row:1;justify-self:end;text-align:right!important;font-weight:600}
+  #pay tbody td:nth-child(2)::before{display:inline!important;content:"Ngày "!important;text-transform:none}
+  #pay tbody td:nth-child(3){grid-column:1/-1;grid-row:2;font-size:18px;font-weight:700}
+  #pay tbody td:nth-child(3)::before{display:none!important}
+  #pay tbody td:nth-child(4),#pay tbody td:nth-child(6){grid-row:3;grid-column:span 3;background:var(--in)!important;border-radius:10px;padding:8px 10px!important;font-size:17px;font-weight:700;color:var(--tx)}
+  #pay tbody td:nth-child(6){color:var(--pr)}
+  #pay tbody td:nth-child(5){grid-column:1/-1}
+  #pay tbody td:nth-child(7){grid-column:1/-1;color:var(--mu)}
+  #pay tbody td:nth-child(8){grid-column:1/-1!important;padding-top:8px!important;border-top:1px dashed var(--bd)!important}
+  #pay tbody td:empty,#pay tbody td.nt:empty{display:none!important}
+  #pay tfoot td:first-child{font-size:15px;font-weight:700}
+  #pay tfoot td:nth-child(n+2){font-size:15px;font-weight:700}
+
+  /* --- CÔNG NỢ: khách + tổng nợ nổi bật, 4 mốc ngày, nút --- */
+  #dt tbody td:nth-child(1){grid-column:1/5;font-size:18px;font-weight:700}
+  #dt tbody td:nth-child(1)::before{display:none!important}
+  #dt tbody td:nth-child(7){grid-column:4/-1;grid-row:1;justify-self:end;text-align:right!important;font-size:18px;font-weight:700;color:var(--pr)}
+  #dt tbody td:nth-child(1){grid-column:1/4}
+  #dt tbody td:nth-child(7)::before{text-align:right}
+  #dt tbody td:nth-child(2){grid-column:1/-1;grid-row:2;color:var(--mu)}
+  #dt tbody td:nth-child(2)::before{display:inline!important;margin-right:4px}
+  #dt tbody td:nth-child(2)::after{content:" đơn"}
+  #dt tbody td:nth-child(3),#dt tbody td:nth-child(4),#dt tbody td:nth-child(5),#dt tbody td:nth-child(6){grid-column:span 3;background:var(--in)!important;border-radius:8px;padding:6px 8px!important}
+  #dt tbody td:nth-child(8){grid-column:1/-1}
+  #dt tbody td:nth-child(8)::before{display:inline!important;margin-right:4px}
+  #dt tbody td:nth-child(9){grid-column:1/-1!important;display:flex!important;flex-wrap:wrap;gap:8px;padding-top:8px!important;border-top:1px dashed var(--bd)!important}
+  #dt tbody td:nth-child(9) button{flex:1 1 140px}
+  #dt tfoot td:nth-child(1){font-size:15px;font-weight:700}
+  #dt tfoot td:nth-child(7){font-weight:700;color:var(--pr)}
+
+  /* --- THEO THÁNG: tháng to; Doanh số | Còn phải thu; phụ nhỏ --- */
+  #mt tbody td:nth-child(1){grid-column:1/-1;font-size:17px;font-weight:700}
+  #mt tbody td:nth-child(1)::before{display:none!important}
+  #mt tbody td:nth-child(1) button{min-height:40px;font-size:16px;font-weight:700}
+  #mt tbody td:nth-child(1){grid-row:1}#mt tbody td:nth-child(4){grid-column:1/4;grid-row:2}#mt tbody td:nth-child(6){grid-column:4/-1;grid-row:2}
+  #mt tbody td:nth-child(4),#mt tbody td:nth-child(6){background:var(--in)!important;border-radius:10px;padding:8px 10px!important;font-size:16px;font-weight:700;color:var(--tx)}
+  #mt tbody td:nth-child(6){color:var(--pr)}
+  #mt tbody td:nth-child(2),#mt tbody td:nth-child(3),#mt tbody td:nth-child(5){grid-column:span 2}
+
+  /* --- KHÁCH HÀNG: khách + doanh số; chưa thu; phụ; thanh tỷ trọng --- */
+  #cust tbody td:nth-child(1){grid-column:1/4;font-size:18px;font-weight:700;display:flex!important;align-items:center;gap:8px}
+  #cust tbody td:nth-child(1)::before{display:none!important}
+  #cust tbody td:nth-child(6){grid-column:4/-1;grid-row:1;justify-self:end;text-align:right!important;font-size:18px;font-weight:700;color:var(--pr)}
+  #cust tbody td:nth-child(7){grid-column:1/-1;grid-row:2}
+  #cust tbody td:nth-child(7)::before{display:inline!important;margin-right:4px}
+  #cust tbody td:nth-child(7)::after{content:" đ"}
+  #cust tbody td:nth-child(2),#cust tbody td:nth-child(3),#cust tbody td:nth-child(4),#cust tbody td:nth-child(5),#cust tbody td:nth-child(8){grid-column:span 2}
+  #cust tbody td:nth-child(9){grid-column:1/-1;min-width:0!important}
+  #cust tfoot td:nth-child(1){font-size:15px;font-weight:700}
+  #cust tfoot td:nth-child(9){display:none!important}
+}
+</style>
 </head>
 
 <body>
@@ -7002,7 +7122,7 @@
         <nav class="tabs" id="tabs" role="tablist">
             <button data-tab="tong" class="on">Tổng quan</button><button data-tab="don">Đơn hàng</button><button
                 data-tab="khach">Khách hàng</button><button data-tab="thang">Theo tháng</button><button
-                data-tab="thu">Chi phí đã thu</button><button data-tab="no">Công nợ</button><button data-tab="luong"
+                data-tab="thu">Chi phí đã thu</button><button data-tab="no">Công nợ</button><button data-tab="slip">Phiếu giao</button><button data-tab="luong"
                 id="tabluong" class="hid">Lương của
                 Thịnh</button><button data-tab="nghia" id="tabnghia" class="hid">Phí anh Nghĩa</button><button
                 data-tab="ln" id="tabln" class="hid">Lợi nhuận</button><button data-tab="tk" id="tabtk" class="hid">Tài
@@ -7122,6 +7242,14 @@
                 </div>
                 <p class="note">Gồm mọi đơn đang ở trạng thái «Chưa thu» của tất cả các tháng. Số ngày tính từ ngày
                     giao. Bấm «Sao chép nhắc nợ» để lấy sẵn tin nhắn gửi khách qua Zalo.</p>
+            </section>
+        </div>
+        <div class="tp hid" id="tp-slip">
+            <section>
+                <h2>Phiếu giao nhận (ảnh phiếu giấy)</h2>
+                <div class="slbar"><input id="slq" type="search" placeholder="Tìm: ngày (27/10), khách, mã đơn, số phiếu, nội dung…" aria-label="Tìm phiếu giao nhận"><select id="slm" aria-label="Lọc theo tháng"></select><button class="p hid" id="sladd">+ Thêm phiếu</button></div>
+                <p class="note" id="slc"></p>
+                <div id="sll"></div>
             </section>
         </div>
         <div class="tp hid" id="tp-ln">
@@ -8975,14 +9103,12 @@
             try { put() } catch (e) { snaps().slice(3).forEach(k => { try { localStorage.removeItem(k) } catch (x) { } }); try { put() } catch (x) { } }
             snaps().slice(14).forEach(k => { try { localStorage.removeItem(k) } catch (e) { } });
             try { localStorage.setItem('bc-lastbk', day) } catch (e) { }
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = 'sokmok-sao-luu-' + day + '.json';
-            document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
             $('sv').style.color = ''; $('sv').textContent = 'Đã tự động sao lưu ngày ' + day.split('-').reverse().join('/')
         }
         setInterval(() => { if (me && !$('app').classList.contains('hid')) dailyBackup() }, 3600000);
         $('rsa').onclick = () => {
             const L = snaps();
-            md.innerHTML = `<div class="dlg" style="max-width:460px"><h3>Bản sao lưu tự động</h3>${L.length ? '<div style="display:grid;gap:6px;margin:8px 0">' + L.map(k => { const d = k.slice(SNP.length); let kb = 0; try { kb = Math.round((localStorage.getItem(k) || '').length / 1024) } catch (e) { } return `<button type="button" data-sn="${esc(k)}">${esc(d.split('-').reverse().join('/'))} · ${kb} KB</button>` }).join('') + '</div>' : '<p class="hint">Chưa có bản sao lưu tự động nào.</p>'}<p class="hint">Mỗi ngày trang tự lưu 1 bản trong trình duyệt (giữ 14 ngày gần nhất) và tải 1 file về máy. Nên giữ các file này ở nơi an toàn.</p><div class="act"><button type="button" id="mc">Đóng</button></div></div>`;
+            md.innerHTML = `<div class="dlg" style="max-width:460px"><h3>Bản sao lưu tự động</h3>${L.length ? '<div style="display:grid;gap:6px;margin:8px 0">' + L.map(k => { const d = k.slice(SNP.length); let kb = 0; try { kb = Math.round((localStorage.getItem(k) || '').length / 1024) } catch (e) { } return `<button type="button" data-sn="${esc(k)}">${esc(d.split('-').reverse().join('/'))} · ${kb} KB</button>` }).join('') + '</div>' : '<p class="hint">Chưa có bản sao lưu tự động nào.</p>'}<p class="hint">Mỗi ngày trang tự lưu 1 bản trong trình duyệt (giữ 14 ngày gần nhất). Muốn có file về máy thì bấm nút Sao lưu.</p><div class="act"><button type="button" id="mc">Đóng</button></div></div>`;
             md.classList.remove('hid'); const close = () => { md.classList.add('hid'); md.innerHTML = '' };
             $('mc').onclick = close; md.onclick = async e => {
                 if (e.target === md) { close(); return }
@@ -8995,6 +9121,148 @@
             }
         };
         try { navigator.storage && navigator.storage.persist && navigator.storage.persist() } catch (e) { }
+        /* ===== Kho phiếu giao nhận (ảnh phiếu giấy): lưu theo ngày giao, 1 phiếu gắn nhiều đơn, tìm kiếm ===== */
+        (function () {
+            const sg = fn => { try { return fn() } catch (e) { console.error(e) } };
+            const PX = () => window.__phx || { PH: {}, FAIL: {}, MX: 6, load: async () => { }, rm: () => { }, add: async () => ({ ok: false, err: 'chưa sẵn sàng' }), view: () => { }, ready: () => false };
+            const SL = () => { const C = cfg(); return Array.isArray(C.slips) ? C.slips : (C.slips = []) };
+            const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+            const rowsAll = () => Object.entries(S.months).flatMap(([m, M]) => (M.rows || []).map(r => ({ m, r })));
+            const findRow = o => { const M = S.months[o.m]; let r = M && (M.rows || []).find(x => x.id === o.id); if (!r) { const a = rowsAll().find(x => x.r.id === o.id); r = a && a.r } return r };
+            const todayS = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+            const dow = d => { const t = new Date(d + 'T00:00:00'); return isNaN(t) ? '' : ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][t.getDay()] };
+            const lbl = r => (r.id || '?') + ' · ' + (r.k || '?') + ' · ' + n(r.q) + ' ' + (r.u || '') + (r.g ? ' · giao ' + fd(r.g) : '');
+            document.head.insertAdjacentHTML('beforeend', '<style>.slbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.slbar input[type=search]{flex:1;min-width:200px;padding:9px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit}.slbar select{padding:9px 10px;border-radius:10px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit}.sld{margin:16px 0 4px;font-weight:700;color:var(--mu);font-size:13px}.slk{display:flex;gap:12px;border:1px solid var(--bd);border-radius:12px;padding:10px;background:var(--cd);margin:8px 0;flex-wrap:wrap}.slk .slp{display:flex;gap:6px;flex-wrap:wrap;max-width:240px;align-content:flex-start}.slk .sli{flex:1;min-width:220px}.slk .sla{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.slc{display:inline-block;margin:2px 4px 2px 0;padding:2px 9px;border-radius:999px;border:1px solid var(--bd);background:var(--in);font-size:12px}.slc.sel{cursor:pointer;border-color:var(--pr)}.slk pre{white-space:pre-wrap;margin:6px 0 0;font:inherit;font-size:13px}.slk summary{cursor:pointer;font-size:13px;color:var(--mu);margin-top:6px}.sl-ol{display:grid;gap:4px;margin-top:8px;max-height:200px;overflow:auto}.sl-ol button{text-align:left}.sl-ta{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--in);color:var(--tx);font:inherit;box-sizing:border-box;resize:vertical}.sl-ai{font-size:12px;color:var(--mu);margin-top:6px}</style>');
+            const tried = new Set(); let relo = false;
+
+            /* ---------- hiển thị danh sách + tìm kiếm ---------- */
+            const hay = s => {
+                const ds = s.d || '', p = ds.split('-');
+                const od = (s.ords || []).map(o => { const r = findRow(o); return r ? [r.id, r.k, r.note].join(' ') : o.id }).join(' ');
+                return fold([ds, fd(ds), p.length === 3 ? p[2] + '/' + p[1] : '', p.length === 3 ? p[2] + '-' + p[1] : '', s.no, s.note, s.txt, od].join(' '))
+            };
+            function slRender() {
+                const el = $('sll'); if (!el) return;
+                const add = $('sladd'); if (add) add.classList.toggle('hid', !isAd());
+                const all0 = SL().slice().sort((a, b) => (b.d || '').localeCompare(a.d || '') || (b.at || '').localeCompare(a.at || ''));
+                const sm = $('slm'), ms = [...new Set(all0.map(s => (s.d || '').slice(0, 7)).filter(Boolean))], cur = sm.value;
+                sm.innerHTML = '<option value="">Tất cả các tháng</option>' + ms.map(m => `<option value="${m}">${esc(mk(m))}</option>`).join(''); sm.value = ms.includes(cur) ? cur : '';
+                const toks = fold($('slq').value).split(/\s+/).filter(Boolean);
+                const L = all0.filter(s => (!sm.value || (s.d || '').startsWith(sm.value)) && (!toks.length || toks.every(t => hay(s).includes(t))));
+                const nOrd = L.reduce((a, s) => a + (s.ords || []).length, 0);
+                $('slc').textContent = all0.length ? `Hiện ${L.length}/${all0.length} phiếu, gắn ${nOrd} đơn.` : 'Chưa có phiếu nào. Bấm «+ Thêm phiếu» để chụp và lưu phiếu giao nhận giấy.';
+                const PH = PX().PH; let h = '', last = '';
+                for (const s of L) {
+                    if (s.d !== last) { last = s.d; const day = L.filter(x => x.d === s.d); h += `<div class="sld">${esc(dow(s.d))} ${esc(fd(s.d) || 'Chưa rõ ngày')} · ${day.length} phiếu · ${day.reduce((a, x) => a + (x.ords || []).length, 0)} đơn</div>` }
+                    const th = (s.ph || []).map((id, k) => `<button type="button" class="pht" data-slv="${esc(s.id)}" data-k="${k}" aria-label="Xem ảnh phiếu ${k + 1}">${PH[id] ? `<img src="${PH[id]}" alt="Ảnh phiếu ${k + 1}">` : PX().FAIL[id] ? '<span>⟳</span>' : '<i class="phs"></i>'}</button>`).join('');
+                    const od = (s.ords || []).map(o => { const r = findRow(o); return `<span class="slc" title="${esc(o.id)}">${r ? esc((r.k || '?') + ' · ' + n(r.q) + ' ' + (r.u || '')) : esc(o.id) + ' (đã xóa?)'}</span>` }).join('');
+                    h += `<div class="slk"><div class="slp">${th || '<span class="phm">Không có ảnh</span>'}</div><div class="sli"><div><b>${esc(fd(s.d))}</b>${s.no ? ' · Phiếu ' + esc(s.no) : ''} · ${(s.ords || []).length} đơn</div><div style="margin-top:4px">${od || '<span class="phm">Chưa gắn đơn nào</span>'}</div>${s.note ? `<div style="margin-top:4px;font-size:13px">${esc(s.note)}</div>` : ''}${s.txt ? `<details><summary>Nội dung phiếu</summary><pre>${esc(s.txt)}</pre></details>` : ''}${isAd() ? `<div class="sla"><button type="button" data-sle="${esc(s.id)}">Sửa</button><button type="button" class="d" data-sld="${esc(s.id)}">Xóa</button></div>` : ''}</div></div>`
+                }
+                el.innerHTML = h || '';
+                const miss = [...new Set(L.flatMap(s => s.ph || []))].filter(id => !PH[id] && !tried.has(id)).slice(0, 40);
+                if (miss.length && !relo) { miss.forEach(i => tried.add(i)); relo = true; PX().load(miss).then(() => { relo = false; slRender() }, () => { relo = false }) }
+            }
+            async function slView(sid, k) {
+                const s = SL().find(x => x.id === sid); if (!s) return; await PX().load(s.ph || []);
+                if (!(s.ph || []).some(i => PX().PH[i])) { toast('err', 'Không tải được ảnh từ máy chủ. Thử lại sau.'); return }
+                PX().view({ k: 'Phiếu giao nhận ' + fd(s.d), get ph() { return s.ph || [] } }, k || 0, 0, { del: id2 => { if (!isAd()) return; s.ph = (s.ph || []).filter(z => z !== id2); PX().rm(id2); save(); all() } })
+            }
+
+            /* ---------- form thêm / sửa phiếu ---------- */
+            function slForm(id) {
+                if (!isAd()) return;
+                const old = id ? SL().find(s => s.id === id) : null; if (id && !old) return;
+                const d = { ph: old ? [...(old.ph || [])] : [], ords: old ? (old.ords || []).map(o => ({ m: o.m, id: o.id })) : [], ai: old && old.ai ? old.ai : null };
+                const added = []; let busy = false, oq = '';
+                md.innerHTML = `<div class="dlg" role="dialog" aria-modal="true" style="max-width:720px"><h3>${old ? 'Sửa phiếu giao nhận' : 'Thêm phiếu giao nhận'}</h3>
+<div class="fg"><label class="f">Ngày giao<input id="sf_d" type="date"></label><label class="f">Số phiếu (nếu có)<input id="sf_no" type="text"></label><label class="f w">Ghi chú<input id="sf_note" type="text"></label></div>
+<div class="dn" style="margin-top:10px"><small>Ảnh phiếu (<span id="sf_c">0</span>/${PX().MX})</small><div class="phg" id="sf_g"></div><div class="phb"><button type="button" id="sf_add">📷 Thêm ảnh phiếu</button><span class="phm" id="sf_m">Chọn hoặc kéo thả ảnh vào đây</span><input type="file" id="sf_f" accept="image/*" multiple hidden></div></div>
+<label class="f w" style="margin-top:10px">Nội dung phiếu<textarea id="sf_txt" class="sl-ta" rows="5" placeholder="Tên hàng, số lượng, ghi chú trên phiếu…"></textarea></label>
+<div class="dn" style="margin-top:10px"><small>Đơn hàng giao theo phiếu này (<span id="sf_n">0</span>)</small><div id="sf_sel" style="margin-top:6px"></div><div class="phb"><input id="sf_q" type="search" placeholder="Tìm đơn: tên khách, mã SM-…, ngày" style="flex:1;min-width:160px;padding:8px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit"><button type="button" id="sf_sg">Gợi ý đơn giao ngày này</button></div><div class="sl-ol" id="sf_ol"></div></div>
+<div class="err" id="sf_e"></div><div class="act"><button type="button" id="mc">Hủy</button><button type="button" class="p" id="sf_ok">Lưu</button></div></div>`;
+                md.classList.remove('hid');
+                $('sf_d').value = old ? old.d || '' : todayS(); $('sf_no').value = old ? old.no || '' : ''; $('sf_note').value = old ? old.note || '' : ''; $('sf_txt').value = old ? old.txt || '' : '';
+                const close = () => { md.classList.add('hid'); md.innerHTML = '' }, err = t => { $('sf_e').textContent = t || '' };
+                const isSel = r => d.ords.some(o => o.id === r.id);
+                const drawPh = () => { $('sf_c').textContent = d.ph.length; $('sf_g').innerHTML = d.ph.map((id, k) => `<div class="phw"><button type="button" class="pht" data-sv="${esc(id)}" aria-label="Xem ảnh ${k + 1}">${PX().PH[id] ? `<img src="${PX().PH[id]}" alt="Ảnh ${k + 1}">` : '<i class="phs"></i>'}</button><b class="phx" data-sd="${esc(id)}" role="button" title="Bỏ ảnh này">✕</b></div>`).join('') };
+                const drawSel = () => { $('sf_n').textContent = d.ords.length; $('sf_sel').innerHTML = d.ords.length ? d.ords.map(o => { const r = findRow(o); return `<span class="slc sel" data-ou="${esc(o.id)}" title="Bấm để bỏ đơn này">${esc(r ? lbl(r) : o.id)} ✕</span>` }).join('') : '<span class="phm">Chưa gắn đơn nào.</span>' };
+                const drawOl = () => {
+                    const toks = fold(oq).split(/\s+/).filter(Boolean);
+                    const L = rowsAll().filter(x => x.r.id && !isSel(x.r)).filter(x => { const h = fold(lbl(x.r) + ' ' + fd(x.r.d) + ' ' + fd(x.r.g) + ' ' + (x.r.note || '')); return toks.every(t => h.includes(t)) }).sort((a, b) => ((b.r.g || b.r.d || '')).localeCompare(a.r.g || a.r.d || '')).slice(0, 40);
+                    $('sf_ol').innerHTML = L.length ? L.map(x => `<button type="button" data-oa="${esc(x.r.id)}" data-om="${esc(x.m)}">+ ${esc(lbl(x.r))}</button>`).join('') : '<span class="phm">Không có đơn phù hợp.</span>'
+                };
+                drawPh(); drawSel(); drawOl(); PX().load(d.ph).then(drawPh);
+                const cancel = () => { added.forEach(i => PX().rm(i)); close() };
+                $('mc').onclick = cancel; md.onclick = e => { if (e.target === md) cancel() };
+                async function put(F) {
+                    F = [...F].filter(x => /^image\//.test(x.type)); if (!F.length || busy) return;
+                    if (!PX().ready()) { err('Chưa kết nối máy chủ nên không lưu được ảnh. Hãy tải lại trang.'); return }
+                    busy = true; err(''); let k = 0;
+                    try {
+                        for (const x of F) {
+                            if (d.ph.length >= PX().MX) { err('Tối đa ' + PX().MX + ' ảnh mỗi phiếu.'); break }
+                            $('sf_m').textContent = 'Đang nén và tải lên ' + (++k) + '/' + F.length + '…';
+                            const r = await PX().add(x); if (!r.ok) { err('Không lưu được ảnh (' + (r.err || 'lỗi mạng') + ').'); break }
+                            d.ph.push(r.id); added.push(r.id); drawPh()
+                        }
+                    } catch (x) { err(x.message) }
+                    $('sf_m').textContent = 'Chọn hoặc kéo thả ảnh vào đây'; busy = false
+                }
+                $('sf_add').onclick = () => $('sf_f').click(); $('sf_f').onchange = e => { put(e.target.files); e.target.value = '' };
+                const dlg = md.querySelector('.dlg'); dlg.ondragover = e => { e.preventDefault() }; dlg.ondrop = e => { e.preventDefault(); put(e.dataTransfer.files) };
+                $('sf_g').onclick = e => {
+                    const x = e.target.closest('[data-sd]'); if (x) { d.ph = d.ph.filter(i => i !== x.dataset.sd); drawPh(); return }
+                    const b = e.target.closest('[data-sv]'); if (!b) return; const k2 = d.ph.indexOf(b.dataset.sv);
+                    if (PX().PH[b.dataset.sv]) PX().view({ k: 'Phiếu giao nhận', get ph() { return d.ph } }, k2, 0, { del: id2 => { d.ph = d.ph.filter(i => i !== id2); drawPh() } })
+                };
+                $('sf_q').oninput = e => { oq = e.target.value; drawOl() };
+                $('sf_ol').onclick = e => { const b = e.target.closest('[data-oa]'); if (!b) return; d.ords.push({ m: b.dataset.om, id: b.dataset.oa }); drawSel(); drawOl() };
+                $('sf_sel').onclick = e => { const b = e.target.closest('[data-ou]'); if (!b) return; d.ords = d.ords.filter(o => o.id !== b.dataset.ou); drawSel(); drawOl() };
+                $('sf_sg').onclick = () => {
+                    const dt = $('sf_d').value; if (!dt) { err('Chọn ngày giao trước.'); return }
+                    const L = rowsAll().filter(x => x.r.id && !isSel(x.r) && (x.r.g === dt || spl(x.r).some(s => s.g === dt)));
+                    L.forEach(x => d.ords.push({ m: x.m, id: x.r.id })); drawSel(); drawOl();
+                    err(L.length ? '' : 'Không có đơn nào ghi ngày giao ' + fd(dt) + '. Hãy tìm và chọn đơn bên dưới.'); if (L.length) $('sf_m').textContent = 'Đã gắn thêm ' + L.length + ' đơn giao ngày ' + fd(dt) + '.'
+                };
+                $('sf_ok').onclick = () => {
+                    const dt = $('sf_d').value; if (!dt) { err('Chọn ngày giao.'); return }
+                    const txt = $('sf_txt').value.trim(); if (!d.ph.length && !txt && !d.ords.length) { err('Cần ít nhất ảnh phiếu, nội dung hoặc một đơn hàng.'); return }
+                    const rec = { d: dt, no: $('sf_no').value.trim(), note: $('sf_note').value.trim(), txt, ph: [...d.ph], ords: d.ords.map(o => ({ m: o.m, id: o.id })) };
+                    if (d.ai && txt) rec.ai = d.ai;
+                    const gone = [...(old ? old.ph || [] : []).filter(x => !d.ph.includes(x)), ...added.filter(x => !d.ph.includes(x))];
+                    if (old) { Object.assign(old, rec); if (!rec.ai) delete old.ai; old.ed = { by: me ? me.u : '', at: new Date().toISOString() } }
+                    else SL().push(Object.assign({ id: 'SL-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), by: me ? me.u : '', at: new Date().toISOString() }, rec));
+                    [...new Set(gone)].forEach(i => PX().rm(i)); close(); save(); all(); toast('ok', 'Đã lưu phiếu giao nhận ' + fd(dt) + '.')
+                }
+            }
+
+            /* ---------- sự kiện ---------- */
+            document.addEventListener('click', async e => {
+                const t = e.target; if (!t.closest) return;
+                if (t.closest('#sladd')) { slForm(); return }
+                const v = t.closest('[data-slv]'); if (v) { slView(v.dataset.slv, +v.dataset.k || 0); return }
+                const ed = t.closest('[data-sle]'); if (ed) { slForm(ed.dataset.sle); return }
+                const dl = t.closest('[data-sld]'); if (dl) {
+                    if (!isAd()) return; const s = SL().find(x => x.id === dl.dataset.sld); if (!s) return;
+                    if (!await ask('Xóa phiếu giao nhận ngày <b>' + esc(fd(s.d)) + '</b>' + (s.ph && s.ph.length ? ' cùng ' + s.ph.length + ' ảnh' : '') + '?')) return;
+                    const i = SL().indexOf(s); if (i >= 0) SL().splice(i, 1); (s.ph || []).forEach(x => PX().rm(x)); save(); all(); return
+                }
+                const so = t.closest('[data-slo]'); if (so) { slView(so.dataset.slo, 0) }
+            });
+            $('slq').addEventListener('input', () => sg(slRender)); $('slm').addEventListener('change', () => sg(slRender));
+            $('tabs').addEventListener('click', e => { if (e.target.dataset && e.target.dataset.tab === 'slip') sg(slRender) });
+            const _all2 = all; all = function () { const r = _all2.apply(this, arguments); sg(slRender); return r };
+            /* trong chi tiết đơn: liệt kê các phiếu giao nhận có đơn này */
+            const _sr2 = showRow; showRow = function (i) {
+                _sr2(i); sg(() => {
+                    const r = S.rows[i], act = document.querySelector('#md .dlg .act'); if (!r || !r.id || !act) return;
+                    const L = SL().filter(s => (s.ords || []).some(o => o.id === r.id)); if (!L.length) return;
+                    const bx = document.createElement('div'); bx.className = 'dn';
+                    bx.innerHTML = '<small>Phiếu giao nhận (' + L.length + ')</small><div style="margin-top:6px">' + L.map(s => `<span class="slc sel" data-slo="${esc(s.id)}" title="Bấm để xem ảnh phiếu">${esc(fd(s.d))}${s.no ? ' · ' + esc(s.no) : ''} · ${(s.ph || []).length} ảnh</span>`).join('') + '</div>';
+                    act.parentNode.insertBefore(bx, act)
+                })
+            }
+        })();
         /* ===== Mở rộng: tab Lợi nhuận + nhắc công nợ qua Telegram ===== */
         const vn = x => Math.round(x).toLocaleString('vi-VN'), vn1 = (x, d) => (+x).toLocaleString('vi-VN', { maximumFractionDigits: d });
         const PFF = [{ k: 'chuyen', l: 'Chi phí chuyển hàng (VND)', t: 'number', w: 1 }, { k: 'nhan', l: 'Các khoản nhận vào tài khoản (cách nhau bằng dấu phẩy, ví dụ 15450000, 1820000)', t: 'text', w: 1 }, { k: 'conlai', l: 'Số tiền còn lại trong tài khoản (VND)', t: 'number' }, { k: 'ns', l: 'Ngân sách quảng cáo + vận hành (VND)', t: 'number' }, { k: 'ads', l: 'Đã sử dụng quảng cáo + vận hành (VND)', t: 'number' }];
@@ -10949,6 +11217,31 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
   window.bbnhOpen = open;
+})();
+</script>
+<script id="x-mobile-tabs-v2-js">
+/* gắn nhãn cột (data-l) cho từng ô của các bảng, để CSS điện thoại hiện tên mục trong thẻ. Chạy lại mỗi khi bảng được vẽ lại. */
+(function () {
+  var IDS = ['pay', 'dt', 'mt', 'cust', 'pt'];
+  function label(t) {
+    var ths = [].map.call(t.querySelectorAll('thead th'), function (h) { return (h.textContent || '').trim() });
+    [].forEach.call(t.querySelectorAll('tbody tr, tfoot tr'), function (tr) {
+      var c = 0;
+      [].forEach.call(tr.children, function (td) {
+        var sp = td.colSpan || 1, l = sp > 1 ? '' : (ths[c] || '');
+        if (l) td.setAttribute('data-l', l); else td.removeAttribute('data-l');
+        if (td === tr.lastElementChild && td.querySelector('button, .ed') && !td.querySelector('.num')) td.classList.add('ac');
+        c += sp;
+      });
+    });
+  }
+  function watch(id) {
+    var t = document.getElementById(id); if (!t) return;
+    var busy = false, mo = new MutationObserver(function () { if (busy) return; busy = true; try { label(t) } finally { busy = false } });
+    mo.observe(t, { childList: true }); label(t);
+  }
+  function go() { IDS.forEach(watch) }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();
 </script>
 </body>
