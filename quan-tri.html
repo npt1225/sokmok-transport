@@ -7186,13 +7186,16 @@
                 khoản</button>
         </nav>
         <div class="tp" id="tp-tong">
-            <section>
+            <div class="ovsub" id="ovsub" role="tablist">
+                <button type="button" data-ov="sum">📊 Tổng hợp</button>
+                <button type="button" data-ov="act" class="ovred">⚡ Cần xử lý ngay <span class="ovn" id="ovn" hidden>0</span></button>
+            </div>
+            <section id="ov-sum">
                 <h2>Tổng hợp</h2>
                 <div class="cards" id="cards"></div>
             </section>
-            <section>
-                <h2>Doanh số theo ngày hàng về, <span id="cm"></span></h2>
-                <div id="ch2"></div>
+            <section id="ov-act">
+                <div id="actx"></div>
             </section>
         </div>
         <div class="tp hid" id="tp-don">
@@ -8968,9 +8971,6 @@
             });
             $('mt').innerHTML = h + `</tbody>`;
             bars($('ch1'), ks.map(k => Number(k.slice(5)) + '/' + k.slice(2, 4)), [D.map(d => d.tot), D.map(d => d.pt)], ['var(--b1)', 'var(--b3)']);
-            const by = {}; S.rows.forEach(r => { const k = r.d || ''; by[k] = (by[k] || 0) + fee(r) }); const dk = Object.keys(by).sort();
-            $('cm').textContent = mk(S.cur).toLowerCase();
-            if (dk.length) bars($('ch2'), dk.map(k => k ? k.slice(8) + '/' + k.slice(5, 7) : '?'), [dk.map(k => by[k])], ['var(--b2)']); else $('ch2').textContent = 'Chưa có dữ liệu trong tháng này.'
         }
         $('mo').onchange = e => { setMonth(e.target.value); saveLocal(); all() };
         $('delm').onclick = async () => {
@@ -10749,6 +10749,7 @@ ${curs.map(pnl).join('')}
 ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14px 0 0">Cảm ơn quý khách đã sử dụng dịch vụ SOKMOK Transport</p><p style="text-align:center;font-size:12px;color:#98a2b3;margin:4px 0 0">Hotline 0865 491 456 · (+84) 981 491 456 · (+855) 92 889 198</p></div></div>`
             }
             /* Bill thanh toán: chọn 1 hoặc nhiều người gửi (cùng giao cho 1 người nhận) → xuất chung 1 bill; đơn đã thu được ẩn; đơn tính USD ra bill bằng USD; mã QR mở đúng danh sách đơn đã chọn */
+            window.__payBill = payBill;
             function payBill(rows, name) {
                 ensureIds(); if (!rows.length) { toast('err', 'Không có đơn nào để lập bill.'); return }
                 const C = cfg(); C.ct = C.ct || {}; C.rv = C.rv || {};
@@ -10865,6 +10866,355 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
             const bn = document.createElement('div'); bn.id = 'offb'; bn.setAttribute('role', 'alert'); bn.textContent = '⚠ Mất kết nối mạng: thay đổi có thể chưa được lưu lên máy chủ'; document.body.appendChild(bn);
             const net = () => { bn.style.display = navigator.onLine ? 'none' : 'block' }; addEventListener('offline', net); addEventListener('online', () => { net(); safe(() => toast('ok', 'Đã có mạng trở lại.')) }); net();
             document.addEventListener('keydown', e => { if (e.key !== 'Escape' || document.querySelector('.plb')) return; const m = document.getElementById('md'); if (m && !m.classList.contains('hid')) { const c = document.getElementById('mc'); if (c) c.click() } });
+        })();
+
+
+        /* ===== Tổng quan · «Cần xử lý ngay»: 3 cột Chưa giao / Đang giao / Đã giao · chưa thu, ghi từng lần giao, tạo bill thanh toán ===== */
+        (function () {
+            const X = id => document.getElementById(id);
+            const LSK = 'bc-ovsub';
+            const AF = { cust: new Set(), sort: 'old', sel: new Set(), open: '', form: null, sub: 'sum' };
+            try { const v = localStorage.getItem(LSK); if (v === 'sum' || v === 'act') AF.sub = v } catch (e) { }
+            document.head.insertAdjacentHTML('beforeend', `<style id="act-css">
+#tp-tong:not(.hid){display:block!important}
+#tp-tong .cards{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))!important}
+#tp-tong .ovsub{display:flex;gap:8px;margin:0 0 14px;padding:6px;border:1px solid var(--bd);border-radius:14px;background:var(--cd);width:fit-content;max-width:100%;overflow-x:auto}
+#tp-tong .ovsub button{border:0;background:transparent;color:var(--tx);font:inherit;font-weight:700;font-size:14px;padding:9px 16px;min-height:0;border-radius:10px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px;box-shadow:none}
+#tp-tong .ovsub button.on{background:var(--hd);color:#fff}
+#tp-tong .ovsub button.ovred.on{background:var(--pr);box-shadow:0 4px 14px rgba(200,16,46,.28)}
+#tp-tong .ovn{background:var(--pr);color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:800;line-height:1.5}
+#tp-tong .ovred.on .ovn{background:#fff;color:var(--pr)}
+.ovh{display:none!important}
+#actx{--ct:#64748b}
+#actx .ahd{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:14px}
+#actx .ahd h3{margin:0;font-size:18px}
+#actx .ahb{display:flex;gap:8px;flex-wrap:wrap}
+#actx .ahb button{border:1px solid var(--bd);background:var(--cd);color:var(--tx);font:inherit;font-weight:700;font-size:13.5px;padding:9px 14px;min-height:0;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+#actx .ahb button.aredb{background:var(--pr);border-color:var(--pr);color:#fff;box-shadow:0 4px 14px rgba(200,16,46,.25)}
+#actx .abdg{background:var(--pr);color:#fff;border-radius:999px;padding:0 7px;font-size:11.5px;font-weight:800}
+#actx .acards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+#actx .ack{border:1px solid var(--bd);border-top:4px solid var(--ct);border-radius:16px;background:var(--cd);padding:14px;display:flex;gap:12px;align-items:center;min-width:0}
+#actx .ack .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:21px;flex:none;background:color-mix(in srgb,var(--ct) 14%,transparent)}
+#actx .ack small{display:block;font-size:12px;color:var(--mu);font-weight:600}
+#actx .ack b{display:block;font-size:24px;line-height:1.2;color:var(--ct);margin:1px 0}
+#actx .ack .s{font-size:11.5px;color:var(--mu);line-height:1.35}
+#actx .afb{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--bd);border-radius:14px;background:var(--cd);padding:10px 12px;margin-bottom:14px}
+#actx .afb .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#actx .afb .lb{font-size:12.5px;font-weight:700;color:var(--mu)}
+#actx .achip{border:1px solid var(--bd);background:var(--in);color:var(--tx);border-radius:999px;padding:6px 13px;min-height:0;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+#actx .achip small{opacity:.6;margin-left:4px;font-weight:700}
+#actx .achip.on{background:var(--pr);border-color:var(--pr);color:#fff}
+#actx .aseg{display:flex;border:1px solid var(--bd);border-radius:999px;overflow:hidden}
+#actx .aseg button{border:0;background:var(--in);color:var(--tx);padding:7px 14px;min-height:0;font:inherit;font-weight:700;font-size:13px;cursor:pointer;border-radius:0}
+#actx .aseg button.on{background:var(--pr);color:#fff}
+#actx .acols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media(max-width:1000px){#actx .acols{grid-template-columns:1fr}}
+#actx .acol{border:1px solid var(--bd);border-top:4px solid var(--ct);border-radius:16px;background:var(--cd);overflow:hidden}
+#actx .acol-h{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;font-weight:800;font-size:15px}
+#actx .acol-h span{background:color-mix(in srgb,var(--ct) 15%,transparent);color:var(--ct);border-radius:999px;padding:3px 12px;font-size:12px}
+#actx .acol-t{display:flex;align-items:center;gap:10px;padding:8px 15px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mu);flex-wrap:wrap}
+#actx .acol-t label{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--tx);cursor:pointer}
+#actx .acol-t .sp{flex:1}
+#actx .acol-t button{border:0;background:var(--pr);color:#fff;font:inherit;font-weight:800;font-size:13px;padding:8px 16px;min-height:0;border-radius:10px;cursor:pointer}
+#actx .acol-t button:disabled{opacity:.4;cursor:not-allowed}
+#actx .acol-b{padding:10px;max-height:560px;overflow:auto;display:flex;flex-direction:column;gap:10px;background:var(--bg);border-top:1px solid var(--bd)}
+#actx .aem{text-align:center;color:var(--mu);font-size:13px;padding:22px 8px}
+#actx .aoc{background:var(--cd);border:1px solid var(--bd);border-left:4px solid var(--ct);border-radius:12px;padding:12px;display:flex;gap:10px;min-width:0}
+#actx .aoc .bd{flex:1;min-width:0}
+#actx .aoc>input[type=checkbox]{width:19px;height:19px;flex:none;margin-top:3px;cursor:pointer}
+#actx .aoc.sel{background:color-mix(in srgb,var(--ct) 8%,var(--cd))}
+#actx .atop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+#actx .anm{font-weight:800;font-size:15px}
+#actx .aid{font-size:11px;font-weight:700;background:var(--in);border:1px solid var(--bd);color:var(--mu);border-radius:6px;padding:1px 7px;margin-left:6px;white-space:nowrap}
+#actx .aam{text-align:right;flex:none}
+#actx .aam b{font-size:17px;white-space:nowrap}
+#actx .aam small{color:var(--mu);font-size:10.5px;margin-left:3px;font-weight:700}
+#actx .apl{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px}
+#actx .apl.no{background:rgba(200,16,46,.12);color:#c8102e}
+#actx .apl.yes{background:rgba(21,128,61,.14);color:#15803d}
+#actx .apl.free{background:rgba(100,116,139,.16);color:#64748b}
+#actx .abl{display:inline-block;margin-top:4px;font-size:11px;font-weight:800;border-radius:7px;padding:2px 8px;background:rgba(124,58,237,.13);color:#7c3aed}
+#actx .achs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+#actx .ach{background:var(--in);border:1px solid var(--bd);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700}
+#actx .atr{background:rgba(37,99,235,.12);color:#2563eb;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700}
+#actx .aex{font-size:12.5px;color:var(--mu);margin-top:7px;line-height:1.45}
+#actx .aex b{color:var(--tx)}
+#actx .aex .od{color:#c8102e;font-weight:800}
+#actx .adl{color:#15803d;font-weight:700}
+#actx .ared{color:#c8102e;font-weight:800}
+#actx .abar{height:8px;border-radius:999px;background:rgba(37,99,235,.15);overflow:hidden;margin-top:9px}
+#actx .abar i{display:block;height:100%;background:#2563eb;border-radius:999px}
+#actx .apg{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-top:5px}
+#actx .apg .re{color:#d97706;font-weight:700}
+#actx .apg b{color:var(--tx)}
+#actx .abt{display:flex;gap:8px;margin-top:10px}
+#actx .abt button{flex:1;padding:9px 6px;min-height:0;border-radius:10px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+#actx .abt button.pri{background:rgba(37,99,235,.1);color:#2563eb;border-color:rgba(37,99,235,.35)}
+#actx .abt button.pri.on{background:#2563eb;color:#fff;border-color:#2563eb}
+#actx .afm{margin-top:10px;border:1px solid rgba(37,99,235,.35);background:rgba(37,99,235,.06);border-radius:12px;padding:12px}
+#actx .afm .t{font-weight:800;color:#2563eb;font-size:13.5px;margin-bottom:8px}
+#actx .afm label{display:block;font-size:12px;font-weight:700;color:var(--mu);margin-bottom:8px}
+#actx .afm input{width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit;font-size:14px}
+#actx .afm .r1{display:flex;gap:10px;align-items:flex-end}
+#actx .afm .r1 label{flex:1;margin-bottom:0}
+#actx .afm .iw{position:relative}
+#actx .afm .iw input{padding-right:58px;font-size:16px;font-weight:700;border-color:#2563eb}
+#actx .afm .iw span{position:absolute;right:12px;top:50%;transform:translateY(-50%);margin-top:2px;font-size:12px;color:var(--mu);font-weight:700}
+#actx .afm .hb{border:1px solid rgba(37,99,235,.35);background:rgba(37,99,235,.08);color:#2563eb;font:inherit;font-weight:800;font-size:13px;padding:11px 14px;min-height:0;border-radius:10px;cursor:pointer;white-space:nowrap}
+#actx .afm .arem{font-size:12.5px;color:var(--mu);margin:8px 0 10px}
+#actx .afm .arem b{color:var(--tx)}
+#actx .afm .r2{display:grid;grid-template-columns:3fr 2fr;gap:10px}
+#actx .afm .r3{display:grid;grid-template-columns:1fr 1.7fr;gap:10px;margin-top:10px}
+#actx .afm .r3 button{padding:11px;min-height:0;border-radius:10px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);font:inherit;font-weight:700;cursor:pointer}
+#actx .afm .r3 button.sv{background:var(--pr);border-color:var(--pr);color:#fff;font-weight:800}
+#actx .aoc.clk{cursor:pointer;transition:box-shadow .15s,transform .15s}
+#actx .aoc.clk:hover{box-shadow:0 6px 18px rgba(15,23,42,.14);transform:translateY(-1px)}
+#actx .avw{margin-top:8px}
+#actx .avw button{border:0;background:transparent;color:var(--ct);font:inherit;font-weight:800;font-size:12.5px;padding:2px 0;min-height:0;cursor:pointer}
+.adt{position:fixed;inset:0;z-index:19;background:rgba(10,15,25,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.adt *{box-sizing:border-box}
+.adt .aw{--ct:#64748b;width:min(1060px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--cd);color:var(--tx);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.4);font-family:inherit}
+.adt .ah{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:20px 24px;background:linear-gradient(135deg,var(--hd),color-mix(in srgb,var(--ct) 55%,var(--hd)));color:#fff;border-radius:20px 20px 0 0}
+.adt .ah h3{margin:0;font-size:22px;line-height:1.2;color:#fff}
+.adt .ah .ids{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.adt .tg{font-size:12px;font-weight:800;border-radius:999px;padding:3px 11px;background:rgba(255,255,255,.18);color:#fff}
+.adt .tg.id{background:rgba(255,255,255,.92);color:#16212f}
+.adt .tg.no{background:#c8102e}.adt .tg.yes{background:#15803d}.adt .tg.go{background:#2563eb}.adt .tg.wait{background:#d97706}.adt .tg.bl{background:#7c3aed}
+.adt .ar{display:flex;align-items:center;gap:14px}
+.adt .ar .am{text-align:right}.adt .ar .am b{display:block;font-size:30px;line-height:1.1}.adt .ar .am small{opacity:.8;font-weight:700}
+.adt .x{border:0;background:rgba(255,255,255,.18);color:#fff;width:38px;height:38px;border-radius:12px;font-size:20px;cursor:pointer;min-height:0;padding:0}
+.adt .bd2{display:grid;grid-template-columns:minmax(250px,4fr) minmax(0,8fr)}
+.adt .lp{padding:20px 22px;background:var(--in);border-radius:0 0 0 20px;border-right:1px solid var(--bd)}
+.adt .rp{padding:20px 22px;min-width:0}
+.adt h4{margin:0 0 12px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mu)}
+.adt .ig{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adt .it{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:9px 12px;min-width:0}
+.adt .it.w{grid-column:1/-1}
+.adt .it small{display:block;font-size:11px;font-weight:700;color:var(--mu);margin-bottom:2px}
+.adt .it b{font-size:14.5px;word-break:break-word}
+.adt .it em{font-style:normal;font-size:12px;color:var(--mu);font-weight:600}
+.adt .sm{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--in);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.adt .sm .big{font-size:28px;font-weight:800;line-height:1.1}.adt .sm .big small{font-size:14px;color:var(--mu);font-weight:700}
+.adt .sm .pg{flex:1;min-width:200px}
+.adt .bar{height:10px;border-radius:999px;background:rgba(37,99,235,.15);overflow:hidden}
+.adt .bar i{display:block;height:100%;background:#2563eb;border-radius:999px}
+.adt .sm .lb{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mu);margin-top:6px;font-weight:600}
+.adt .sm .lb .re{color:#d97706;font-weight:800}.adt .sm .lb .ok{color:#15803d;font-weight:800}
+.adt .tl{display:flex;flex-direction:column;gap:10px}
+.adt .dr{display:grid;grid-template-columns:40px minmax(120px,1.2fr) minmax(110px,1fr) minmax(110px,1fr) minmax(120px,1.2fr) auto;gap:12px;align-items:center;border:1px solid var(--bd);border-left:5px solid #2563eb;border-radius:14px;padding:11px 14px;background:var(--cd)}
+.adt .dr .n{width:34px;height:34px;border-radius:50%;background:#2563eb;color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
+.adt .dr .d b{display:block;font-size:15px}.adt .dr .d small{color:var(--mu);font-weight:600;font-size:12px}
+.adt .dr .xe b{display:block;font-size:14px}.adt .dr .xe small{color:#2563eb;font-weight:700;font-size:12px}
+.adt .dr .q b{font-size:19px;color:#2563eb}.adt .dr .q small{display:block;color:var(--mu);font-size:12px;font-weight:600}
+.adt .dr .cu small{display:block;color:var(--mu);font-size:11.5px;font-weight:600}.adt .dr .cu b{font-size:13.5px}
+.adt .dr button{border:1px solid var(--bd);background:var(--in);color:#c8102e;border-radius:9px;font-weight:700;font-size:12px;padding:6px 10px;min-height:0;cursor:pointer}
+.adt .em{text-align:center;color:var(--mu);padding:26px 10px;border:2px dashed var(--bd);border-radius:14px;font-weight:600}
+.adt .ft{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;padding:14px 24px;border-top:1px solid var(--bd)}
+.adt .ft button{border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit;font-weight:700;font-size:14px;padding:10px 18px;border-radius:11px;cursor:pointer;min-height:0}
+.adt .ft button.p{background:#2563eb;border-color:#2563eb;color:#fff}
+.adt .ft button.g{background:#15803d;border-color:#15803d;color:#fff}
+@media(max-width:860px){.adt .bd2{grid-template-columns:1fr}.adt .lp{border-right:0;border-bottom:1px solid var(--bd);border-radius:0}.adt .dr{grid-template-columns:40px 1fr 1fr;}.adt .dr .cu{display:none}.adt .ah h3{font-size:19px}.adt .ar .am b{font-size:24px}}
+</style>`);
+
+            const sd = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '–';
+            const dsince = iso => { if (!iso) return null; const a = Date.parse(today() + 'T00:00:00'), b = Date.parse(iso + 'T00:00:00'); return isFinite(a) && isFinite(b) ? Math.round((a - b) / 864e5) : null };
+            const ago = k => k === null ? '' : k < 0 ? 'sắp về' : k === 0 ? 'hôm nay' : k + ' ngày trước';
+            /* các đơn còn cần theo dõi: mọi tháng chưa khóa */
+            const list = () => Object.keys(S.months).sort().filter(m => !isLk(m)).flatMap(m => (S.months[m].rows || []).map((r, i) => ({ r, m, i, k: r.id || (m + '|' + i) })));
+            const totOf = r => { for (const k of ['q', 'kg', 'm3']) { const T = n(r[k]); if (T > 0) return { k, T, un: k === 'q' ? ((r.u || '').trim() || 'kiện') : k === 'kg' ? 'kg' : 'm³' } } return { k: 'q', T: 0, un: (r.u || '').trim() || 'kiện' } };
+            const gotOf = (r, k) => spl(r).reduce((a, s) => a + n(s[k]), 0);
+            const kind = r => { const d = dvOf(r); if (d.v === 'no') { const t = totOf(r); return spl(r).length && gotOf(r, t.k) > 0 ? 'go' : 'wait' } return pd(r) === 'no' ? 'unp' : '' };
+            const dDone = r => { const a = spl(r).map(s => s.g).filter(Boolean).sort(); return a.length ? a[a.length - 1] : (r.g || '') };
+            const dFirst = r => spl(r).map(s => s.g).filter(Boolean).sort()[0] || '';
+            const dKey = (c, r) => (c === 'wait' ? r.d : c === 'go' ? (dFirst(r) || r.d) : (dDone(r) || r.d)) || '\uffff';
+            const sum = A => ({ n: A.length, kg: A.reduce((a, x) => a + kgT(x.r), 0), v: A.reduce((a, x) => a + fee(x.r), 0) });
+            const snapForm = () => { const f = X('actx') && X('actx').querySelector('.afm'); if (!f) return; const g = k => { const e = f.querySelector('[data-f="' + k + '"]'); return e ? e.value : '' }; AF.form = { q: g('q'), g: g('g'), xe: g('xe'), trip: g('trip') } };
+            const trips = () => [...new Set(list().flatMap(x => spTrips(x.r)))];
+
+            const chips = r => {
+                const c = []; if (n(r.q)) c.push(`<span class="ach">📦 ${f2(r.q)} ${esc((r.u || '').trim() || 'kiện')}</span>`);
+                if (n(r.kg)) c.push(`<span class="ach">⚖️ ${f2(r.kg)} kg</span>`); if (n(r.m3)) c.push(`<span class="ach">🧊 ${f2(r.m3)} m³</span>`);
+                return c.length ? `<div class="achs">${c.join('')}</div>` : ''
+            };
+            const tripChips = r => { const S2 = spl(r); return S2.length ? `<div class="achs">${S2.map(s => `<span class="atr" title="${esc((s.trip ? 'Chuyến ' + s.trip + ' · ' : '') + (n(s.q) ? f2(s.q) + ' ' + (r.u || '') : ''))}">🚚 ${sd(s.g)} - Xe ${f2(n(s.xe) || 1)}</span>`).join('')}</div>` : '' };
+            const top = (x, right) => {
+                const r = x.r; return `<div class="atop"><div><span class="anm">${esc(r.k || '(chưa ghi khách)')}</span>${r.id ? `<span class="aid">${esc(r.id)}</span>` : ''}</div><div class="aam"><b>${f(fee(r))}</b><small>VND</small><br>${right}</div></div>`
+            };
+            const vw = x => `<div class="avw"><button type="button" data-a="view" data-k="${esc(x.k)}">🔍 Xem chi tiết ›</button></div>`;
+            const payPill = r => { const p = pd(r); return `<span class="apl ${p}">● ${PL[p]}</span>` };
+            const formHtml = x => {
+                const r = x.r, t = totOf(r), got = spl(r).length ? gotOf(r, t.k) : 0, rem = Math.max(0, t.T - got), fv = AF.form || {};
+                return `<div class="afm" data-rem="${rem}" data-has="${t.T > 0 ? 1 : 0}" data-un="${esc(t.un)}"><div class="t">📝 Ghi lần giao hàng</div>
+<div class="r1"><label>Giao lần này<div class="iw"><input data-f="q" type="number" inputmode="decimal" min="0" step="any" autocomplete="off" placeholder="${t.T ? 'còn ' + f2(rem) : 'Số lượng'}" value="${esc(fv.q || '')}"><span>${esc(t.un)}</span></div></label>${t.T ? `<button type="button" class="hb" data-a="full" data-v="${rem}">Hết (${f2(rem)})</button>` : ''}</div>
+<div class="arem">${t.T ? `Còn lại sau lần này: <b data-rm>${f2(rem - n(fv.q))}</b> ${esc(t.un)}` : 'Đơn chưa ghi số lượng tổng.'}</div>
+<div class="r2"><label>📅 Ngày giao<input data-f="g" type="date" value="${esc(fv.g || today())}"></label><label>🚛 Số xe<input data-f="xe" type="number" inputmode="decimal" min="1" step="any" value="${esc(fv.xe || '1')}"></label></div>
+<label>🎫 Chuyến xe (biển số / mã)<input data-f="trip" list="atl" autocomplete="off" placeholder="Để trống nếu đi xe riêng" value="${esc(fv.trip || '')}"></label>
+<div class="r3"><button type="button" data-a="cancel">Hủy</button><button type="button" class="sv" data-a="save" data-k="${esc(x.k)}">Lưu số lượng giao</button></div></div>`
+            };
+            const btns = (x, ad) => {
+                if (!ad) return ''; const on = AF.open === x.k;
+                return `<div class="abt"><button type="button" data-a="done" data-k="${esc(x.k)}">✓ Đã giao đủ</button><button type="button" class="pri${on ? ' on' : ''}" data-a="open" data-k="${esc(x.k)}">${on ? '✕ Đóng' : '+ Nhập SL giao'}</button></div>${on ? formHtml(x) : ''}`
+            };
+            const cWait = (x, ad) => {
+                const r = x.r, k = dsince(r.d);
+                return `<div class="aoc clk" data-v="${esc(x.k)}" style="--ct:#e08a00"><div class="bd">${top(x, payPill(r))}${chips(r)}<div class="aex">⏳ ${r.d ? `Hàng về <b>${fd(r.d)}</b> · <span class="${k > 7 ? 'od' : ''}">${ago(k)}</span>` : 'Chưa ghi ngày hàng về'}</div>${vw(x)}${btns(x, ad)}</div></div>`
+            };
+            const cGo = (x, ad) => {
+                const r = x.r, t = totOf(r), got = gotOf(r, t.k), pct = t.T > 0 ? Math.min(100, got / t.T * 100) : 0;
+                return `<div class="aoc clk" data-v="${esc(x.k)}" style="--ct:#2563eb"><div class="bd">${top(x, payPill(r))}${chips(r)}${tripChips(r)}${t.T > 0 ? `<div class="abar"><i style="width:${pct.toFixed(1)}%"></i></div><div class="apg"><span>Đã giao <b>${f2(got)}</b>/${f2(t.T)} ${esc(t.un)}</span><span class="re">Còn <b>${f2(Math.max(0, t.T - got))}</b> ${esc(t.un)}</span></div>` : ''}${vw(x)}${btns(x, ad)}</div></div>`
+            };
+            const cUnp = x => {
+                const r = x.r, dd = dDone(r), k = dsince(dd);
+                return `<div class="aoc clk${AF.sel.has(x.k) ? ' sel' : ''}" data-v="${esc(x.k)}" style="--ct:#12a15a"><input type="checkbox" data-s="${esc(x.k)}" ${AF.sel.has(x.k) ? 'checked' : ''} aria-label="Chọn đơn ${esc(r.id || '')}"><div class="bd">${top(x, r.bill ? `<span class="abl" title="Phiếu giao nhận đã lập">🧾 ${esc(r.bill)}</span>` : '')}${chips(r)}${tripChips(r)}<div class="aex"><span class="adl">✅ ${dd ? `Giao ${fd(dd)}` : 'Đã giao'}</span> · <span class="ared">chưa thu${k > 0 ? ' ' + k + ' ngày' : ''}</span></div>${vw(x)}</div></div>`
+            };
+
+            function renderAct(fresh) {
+                const root = X('actx'); if (!root) return; const ad = isAd();
+                const act = document.activeElement; let fa = null;
+                if (act && root.contains(act) && act.dataset && act.dataset.f) fa = { f: act.dataset.f, s: act.selectionStart, e: act.selectionEnd };
+                if (!fresh && AF.open) snapForm();
+                const G = { wait: [], go: [], unp: [] }; list().forEach(x => { const c = kind(x.r); if (c) G[c].push(x) });
+                const all3 = [...G.wait, ...G.go, ...G.unp], total = all3.length;
+                const bn = X('ovn'); if (bn) { bn.textContent = total; bn.hidden = !total }
+                const ids = new Set(G.unp.map(x => x.k)); [...AF.sel].forEach(k => { if (!ids.has(k)) AF.sel.delete(k) });
+                if (AF.open && ![...G.wait, ...G.go].some(x => x.k === AF.open)) { AF.open = ''; AF.form = null }
+                const cnt = {}; all3.forEach(x => { const c = key(x.r.k); cnt[c] = (cnt[c] || 0) + 1 });
+                [...AF.cust].forEach(c => { if (!cnt[c]) AF.cust.delete(c) });
+                const cmpD = (c) => (a, b) => (AF.sort === 'cust' ? key(a.r.k).localeCompare(key(b.r.k), 'vi') : 0) || dKey(c, a.r).localeCompare(dKey(c, b.r)) || String(a.r.id || '').localeCompare(String(b.r.id || ''));
+                const V = c => G[c].filter(x => !AF.cust.size || AF.cust.has(key(x.r.k))).sort(cmpD(c));
+                const W = V('wait'), O = V('go'), U = V('unp');
+                const sW = sum(G.wait), sO = sum(G.go), sU = sum(G.unp);
+                const od = [...G.wait, ...G.go].filter(x => { const k = dsince(x.r.d); return k !== null && k > 7 });
+                const wu = G.wait.filter(x => pd(x.r) === 'no'), noBill = G.unp.filter(x => !x.r.bill);
+                const kv = (ic, t, big, s, c) => `<div class="ack" style="--ct:${c}"><div class="ic">${ic}</div><div><small>${t}</small><b>${big}</b><div class="s">${s}</div></div></div>`;
+                let nb = 0; try { nb = billAll().length } catch (e) { }
+                const selV = U.filter(x => AF.sel.has(x.k)), allSel = U.length > 0 && selV.length === U.length;
+                const col = (c, ic, t, A, body, tool) => `<div class="acol" style="--ct:${c}"><div class="acol-h"><div>${ic} ${t}</div><span>${A} đơn</span></div>${tool || ''}<div class="acol-b">${body}</div></div>`;
+                const em = '<div class="aem">Không có đơn nào 🎉</div>';
+                root.innerHTML = `<div class="ahd"><h3>Cần xử lý ngay</h3><div class="ahb"><button type="button" class="aredb" data-a="slip">🧾 Tạo phiếu giao nhận</button><button type="button" data-a="slips">📄 Phiếu đã lập <span class="abdg">${nb}</span></button></div></div>
+<div class="acards">${kv('🚚', 'Chưa giao', sW.n + ' đơn', f(sW.kg) + ' kg · ' + f(sW.v) + ' VND', '#e08a00')}${kv('🛣️', 'Đang giao', sO.n + ' đơn', f(sO.kg) + ' kg · ' + f(sO.v) + ' VND', '#2563eb')}${kv('⏰', 'Chưa giao quá 7 ngày', od.length + ' đơn', od.length ? 'Cần giao gấp' : 'Không có đơn quá hạn', '#dc2626')}${kv('💸', 'Chưa giao & chưa thu tiền', wu.length + ' đơn', 'Cần giao rồi thu', '#7c3aed')}${kv('💰', 'Đã giao · chưa thu', sU.n + ' đơn', f(sU.v) + ' VND · ' + noBill.length + ' đơn chưa lập bill', '#12a15a')}</div>
+<div class="afb"><div class="chips"><span class="lb">👥 Khách:</span><button type="button" class="achip${AF.cust.size ? '' : ' on'}" data-a="cust" data-c="">Tất cả <small>${total}</small></button>${Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'vi')).map(c => `<button type="button" class="achip${AF.cust.has(c) ? ' on' : ''}" data-a="cust" data-c="${esc(c)}">${esc(c)} <small>${cnt[c]}</small></button>`).join('')}</div><div class="aseg"><button type="button" data-a="sort" data-o="old" class="${AF.sort === 'old' ? 'on' : ''}">Cũ nhất trước</button><button type="button" data-a="sort" data-o="cust" class="${AF.sort === 'cust' ? 'on' : ''}">Theo khách</button></div></div>
+<div class="acols">${col('#e08a00', '🚚', 'Chưa giao', W.length, W.map(x => cWait(x, ad)).join('') || em)}${col('#2563eb', '🛣️', 'Đang giao', O.length, O.map(x => cGo(x, ad)).join('') || em)}${col('#12a15a', '💰', 'Đã giao · chưa thu', U.length, U.map(cUnp).join('') || em, `<div class="acol-t"><label><input type="checkbox" data-a="all" ${allSel ? 'checked' : ''} ${U.length ? '' : 'disabled'}> Chọn hết</label><span>Tick đơn để tạo bill</span><span class="sp"></span><button type="button" data-a="bill" ${selV.length ? '' : 'disabled'}>🧾 Tạo bill${selV.length ? ' (' + selV.length + ')' : ''}</button></div>`)}</div>
+<datalist id="atl">${trips().map(t => `<option value="${esc(t)}">`).join('')}</datalist>`;
+                if (DT.k) drawDetail();
+                if (fa) { const e = root.querySelector('[data-f="' + fa.f + '"]'); if (e) { e.focus(); try { e.setSelectionRange(fa.s, fa.e) } catch (x) { } } }
+            }
+
+            const find = k => list().find(x => x.k === k);
+            const updRem = f => { const q = f.querySelector('[data-f="q"]'), o = f.querySelector('.arem'); if (!q || !o || f.dataset.has !== '1') return; const left = +f.dataset.rem - n(q.value), un = f.dataset.un; o.innerHTML = left < -1e-9 ? `<span class="ared">Vượt số còn lại ${f2(-left)} ${esc(un)}</span>` : `Còn lại sau lần này: <b>${f2(left)}</b> ${esc(un)}` };
+            function saveDel(x, f) {
+                const r = x.r, t = totOf(r), got = spl(r).length ? gotOf(r, t.k) : 0, rem = Math.max(0, t.T - got);
+                const g = k => (f.querySelector('[data-f="' + k + '"]') || {}).value || '';
+                const q = n(g('q')), date = g('g'), trip = g('trip').trim(), xe = Math.max(1, n(g('xe')) || 1);
+                if (!(q > 0)) { toast('err', 'Nhập số lượng giao lần này.'); return }
+                if (t.T > 0 && q > rem + 1e-9) { toast('err', 'Chỉ còn ' + f2(rem) + ' ' + t.un + ', không thể ghi giao ' + f2(q) + '.'); return }
+                if (!date) { toast('err', 'Chọn ngày giao.'); return }
+                const S0 = Array.isArray(r.sp) ? r.sp.filter(Boolean) : [], s = { g: date, xe }; if (trip) s.trip = trip; s[t.k] = q;
+                for (const k2 of ['kg', 'm3']) if (k2 !== t.k && n(r[k2]) > 0 && t.T > 0 && S0.some(z => n(z[k2]) > 0)) s[k2] = Math.round(n(r[k2]) * q / t.T * 100) / 100;
+                S0.push(s); r.sp = S0;
+                const ds = spl(r).map(z => z.g).filter(Boolean).sort(); r.g = ds.length ? ds[ds.length - 1] : '';
+                r.trip = [...new Set(spl(r).map(z => (z.trip || '').trim()).filter(Boolean))].join(', ');
+                r.xe = effXe([{ sp: spl(r), loai: r.loai }])[0];
+                r.dv = ''; AF.open = ''; AF.form = null; save(); all()
+            }
+            async function markDone(x) {
+                const r = x.r; if (!await ask(`Đánh dấu đơn <b>${esc(r.k || '')}</b>${r.id ? ' (' + esc(r.id) + ')' : ''} đã giao đủ?`, 'Đã giao đủ')) return;
+                const t = today(); if (!spl(r).length && (!r.g || r.g > t)) r.g = t;
+                r.dv = dvOf(r).auto === 'yes' ? '' : 'yes'; if (AF.open === x.k) { AF.open = ''; AF.form = null } save(); all()
+            }
+            function payNow() {
+                const rows = list().filter(x => AF.sel.has(x.k) && kind(x.r) === 'unp').map(x => x.r); if (!rows.length) return;
+                const nm = [...new Set(rows.map(r => strip(key(r.k))))].join(' & ');
+                if (typeof window.__payBill === 'function') window.__payBill(rows, nm); else toast('err', 'Chưa mở được cửa sổ lập bill, hãy tải lại trang.')
+            }
+
+            /* ===== Xem chi tiết đơn (nằm ngang): thông tin đơn + các lần giao dạng dòng thời gian ===== */
+            const DT = { k: '' };
+            const WDN = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            const wdOf = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? '' : WDN[d.getDay()] };
+            const recalc = r => {
+                const A = spl(r); if (!A.length) { r.sp = undefined; r.g = ''; r.trip = ''; r.xe = 0 }
+                else { const ds = A.map(z => z.g).filter(Boolean).sort(); r.g = ds.length ? ds[ds.length - 1] : ''; r.trip = [...new Set(A.map(z => (z.trip || '').trim()).filter(Boolean))].join(', '); r.xe = effXe([{ sp: A, loai: r.loai }])[0] }
+                r.dv = ''
+            };
+            function closeDetail() { const o = X('adt'); if (o) o.remove(); DT.k = '' }
+            function drawDetail() {
+                if (!DT.k) return; const x = find(DT.k); if (!x) { closeDetail(); return }
+                const r = x.r, ad = isAd(), c = kind(r), t = totOf(r), S2 = spl(r), got = S2.length ? gotOf(r, t.k) : 0, rem = Math.max(0, t.T - got), dv = dvOf(r), p = pd(r);
+                const st = dv.v === 'yes' ? ['yes', 'Đã giao'] : got > 0 ? ['go', 'Đang giao'] : ['wait', 'Chưa giao'];
+                const col = st[0] === 'yes' ? '#15803d' : st[0] === 'go' ? '#2563eb' : '#d97706';
+                const k0 = dsince(r.d), un = esc(t.un), pct = t.T > 0 ? Math.min(100, got / t.T * 100) : 0;
+                const it = (l, v, w) => v === '' || v == null ? '' : `<div class="it${w ? ' w' : ''}"><small>${l}</small><b>${v}</b></div>`;
+                let cuoc = `${f(fee(r))} VND`; if (isU(r)) cuoc += `<br><em>${f2(r.usd)} USD × ${f(rt(r))}</em>`; else if (r.by === 'KG') cuoc += `<br><em>${f2(r.kg)} kg × ${f(n(r.pk) || S.kg)} đ</em>`;
+                const info = it('📅 Hàng về', r.d ? fd(r.d) + (k0 !== null ? `<br><em>${ago(k0)}</em>` : '') : '') + it('📦 Số lượng', n(r.q) ? f2(r.q) + ' ' + esc((r.u || '').trim() || 'kiện') : '') + it('⚖️ Khối lượng', n(r.kg) ? f2(r.kg) + ' kg' : '') + it('🧊 Thể tích', n(r.m3) ? f2(r.m3) + ' m³' : '') + it('💵 Cước', cuoc, 1) + it('🧮 Tính theo', esc(BY[r.by] || r.by || '')) + it('💰 Thu tiền', `<span style="color:${p === 'no' ? '#c8102e' : p === 'yes' ? '#15803d' : '#64748b'}">${PL[p]}</span>`) + it('🧾 Phiếu giao nhận', r.bill ? esc(r.bill) : '') + it('🚛 Chuyến xe', spTrips(r).map(esc).join(', ')) + it('🗒️ Ghi chú', r.note ? esc(r.note) : '', 1) + it('🏷️ Thẻ', (r.tags || []).length ? r.tags.map(esc).join(', ') : '', 1);
+                const idx = (Array.isArray(r.sp) ? r.sp : []).map((s, i) => ({ s, i })).filter(z => spl({ sp: [z.s] }).length), sh = S2.length ? spShare(r, S2) : [];
+                let cum = 0;
+                const rows = idx.map((z, j) => {
+                    const s = z.s, q = n(s[t.k]); cum += q;
+                    return `<div class="dr"><div class="n">${j + 1}</div><div class="d"><b>${s.g ? fd(s.g) : 'Chưa rõ ngày'}</b><small>${s.g ? wdOf(s.g) : ''}</small></div><div class="xe"><b>🚛 Xe ${f2(n(s.xe) || 1)}</b><small>${s.trip ? esc(s.trip) : 'xe riêng'}</small></div><div class="q"><b>${q ? f2(q) : '–'}</b> ${q ? un : ''}<small>${t.T > 0 && q ? 'cộng dồn ' + f2(cum) + '/' + f2(t.T) : ''}</small></div><div class="cu"><small>Cước tạm tính</small><b>${f(fee(r) * (sh[j] || 0))} đ</b>${s.note ? `<small>${esc(s.note)}</small>` : ''}${(s.ph || []).length ? `<small>📷 ${s.ph.length} ảnh</small>` : ''}</div>${ad ? `<div><button type="button" data-d="del" data-i="${z.i}">Xóa</button></div>` : '<div></div>'}</div>`
+                }).join('');
+                const sum = t.T > 0 ? `<div class="sm"><div class="big">${f2(got)}<small> / ${f2(t.T)} ${un}</small></div><div class="pg"><div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div><div class="lb"><span>${S2.length} lần giao</span>${rem > 1e-9 ? `<span class="re">Còn ${f2(rem)} ${un}</span>` : '<span class="ok">✔ Đủ số lượng</span>'}</div></div></div>` : '';
+                const none = !S2.length ? `<div class="em">${r.g ? `Giao 1 lần ngày <b>${fd(r.g)}</b> (${wdOf(r.g)})${r.trip ? ' · chuyến ' + esc(r.trip) : ''}` : 'Chưa có lần giao nào. Bấm «Nhập SL giao» để ghi lần giao đầu tiên.'}</div>` : '';
+                let o = X('adt'); if (!o) { o = document.createElement('div'); o.id = 'adt'; o.className = 'adt'; document.body.appendChild(o) }
+                o.innerHTML = `<div class="aw" style="--ct:${col}" role="dialog" aria-modal="true"><div class="ah"><div><h3>${esc(r.k || '(chưa ghi khách)')}</h3><div class="ids">${r.id ? `<span class="tg id">${esc(r.id)}</span>` : ''}<span class="tg ${st[0]}">${st[1]}</span><span class="tg ${p === 'no' ? 'no' : p === 'yes' ? 'yes' : ''}">${PL[p]}</span>${r.bill ? `<span class="tg bl">🧾 ${esc(r.bill)}</span>` : ''}</div></div><div class="ar"><div class="am"><b>${f(fee(r))}</b><small>VND</small></div><button type="button" class="x" data-d="close" aria-label="Đóng">✕</button></div></div>
+<div class="bd2"><div class="lp"><h4>Thông tin đơn hàng</h4><div class="ig">${info}</div></div><div class="rp"><h4>🚚 Các lần giao hàng</h4>${sum}<div class="tl">${rows}</div>${none}</div></div>
+<div class="ft">${ad && (c === 'wait' || c === 'go') ? `<button type="button" class="p" data-d="open">+ Nhập SL giao</button><button type="button" class="g" data-d="done">✓ Đã giao đủ</button>` : ''}${ad && x.m === S.cur ? `<button type="button" data-d="edit">✎ Sửa đơn</button>` : ''}<button type="button" data-d="close">Đóng</button></div></div>`
+            }
+            function openDetail(k) { DT.k = k; drawDetail() }
+            document.addEventListener('click', async e => {
+                const o = X('adt'); if (!o || !DT.k) return;
+                if (e.target === o) { closeDetail(); return }
+                const b = e.target.closest('#adt [data-d]'); if (!b) return; const a = b.dataset.d, x = find(DT.k);
+                if (a === 'close') closeDetail();
+                else if (!x) return;
+                else if (a === 'open') { const k = DT.k; closeDetail(); AF.open = k; AF.form = null; renderAct(true); const cd = root && root.querySelector('.aoc[data-v="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); if (cd) { cd.scrollIntoView({ block: 'center', behavior: 'smooth' }); const q = cd.querySelector('[data-f="q"]'); if (q) q.focus({ preventScroll: true }) } }
+                else if (a === 'done') markDone(x)
+                else if (a === 'edit') { closeDetail(); showRow(x.i) }
+                else if (a === 'del') {
+                    const i = +b.dataset.i, s = (x.r.sp || [])[i]; if (!s) return;
+                    if (!await ask(`Xóa lần giao ngày <b>${s.g ? fd(s.g) : '?'}</b>${n(s[totOf(x.r).k]) ? ' (' + f2(s[totOf(x.r).k]) + ' ' + esc(totOf(x.r).un) + ')' : ''} của đơn <b>${esc(x.r.id || '')}</b>?`, 'Xóa lần giao')) return;
+                    x.r.sp.splice(i, 1); recalc(x.r); save(); all()
+                }
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && DT.k) { const m = X('md'); if (m && !m.classList.contains('hid')) return; closeDetail() } });
+
+            const root = X('actx');
+            if (root) {
+                root.addEventListener('click', e => {
+                    const b = e.target.closest('[data-a]');
+                    if (!b) { const cd = e.target.closest('.aoc[data-v]'); if (cd && root.contains(cd) && !e.target.closest('button,input,label,select,a,.afm')) openDetail(cd.dataset.v); return }
+                    if (!root.contains(b) || b.tagName === 'INPUT') return;
+                    const a = b.dataset.a, k = b.dataset.k;
+                    if (a === 'cust') { const c = b.dataset.c || ''; if (!c) AF.cust.clear(); else if (AF.cust.has(c)) AF.cust.delete(c); else AF.cust.add(c); renderAct() }
+                    else if (a === 'sort') { AF.sort = b.dataset.o; renderAct() }
+                    else if (a === 'open') { AF.open = AF.open === k ? '' : k; AF.form = null; renderAct(true); const q = root.querySelector('.afm [data-f="q"]'); if (q) q.focus() }
+                    else if (a === 'cancel') { AF.open = ''; AF.form = null; renderAct(true) }
+                    else if (a === 'full') { const q = root.querySelector('.afm [data-f="q"]'); if (q) { q.value = b.dataset.v; updRem(q.closest('.afm')); q.focus() } }
+                    else if (a === 'save') { const x = find(k), f = b.closest('.afm'); if (x && f) saveDel(x, f) }
+                    else if (a === 'done') { const x = find(k); if (x) markDone(x) }
+                    else if (a === 'view') openDetail(k)
+                    else if (a === 'bill') payNow()
+                    else if (a === 'slip') { const t = X('bill'); if (t) t.click(); else billForm() }
+                    else if (a === 'slips') { const t = X('bills'); if (t) t.click(); else billList() }
+                });
+                root.addEventListener('change', e => {
+                    const t = e.target;
+                    if (t.matches('[data-s]')) { t.checked ? AF.sel.add(t.dataset.s) : AF.sel.delete(t.dataset.s); renderAct() }
+                    else if (t.matches('[data-a="all"]')) {
+                        const vis = list().filter(x => kind(x.r) === 'unp' && (!AF.cust.size || AF.cust.has(key(x.r.k))));
+                        vis.forEach(x => t.checked ? AF.sel.add(x.k) : AF.sel.delete(x.k)); renderAct()
+                    }
+                });
+                root.addEventListener('input', e => { if (e.target.matches('.afm [data-f="q"]')) updRem(e.target.closest('.afm')) });
+            }
+            function paintSub() {
+                const a = AF.sub === 'act'; if (X('ov-sum')) X('ov-sum').classList.toggle('ovh', a); if (X('ov-act')) X('ov-act').classList.toggle('ovh', !a);
+                document.querySelectorAll('#ovsub button').forEach(b => b.classList.toggle('on', b.dataset.ov === AF.sub))
+            }
+            const sb = X('ovsub'); if (sb) sb.addEventListener('click', e => { const b = e.target.closest('button[data-ov]'); if (!b) return; AF.sub = b.dataset.ov; try { localStorage.setItem(LSK, AF.sub) } catch (x) { } paintSub() });
+            paintSub();
+            const _allA = all; all = function () { const r = _allA.apply(this, arguments); try { renderAct() } catch (e) { console.error(e) } return r };
+            try { renderAct() } catch (e) { console.error(e) }
         })();
 
         /* ===== Gom các nút nổi vào menu «Tiện ích» trên thanh công cụ ===== */
