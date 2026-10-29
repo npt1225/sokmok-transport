@@ -7457,7 +7457,7 @@
                     trong tháng).</p>
             </section>
             <section>
-                <h2>Lương theo từng tháng</h2>
+                <h2>Lương tháng đang chọn</h2>
                 <div class="wrap">
                     <table id="lt2"></table>
                 </div>
@@ -7471,7 +7471,7 @@
                     có tên khách chứa "Nghĩa" trong tháng.</p>
             </section>
             <section>
-                <h2>Phí theo từng tháng</h2>
+                <h2>Phí tháng đang chọn</h2>
                 <div class="wrap">
                     <table id="nt2"></table>
                 </div>
@@ -8211,7 +8211,7 @@
                 pcard('Tổng doanh số tháng', f(a.rev) + ' đ', 'quy đổi VND') +
                 pcard('Hoa hồng 5%', f(a.com) + ' đ', `5% × ${f(a.rev)}`);
             let h = '<thead><tr><th>Tháng</th><th>Tổng doanh số</th><th>Hoa hồng 5%</th><th>Lương cố định</th><th>Lương</th></tr></thead><tbody>', T = { rev: 0, com: 0, sal: 0 };
-            ks.forEach(k => { const x = salOf(S.months[k]); T.rev += x.rev; T.com += x.com; T.sal += x.sal; h += `<tr${k === S.cur ? ' class="c1"' : ''}><td>${mk(k)}</td><td class="num">${f(x.rev)}</td><td class="num">${f(x.com)}</td><td class="num">${f(SAL.base)}</td><td class="num"><b>${f(x.sal)}</b></td></tr>` });
+            ks.filter(k => k === S.cur).forEach(k => { const x = salOf(S.months[k]); T.rev += x.rev; T.com += x.com; T.sal += x.sal; h += `<tr${k === S.cur ? ' class="c1"' : ''}><td>${mk(k)}</td><td class="num">${f(x.rev)}</td><td class="num">${f(x.com)}</td><td class="num">${f(SAL.base)}</td><td class="num"><b>${f(x.sal)}</b></td></tr>` });
             $('lt2').innerHTML = h + `</tbody>`;
             const g = nghOf(cur), cnt = cur.rows.filter(isNghia).length;
             $('ncards').innerHTML = pcard('Phí anh Nghĩa tháng này', f(g.fee) + ' đ', `${f(g.g)} × 2%`, 'big') +
@@ -8219,7 +8219,7 @@
                 pcard('Kg × 10.000', f(g.g) + ' đ', `${f(g.kg)} × ${f(NG.per)}`) +
                 pcard('Nhân 2%', f(g.fee) + ' đ', `${f(g.g)} × 2%`);
             h = '<thead><tr><th>Tháng</th><th>Số dòng</th><th>Tổng kg</th><th>Kg × 10.000</th><th>Phí (× 2%)</th></tr></thead><tbody>'; const N = { c: 0, kg: 0, g: 0, fee: 0 };
-            ks.forEach(k => { const M = S.months[k], x = nghOf(M), c = M.rows.filter(isNghia).length; N.c += c; N.kg += x.kg; N.g += x.g; N.fee += x.fee; h += `<tr${k === S.cur ? ' class="c1"' : ''}><td>${mk(k)}</td><td class="num">${c}</td><td class="num">${f(x.kg)}</td><td class="num">${f(x.g)}</td><td class="num"><b>${f(x.fee)}</b></td></tr>` });
+            ks.filter(k => k === S.cur).forEach(k => { const M = S.months[k], x = nghOf(M), c = M.rows.filter(isNghia).length; N.c += c; N.kg += x.kg; N.g += x.g; N.fee += x.fee; h += `<tr${k === S.cur ? ' class="c1"' : ''}><td>${mk(k)}</td><td class="num">${c}</td><td class="num">${f(x.kg)}</td><td class="num">${f(x.g)}</td><td class="num"><b>${f(x.fee)}</b></td></tr>` });
             $('nt2').innerHTML = h + `</tbody>`
         }
         function heroInfo() { const e = $('hq'); if (!e) return; e.innerHTML = `<span><small>Tháng</small><b>${mk(S.cur).replace('Tháng ', '')}</b></span><span><small>Tỷ giá</small><b>${f(S.rate)}</b></span><span><small>Cước mỗi kg</small><b>${f(S.kg)}</b></span>` }
