@@ -8340,7 +8340,8 @@
         const today = () => { const t = new Date(); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0') };
         const ru = u => { const v = parseFloat(String(u == null ? '' : u).replace(/,/g, '')); return isFinite(v) && Math.round(v) ? en(v) : '' };
         const strip = k => k.replace(/^(anh|chị|chú|cô|bác)\s+/i, '');
-        const snap = r => ({ by: r.by, pm3: r.pm3 || 0, desc: r.desc || '', d: r.d, q: r.q, u: r.u, kg: r.kg, m3: r.m3, f: Math.round(bVnd(r)), usd: bUsd(r) });
+        const bDesc = r => (r.desc || 'Kiện hàng đi Campuchia') + (r.k && r.k !== r.desc ? ' – ' + r.k : '');
+        const snap = r => ({ k: strip(String(r.k == null ? '' : r.k).trim()), by: r.by, pm3: r.pm3 || 0, desc: r.desc || '', d: r.d, q: r.q, u: r.u, kg: r.kg, m3: r.m3, f: Math.round(bVnd(r)), usd: bUsd(r) });
         const bUnits = rows => { const u = {}; rows.forEach(r => { const k = (r.u || '').trim() || 'kiện'; u[k] = (u[k] || 0) + n(r.q) }); return Object.entries(u).map(([k, v]) => f2(v) + ' ' + k).join(' + ') || '0' };
         const bWeight = rows => { const kg = rows.reduce((a, r) => a + n(r.kg), 0), m3 = rows.reduce((a, r) => a + n(r.m3), 0); return kg ? f2(kg) + ' kg' : m3 ? f2(m3) + ' m³' : '–' };
         /* tất cả phiếu: phiếu đã lưu + phiếu cũ chỉ còn dấu trên đơn hàng (dựng lại) */
@@ -8406,7 +8407,7 @@
                 <label class="f">Mr / Ms người gửi<select id="bsg">${['', 'Mr', 'Ms'].map(o => `<option value="${o}"${(es.g || '') === o ? ' selected' : ''}>${o || '— (không ghi)'}</option>`).join('')}</select></label>${L('bsn', 'Người gửi', es.n || '')}${L('bsp', 'SĐT người gửi', es.p || '')}${L('bsa', 'Địa chỉ người gửi', es.a || '', 1)}
                 ${L('brk', 'Khách nhận (gõ hoặc chọn)', E ? E.rk || '' : '', 1, 'list="bkl" autocomplete="off"')}<label class="f">Mr / Ms người nhận<select id="brg">${['', 'Mr', 'Ms'].map(o => `<option value="${o}"${(er.g || '') === o ? ' selected' : ''}>${o || '— (không ghi)'}</option>`).join('')}</select></label>${L('brn', 'Người nhận', er.n || '')}${L('brp', 'SĐT người nhận', er.p || '')}${L('bra', 'Địa chỉ người nhận', er.a || '', 1)}
                 ${L('bv', 'Tiền VND (tự tính, sửa được)', E ? E.v || '' : '')}${L('bu', 'Tiền USD (tự tính, sửa được)', E ? ru(E.u) : '')}<label class="f">Tỷ giá tính phiếu<select id="brm"><option value="0"${RM0 === 0 ? ' selected' : ''}>Theo từng đơn (tỷ giá lúc nhập đơn)</option><option value="1"${RM0 === 1 ? ' selected' : ''}>Tỷ giá hiện tại</option><option value="2"${RM0 === 2 ? ' selected' : ''}>Nhập tay</option></select></label><label class="f">Tỷ giá (VND / 1 USD)<input id="brin" type="number" step="any" min="0" value="${BOVR || ''}"${RM0 === 2 ? '' : ' readonly'}></label><div class="w"><p class="hint" id="brt"></p></div><div class="w"><button type="button" class="schip" id="bsrt" aria-pressed="false">💱 Ghi dòng tỷ giá USD lên phiếu</button><div class="bsel-hint">Bấm chọn thì phiếu có thêm dòng «Tỷ giá USD: 1 USD = … VND» dưới các ô cước. Không bấm thì không hiện.</div></div>
-                ${L('bveh', 'Chuyến xe (nhiều phiếu đi chung 1 xe thì ghi giống nhau)', E ? E.veh || '' : '', 1, 'list="tl" autocomplete="off" placeholder="Vd: 01/10 hoặc biển số xe"')}<div class="w"><p class="hint bvh" id="bvh"></p></div><div class="w bdlw"><button type="button" class="schip" id="bdlt" aria-pressed="false">🚚 Ghi ngày giao &amp; số lượng giao lên phiếu</button><div class="bsel-hint">Không bấm thì phiếu không ghi chuyến xe, ngày giao hay số lượng giao nào. Bấm chọn thì hiện ô ghi ngày giao và số lượng giao cho từng đơn, từng chuyến xe.</div><div class="bdlf" id="bdlf" hidden></div></div></div>
+                ${L('bveh', 'Chuyến xe (nhiều phiếu đi chung 1 xe thì ghi giống nhau)', E ? E.veh || '' : '', 1, 'list="tl" autocomplete="off" placeholder="Vd: 01/10 hoặc biển số xe"')}<div class="w"><p class="hint bvh" id="bvh"></p></div><div class="w bdlw"><button type="button" class="schip" id="bdlt" aria-pressed="false">🚚 Ghi ngày giao &amp; số lượng giao lên phiếu</button><div class="bsel-hint">Không bấm thì phiếu không ghi chuyến xe, ngày giao hay số lượng giao nào. Bấm chọn thì hiện ô ghi ngày giao và số lượng giao cho từng đơn, từng chuyến xe.</div><button type="button" class="schip" id="bdlh" aria-pressed="false" hidden style="margin-top:8px">🙈 Ẩn số lượng giao trên phiếu</button><div class="bsel-hint" id="bdlhh" hidden>Bấm chọn thì phiếu vẫn ghi đầy đủ ngày giao, chuyến xe nhưng KHÔNG in số lượng giao và không so sánh đủ/thiếu/dư. Số bạn nhập ở dưới vẫn được lưu nội bộ để đối chiếu.</div><div class="bdlf" id="bdlf" hidden></div></div></div>
                 <datalist id="bkl">${names.map(x => `<option value="${esc(x)}">`).join('')}</datalist><datalist id="tl">${[...new Set([...A.flatMap(x => spTrips(x.r)), ...C.bills.map(b => (b.veh || '').trim())].filter(Boolean))].map(x => `<option value="${esc(x)}">`).join('')}</datalist>
                 <p class="hint">Mỗi phiếu có tối đa 8 dòng hàng. Nhiều phiếu đi chung 1 xe: ghi cùng một «Chuyến xe», trên phiếu sẽ tự hiện «Chung xe với …». Phiếu có dòng tính theo khối sẽ tự dùng mẫu «Giao hàng tính theo khối». Dòng nhập tay có thể tính theo kg hoặc theo khối (kiện máy 220 USD/khối, kiện thường 150 hoặc 140 USD/khối, hoặc nhập giá khác). Phiếu được lưu lại, xem, sửa và in lại ở nút «Phiếu đã lập». Thông tin người gửi/nhận được nhớ cho lần sau.</p><div class="err" id="fe"></div>
                 <div class="act"><button type="button" id="mc">Hủy</button><button class="p">${E ? 'Lưu thay đổi' : 'Tạo phiếu'}</button></div></form>`;
@@ -8425,6 +8426,7 @@
             const manual = () => mEls().map(d => { const m3 = d.querySelector('.mmd').value === 'M3', pv = d.querySelector('.mpr').value, am = n(d.querySelector('.mk').value); return { desc: d.querySelector('.mdsc').value.trim(), d: d.querySelector('.md').value, q: n(d.querySelector('.mq').value), u: d.querySelector('.mu').value.trim() || 'kiện', kg: m3 ? 0 : am, m3: m3 ? am : 0, by: m3 ? 'M3' : 'KG', pm3: m3 ? (pv === 'o' ? n(d.querySelector('.mpo').value) : n(pv)) : 0 } }).filter((m, i) => { const d = mEls()[i]; return m.desc || m.d || m.q || m.kg || m.m3 || d.querySelector('.mq').value || d.querySelector('.mk').value });
             let skip = !!E, vehTouched = !!(E && E.veh);
             let DL = !!(E && E.dl && (E.dl.d || E.dl.q || (E.dl.items && E.dl.items.length)));
+            let HQ = !!(E && E.dl && E.dl.hq);
             const dlStore = {}; if (E && E.dl && Array.isArray(E.dl.items)) E.dl.items.forEach(i => { if (i.k) dlStore[i.k] = { d: i.d || '', q: i.q || '' } });
             /* các đơn đã chọn → mỗi đơn có 1 dòng cho mỗi chuyến xe (đơn giao nhiều đợt thì mỗi đợt 1 dòng) */
             const dlGroups = () => {
@@ -8520,7 +8522,8 @@
             $('bua').onclick = () => { let c = mEls().length; boxes().forEach(i => { const r = A[+i.value].r; i.checked = !r.bill && pd(r) !== 'yes' && c < MAX; if (i.checked) c++ }); tot() };
             $('bun').onclick = () => { boxes().forEach(i => i.checked = false); tot() };
             if (E) if (E && MO) (E.man || []).forEach(m => addM(m));
-            const dlSync = () => { $('bdlt').classList.toggle('on', DL); $('bdlt').setAttribute('aria-pressed', DL ? 'true' : 'false'); $('bdlf').hidden = !DL; if (DL) dlPaint() };
+            const dlSync = () => { $('bdlt').classList.toggle('on', DL); $('bdlt').setAttribute('aria-pressed', DL ? 'true' : 'false'); $('bdlf').hidden = !DL; $('bdlh').hidden = $('bdlhh').hidden = !DL; $('bdlh').classList.toggle('on', HQ); $('bdlh').setAttribute('aria-pressed', HQ ? 'true' : 'false'); if (DL) dlPaint() };
+            $('bdlh').onclick = () => { HQ = !HQ; dlSync() };
             $('bdlt').onclick = () => { DL = !DL; dlSync(); vehAuto(); vehHint() }; dlSync();
             mode(); load(0);
             if (E) { const lc = A.filter(x => x.r.bill === E.no).length, mc = (E.man || []).length; if (lc + mc < E.rows.length) $('bw').textContent = `Lưu ý: phiếu này có ${E.rows.length} dòng nhưng chỉ tìm thấy ${lc} đơn hàng liên kết và ${mc} dòng nhập tay. Bấm «Lưu thay đổi» sẽ thay các dòng theo lựa chọn hiện tại.` }
@@ -8530,7 +8533,7 @@
                 if (!P.length && !M.length) { $('fe').textContent = MO ? 'Nhập ít nhất 1 dòng hàng (số lượng hoặc kg).' : 'Chọn ít nhất 1 đơn hàng.'; return }
                 if (M.some(x => x.by === 'M3' && x.m3 && !x.pm3)) { $('fe').textContent = 'Dòng tính theo khối cần chọn hoặc nhập đơn giá USD/khối.'; return }
                 if (P.length + M.length > MAX) { $('fe').textContent = 'Phiếu chỉ có 8 dòng hàng, hãy chọn tối đa 8 dòng (hoặc tạo 2 phiếu).'; return }
-                let dl = null; if (DL) { dlRead(); const it = [], GG = dlGroups(); GG.forEach((g, gi) => g.rows.forEach(r => { const v = dlVal(r); let q = (v.q || '').trim(); if (/^[\d.,]+$/.test(q)) q += ' ' + (r.u || 'kiện'); if (v.d || q) it.push({ k: r.key, t: r.trip, d: v.d || '', q, gi }) })); if (!it.length) { $('fe').textContent = 'Bạn đã bật «Ghi ngày giao & số lượng giao»: hãy nhập ngày giao hoặc số lượng giao cho ít nhất 1 chuyến (hoặc bấm tắt nút này).'; return } dl = { items: it, d: it[0].d, q: it[0].q, groups: GG.map(g => g.info) } }
+                let dl = null; if (DL) { dlRead(); const it = [], GG = dlGroups(); GG.forEach((g, gi) => g.rows.forEach(r => { const v = dlVal(r); let q = (v.q || '').trim(); if (/^[\d.,]+$/.test(q)) q += ' ' + (r.u || 'kiện'); if (v.d || q) it.push({ k: r.key, t: r.trip, d: v.d || '', q, gi }) })); if (!it.length) { $('fe').textContent = 'Bạn đã bật «Ghi ngày giao & số lượng giao»: hãy nhập ngày giao hoặc số lượng giao cho ít nhất 1 chuyến (hoặc bấm tắt nút này).'; return } dl = { items: it, d: it[0].d, q: it[0].q, groups: GG.map(g => g.info), ...(HQ ? { hq: 1 } : {}) } }
                 const no = $('bno').value.trim(), s = { g: $('bsg').value, n: $('bsn').value.trim(), p: $('bsp').value.trim(), a: $('bsa').value.trim() }, rc = { g: $('brg').value, n: $('brn').value.trim(), p: $('brp').value.trim(), a: $('bra').value.trim() }, rk = $('brk').value.trim();
                 if (!no) { $('fe').textContent = 'Nhập số phiếu.'; return }
                 if (billAll().some(b => b.no === no && !(E && b.no === E.no))) { $('fe').textContent = 'Số phiếu ' + no + ' đã có rồi. Hãy đổi sang số khác hoặc xóa phiếu cũ trong «Phiếu đã lập».'; return }
@@ -8549,7 +8552,8 @@
         function bBm(r) { return r.by ? r.by === 'M3' : (n(r.pm3) > 0 || (!n(r.kg) && n(r.m3) > 0)) }
         const rowW = r => bBm(r) && n(r.m3) ? r2(r.m3) + ' m³' : n(r.kg) ? r2(r.kg) + ' kg' : n(r.m3) ? r2(r.m3) + ' m³' : '–';
         /* thông tin giao hàng (tuỳ chọn): d.dl = { d: 'yyyy-mm-dd', q: '3 kiện' }. Không bật nút thì phiếu không có d.dl và không in gì thêm */
-        const bDl = d => { const L = d && d.dl; if (!L) return null; if (Array.isArray(L.items) && L.items.length) { const it = L.items.map(i => ({ dt: i.d ? dm(i.d) : '', q: String(i.q == null ? '' : i.q).trim() })).filter(i => i.dt || i.q); if (!it.length) return null; return it.length === 1 ? { dt: it[0].dt, q: it[0].q, g: L.groups } : { dt: it.map(i => i.dt).filter(Boolean).join(', '), q: it.map(i => i.q).filter(Boolean).join(' + '), items: it, g: L.groups } } const dt = L.d ? dm(L.d) : '', q = String(L.q == null ? '' : L.q).trim(); return dt || q ? { dt, q } : null };
+        const bDl = d => { const r = bDl0(d); if (r && d && d.dl && d.dl.hq) { r.q = ''; if (r.items) r.items = r.items.map(i => ({ ...i, q: '' })); if (!r.dt) return null } return r };
+        const bDl0 = d => { const L = d && d.dl; if (!L) return null; if (Array.isArray(L.items) && L.items.length) { const it = L.items.map(i => ({ dt: i.d ? dm(i.d) : '', q: String(i.q == null ? '' : i.q).trim() })).filter(i => i.dt || i.q); if (!it.length) return null; return it.length === 1 ? { dt: it[0].dt, q: it[0].q, g: L.groups } : { dt: it.map(i => i.dt).filter(Boolean).join(', '), q: it.map(i => i.q).filter(Boolean).join(' + '), items: it, g: L.groups } } const dt = L.d ? dm(L.d) : '', q = String(L.q == null ? '' : L.q).trim(); return dt || q ? { dt, q } : null };
         const bDlLine = (dl, pre, qpre, sep) => dl.items && dl.items.length > 1 && dl.g ? 'Giao ' + dl.items.length + ' đợt · xem phiếu chi tiết' : dl.items && dl.items.length > 1 ? 'Giao: ' + dl.items.map(i => [i.dt, i.q ? '(' + i.q + ')' : ''].filter(Boolean).join(' ')).join(' + ') : [dl.dt ? pre + dl.dt : '', dl.q ? qpre + dl.q : ''].filter(Boolean).join(sep || ' · ');
         function BST() { try { return localStorage.getItem('bc-bst') || '1' } catch (e) { return '1' } }
         function paintKhoi(c, d, img, mates) { const v = +BST(); return v > 1 ? paintNew(c, d, img, mates, v) : paintClassic(c, d, img, mates) }
@@ -8600,7 +8604,7 @@
                 hd.forEach((t, i) => txt(t, CX[i], ty + hh / 2 + 9, 25, AL[i], i == 3 ? 400 : i == 4 ? 300 : 0, 700, hc, 1.5));
                 for (let i = 0; i < nr; i++) {
                     const y = ty + hh + i * rh, r = d.rows[i], b = y + rh / 2 + F(13); if (i < nr - 1 || V != 4) { x.fillStyle = LN; x.fillRect(80, y + rh - 2, 2052, 2) } if (!r) continue;
-                    txt(i + 1, CX[0], b, F(30), 'left', 0, 500, MU); txt(r.desc || 'Kiện hàng đi Campuchia', CX[1], b, F(34), 'left', 640, 500); txt(r2(r.q) + ' ' + (r.u || 'kiện'), CX[2], b, F(34), 'left', 270, 500);
+                    txt(i + 1, CX[0], b, F(30), 'left', 0, 500, MU); txt(bDesc(r), CX[1], b, F(34), 'left', 640, 500); txt(r2(r.q) + ' ' + (r.u || 'kiện'), CX[2], b, F(34), 'left', 270, 500);
                     txt(rowW(r), CX[3], b, F(36), 'right', 420, 700, RED); txt(dm(r.d) || '–', CX[4], b, F(32), 'right', 340, 500)
                 }
                 return ty + hh + nr * rh
@@ -8695,7 +8699,7 @@
             }
             d.rows.slice(0, NR).forEach((r, i) => {
                 const y = big ? Math.round(979 + PT * (i + .5) + FS * .36) : [1018, 1071, 1124, 1178, 1232][i];
-                txt(r.desc || 'Kiện hàng đi Campuchia', 497, y, FS, 'center', 660, 600); txt(r2(r.q) + ' ' + (r.u || 'kiện'), 1000, y, FS, 'center', 300, 600);
+                txt(bDesc(r), 497, y, FS, 'center', 660, 600); txt(r2(r.q) + ' ' + (r.u || 'kiện'), 1000, y, FS, 'center', 300, 600);
                 txt(rowW(r), 1445, y, FS, 'center', 440, 700); txt(dm(r.d), 1910, y, FS, 'center', 440, 600)
             });
             
@@ -8710,7 +8714,7 @@
         /* ===== PHIẾU CHI TIẾT GIAO HÀNG: hiện từng đơn, từng chuyến xe, ngày giao, số lượng giao & đối chiếu đủ/thiếu ===== */
         function paintDetail(c, d, img, mates) {
             const W = 2212, FF = "'Be Vietnam Pro','Segoe UI',Arial,sans-serif", RED = '#C8201C', BK = '#14161a', MU = '#5b6068', LN = '#dfe2e7', OK = '#1b7f3b', WARN = '#b45309';
-            const L = d.dl || {}, G = Array.isArray(L.groups) ? L.groups : [], IT = Array.isArray(L.items) ? L.items : [];
+            const L = d.dl || {}, HQ = !!L.hq, G = Array.isArray(L.groups) ? L.groups : [], IT = Array.isArray(L.items) ? L.items : [];
             const pn = t => { const m = String(t == null ? '' : t).match(/[\d.,]+/); if (!m) return null; const v = parseFloat(m[0].replace(/\./g, '').replace(',', '.')); return isFinite(v) ? v : null };
             const blocks = G.map((g, gi) => ({ g, its: IT.filter(i => i.gi === gi) }));
             const RH = 66, GH = 84, FH = 64, TOP = 560;
@@ -8731,7 +8735,7 @@
             box(80, BK, 'BÊN GỬI', d.s); box(1122, RED, 'BÊN NHẬN', d.r);
             /* cột */
             const CX = { stt: 122, don: 190, sl: 1130, xe: 1250, ng: 1500, giao: 2132 };
-            const head = y => { x.fillStyle = BK; rr(80, y, 2052, 64, 12); x.fill(); txt('STT', CX.stt, y + 43, 26, 'center', 0, 700, '#fff'); txt('ĐƠN HÀNG', CX.don, y + 43, 26, 'left', 0, 700, '#fff'); txt('NGÀY GIAO', CX.ng, y + 43, 26, 'center', 0, 700, '#fff'); txt('SỐ LƯỢNG GIAO', CX.giao - 20, y + 43, 26, 'right', 0, 700, '#fff') };
+            const head = y => { x.fillStyle = BK; rr(80, y, 2052, 64, 12); x.fill(); txt('STT', CX.stt, y + 43, 26, 'center', 0, 700, '#fff'); txt('ĐƠN HÀNG', CX.don, y + 43, 26, 'left', 0, 700, '#fff'); txt('NGÀY GIAO', CX.ng, y + 43, 26, 'center', 0, 700, '#fff'); txt(HQ ? 'TÌNH TRẠNG' : 'SỐ LƯỢNG GIAO', CX.giao - 20, y + 43, 26, 'right', 0, 700, '#fff') };
             let y = TOP; head(y); y += 64 + 14;
             let sumOrd = {}, sumDel = {}, allOk = true, anyCmp = false;
             blocks.forEach((b, bi) => {
@@ -8749,13 +8753,14 @@
                     txt('Giao đợt ' + (k + 1), CX.don + 40, y + 45, 32, 'left', 300, 500, MU);
                     txt(it.d ? dm(it.d) : '–', CX.ng, y + 45, 36, 'center', 340, 700);
                     if (!it.d) { txt('Chưa giao', CX.giao - 20, y + 45, 36, 'right', 340, 700, MU); y += RH; return }
+                    if (HQ) { txt('✓ Đã giao', CX.giao - 20, y + 47, 40, 'right', 340, 800, OK); y += RH; return }
                     txt(it.q || '–', CX.giao - 20, y + 47, 42, 'right', 340, 800, RED);
                     const v = pn(it.q); if (v == null) cmp = false; else dsum += v; y += RH
                 });
                 /* đối chiếu */
                 x.fillStyle = BK; x.fillRect(80, y, 2052, 3);
                 let msg, col;
-                if (!cmp) { msg = 'Chưa đủ dữ liệu để đối chiếu'; col = MU; allOk = false }
+                if (HQ) { const nd = b.its.filter(i => i.d).length; msg = nd ? '✓ ĐÃ GIAO  ·  ' + nd + ' đợt' : 'CHƯA GIAO'; col = nd ? OK : WARN } else if (!cmp) { msg = 'Chưa đủ dữ liệu để đối chiếu'; col = MU; allOk = false }
                 else { anyCmp = true; const df = Math.round((g.q - dsum) * 100) / 100; sumOrd[u] = (sumOrd[u] || 0) + g.q; sumDel[u] = (sumDel[u] || 0) + dsum; if (dsum === 0) { msg = 'CHƯA GIAO  ·  đã giao 0 / ' + f2(g.q) + ' ' + u; col = WARN; allOk = false } else if (df === 0) { msg = '✓ ĐỦ  ·  đã giao ' + f2(dsum) + ' / ' + f2(g.q) + ' ' + u; col = OK } else if (df > 0) { msg = '⚠ THIẾU ' + f2(df) + ' ' + u + '  ·  đã giao ' + f2(dsum) + ' / ' + f2(g.q) + ' ' + u; col = WARN; allOk = false } else { msg = '⚠ DƯ ' + f2(-df) + ' ' + u + '  ·  đã giao ' + f2(dsum) + ' / ' + f2(g.q) + ' ' + u; col = RED; allOk = false } }
                 txt('Cộng đơn ' + (bi + 1), CX.don + 40, y + 44, 30, 'left', 400, 600, MU); txt(msg, 2132 - 20, y + 45, 36, 'right', 1500, 800, col);
                 y += FH + 18
@@ -8763,7 +8768,7 @@
             /* tổng */
             y += 6; x.fillStyle = RED; rr(80, y, 2052, 120, 18); x.fill();
             const tt = u => Object.keys(u).map(k => f2(u[k]) + ' ' + k).join(' + ') || '–';
-            txt('TỔNG GIAO', 120, y + 48, 26, 'left', 0, 700, '#FFD9D5'); txt(anyCmp ? tt(sumDel) + '  /  ' + tt(sumOrd) + ' theo đơn' : bUnits(d.rows), 120, y + 98, 52, 'left', 1500, 800, '#fff');
+            txt(HQ ? 'TỔNG ĐƠN' : 'TỔNG GIAO', 120, y + 48, 26, 'left', 0, 700, '#FFD9D5'); txt(anyCmp ? tt(sumDel) + '  /  ' + tt(sumOrd) + ' theo đơn' : bUnits(d.rows), 120, y + 98, 52, 'left', 1500, 800, '#fff');
             txt(anyCmp ? (allOk ? '✓ KHỚP ĐỦ' : 'CÓ CHÊNH LỆCH') : '', 2090, y + 82, 46, 'right', 520, 800, '#fff');
 
             /* tính tiền */
@@ -8800,7 +8805,7 @@
                 let q = 0, kg = 0, m3 = 0;
                 d.rows.forEach((r, i) => {
                     const y = [1018, 1071, 1124, 1178, 1232][i]; q += n(r.q); kg += n(r.kg); m3 += n(r.m3); if (y == null) return;
-                    T(r.desc || 'Kiện hàng đi Campuchia', 497, y, 36, 'center', 640); T(r2(r.q) + ' kiện', 1000, y, 36, 'center', 300);
+                    T(bDesc(r), 497, y, 36, 'center', 640); T(r2(r.q) + ' kiện', 1000, y, 36, 'center', 300);
                     T(n(r.kg) ? r2(r.kg) + 'kg' : n(r.m3) ? r2(r.m3) + 'm³' : '', 1425, y, 36, 'center', 440); T(dm(r.d), 1910, y, 36, 'center', 440)
                 });
                 T(r2(q) + ' kiện', 403, 1383, 34, 'left', 240); T(kg ? r2(kg) + 'kg' : m3 ? r2(m3) + 'm³' : '', 62, 1527, 34, 'left', 260);
@@ -8810,19 +8815,19 @@
             const draw = re => {
 
                 const ready = (document.fonts && document.fonts.load) ? Promise.race([Promise.all([400, 500, 600, 700, 800].map(w => document.fonts.load(w + ' 30px "Be Vietnam Pro"', 'ẤẬỜỀỮặệợữđ ÀÁẢÃẠ0123'))), new Promise(r => setTimeout(r, 2500))]).catch(() => { }) : Promise.resolve();
-                ready.then(() => { (o._dv && d.dl && d.dl.groups ? paintDetail : paintKhoi)($('bc'), d, bImg, mates); fetchRate().then(r => console.log('[Phiếu ' + d.no + '] Tỷ giá USD hiện tại (' + r.src + '):', r.rate, 'VND/USD | đang dùng trong trang:', S.rate, '| USD trên phiếu:', d.u)).catch(() => console.log('[Phiếu ' + d.no + '] Không lấy được tỷ giá USD, đang dùng:', S.rate)); if (saved && re !== 1) tgBill(d) })
+                ready.then(() => { const dd = d.dl ? { ...d, dl: { ...d.dl, hq: o._hq ? 1 : 0 } } : d; (o._dv && d.dl && d.dl.groups ? paintDetail : paintKhoi)($('bc'), dd, bImg, mates); fetchRate().then(r => console.log('[Phiếu ' + d.no + '] Tỷ giá USD hiện tại (' + r.src + '):', r.rate, 'VND/USD | đang dùng trong trang:', S.rate, '| USD trên phiếu:', d.u)).catch(() => console.log('[Phiếu ' + d.no + '] Không lấy được tỷ giá USD, đang dùng:', S.rate)); if (saved && re !== 1) tgBill(d) })
             };
             let o = $('bvw');
             if (!o) {
                 o = document.createElement('div'); o.id = 'bvw'; o.className = 'hid'; o.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);overflow:auto;padding:14px;text-align:center';
-                o.innerHTML = '<div class="tb" style="margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="p" id="bpr">In / Lưu PDF</button><button id="bpn">Tải ảnh PNG</button><select id="bsty" title="Chọn mẫu bill"><option value="1">Mẫu 1 · Cổ điển</option><option value="2">Mẫu 2 · Kẻ sọc cảnh báo</option><option value="3">Mẫu 3 · Nền tối số lớn</option><option value="4">Mẫu 4 · Đỏ đen chéo</option></select><button id="bdv" hidden>Xem phiếu gốc</button><button id="bls">Phiếu đã lập</button><button id="bzm">Phóng to</button><button id="bcl">Đóng</button><span id="bmsg"></span></div><canvas id="bc" style="display:block;width:100%;max-width:1500px;height:auto;margin:0 auto;background:#fff;border-radius:6px"></canvas>';
+                o.innerHTML = '<div class="tb" style="margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="p" id="bpr">In / Lưu PDF</button><button id="bpn">Tải ảnh PNG</button><select id="bsty" title="Chọn mẫu bill"><option value="1">Mẫu 1 · Cổ điển</option><option value="2">Mẫu 2 · Kẻ sọc cảnh báo</option><option value="3">Mẫu 3 · Nền tối số lớn</option><option value="4">Mẫu 4 · Đỏ đen chéo</option></select><button id="bdv" hidden>Xem phiếu gốc</button><button id="bhq" hidden>🙈 Ẩn số lượng giao</button><button id="bls">Phiếu đã lập</button><button id="bzm">Phóng to</button><button id="bcl">Đóng</button><span id="bmsg"></span></div><canvas id="bc" style="display:block;width:100%;max-width:1500px;height:auto;margin:0 auto;background:#fff;border-radius:6px"></canvas>';
                 document.body.appendChild(o);
                 $('bcl').onclick = () => { o.classList.add('hid'); document.body.classList.remove('pb') }; $('bzm').onclick = () => { const z = o.classList.toggle('zm'); $('bzm').textContent = z ? 'Thu nhỏ' : 'Phóng to' };
-                $('bdv').onclick = () => { o._dv = o._dv ? 0 : 1; if (o._rd) o._rd(1); $('bdv').textContent = o._dv ? 'Xem phiếu gốc' : 'Xem phiếu chi tiết giao' }; $('bpr').onclick = () => window.print(); $('bsty').onchange = () => { try { localStorage.setItem('bc-bst', $('bsty').value) } catch (e) { } if (o._rd) o._rd(1) }; $('bls').onclick = () => { o.classList.add('hid'); document.body.classList.remove('pb'); billList() };
+                $('bdv').onclick = () => { o._dv = o._dv ? 0 : 1; if (o._rd) o._rd(1); $('bdv').textContent = o._dv ? 'Xem phiếu gốc' : 'Xem phiếu chi tiết giao' }; $('bhq').onclick = () => { o._hq = !o._hq; $('bhq').textContent = o._hq ? '👁 Hiện số lượng giao' : '🙈 Ẩn số lượng giao'; if (o._rd) o._rd(1) }; $('bpr').onclick = () => window.print(); $('bsty').onchange = () => { try { localStorage.setItem('bc-bst', $('bsty').value) } catch (e) { } if (o._rd) o._rd(1) }; $('bls').onclick = () => { o.classList.add('hid'); document.body.classList.remove('pb'); billList() };
                 $('bpn').onclick = () => $('bc').toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'phieu-' + (o.dataset.no || 'giao-nhan') + (o._dv ? '-chi-tiet' : '') + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000) })
             }
             o.dataset.no = d.no; $('bmsg').textContent = saved ? '✓ Đã lưu phiếu ' + d.no + '. Xem lại bất cứ lúc nào ở nút «Phiếu đã lập».' : 'Phiếu ' + d.no; o.classList.remove('hid'); document.body.classList.add('pb');
-            o._dv = d.dl && d.dl.groups && d.dl.groups.length ? 1 : 0; $('bdv').hidden = !(d.dl && d.dl.groups && d.dl.groups.length); $('bdv').textContent = o._dv ? 'Xem phiếu gốc' : 'Xem phiếu chi tiết giao'; o._rd = draw; $('bsty').value = BST(); if (bImg) draw(); else { bImg = new Image(); bImg.onload = draw; bImg.src = BILLBG }
+            o._dv = d.dl && d.dl.groups && d.dl.groups.length ? 1 : 0; $('bdv').hidden = !(d.dl && d.dl.groups && d.dl.groups.length); $('bdv').textContent = o._dv ? 'Xem phiếu gốc' : 'Xem phiếu chi tiết giao'; o._hq = !!(d.dl && d.dl.hq); $('bhq').hidden = !d.dl; $('bhq').textContent = o._hq ? '👁 Hiện số lượng giao' : '🙈 Ẩn số lượng giao'; o._rd = draw; $('bsty').value = BST(); if (bImg) draw(); else { bImg = new Image(); bImg.onload = draw; bImg.src = BILLBG }
         }
         $('bill').onclick = () => billForm(); $('bills').onclick = () => billList(); billBadge();
         /* Mã QR ngân hàng để khách chuyển khoản (chọn khi lập bill). Muốn thêm/đổi tài khoản: sửa mảng này.
@@ -10951,6 +10956,10 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
 #actx .abt button{flex:1;padding:9px 6px;min-height:0;border-radius:10px;border:1px solid var(--bd);background:var(--in);color:var(--tx);font:inherit;font-weight:700;font-size:13px;cursor:pointer}
 #actx .abt button.pri{background:rgba(37,99,235,.1);color:#2563eb;border-color:rgba(37,99,235,.35)}
 #actx .abt button.pri.on{background:#2563eb;color:#fff;border-color:#2563eb}
+#actx .amv{margin-top:8px}
+#actx .amv button{width:100%;padding:8px 6px;min-height:0;border-radius:10px;border:1px dashed var(--bd);background:transparent;color:var(--mu);font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+#actx .amv button:hover{color:var(--tx);border-color:var(--mu)}
+#actx .ahb button.amvall{border-style:dashed}
 #actx .afm{margin-top:10px;border:1px solid rgba(37,99,235,.35);background:rgba(37,99,235,.06);border-radius:12px;padding:12px}
 #actx .afm .t{font-weight:800;color:#2563eb;font-size:13.5px;margin-bottom:8px}
 #actx .afm label{display:block;font-size:12px;font-weight:700;color:var(--mu);margin-bottom:8px}
@@ -11051,9 +11060,10 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
 <label>🎫 Chuyến xe (biển số / mã)<input data-f="trip" list="atl" autocomplete="off" placeholder="Để trống nếu đi xe riêng" value="${esc(fv.trip || '')}"></label>
 <div class="r3"><button type="button" data-a="cancel">Hủy</button><button type="button" class="sv" data-a="save" data-k="${esc(x.k)}">Lưu số lượng giao</button></div></div>`
             };
+            const nextMo = m => { let y = +m.slice(0, 4), q = +m.slice(5, 7) + 1; if (q > 12) { q = 1; y++ } return y + '-' + String(q).padStart(2, '0') };
             const btns = (x, ad) => {
                 if (!ad) return ''; const on = AF.open === x.k;
-                return `<div class="abt"><button type="button" data-a="done" data-k="${esc(x.k)}">✓ Đã giao đủ</button><button type="button" class="pri${on ? ' on' : ''}" data-a="open" data-k="${esc(x.k)}">${on ? '✕ Đóng' : '+ Nhập SL giao'}</button></div>${on ? formHtml(x) : ''}`
+                return `<div class="abt"><button type="button" data-a="done" data-k="${esc(x.k)}">✓ Đã giao đủ</button><button type="button" class="pri${on ? ' on' : ''}" data-a="open" data-k="${esc(x.k)}">${on ? '✕ Đóng' : '+ Nhập SL giao'}</button></div><div class="amv"><button type="button" data-a="next" data-k="${esc(x.k)}" title="Chuyển đơn và doanh số sang tháng sau">📅 Chuyển sang ${mk(nextMo(x.m))}</button></div>${on ? formHtml(x) : ''}`
             };
             const cWait = (x, ad) => {
                 const r = x.r, k = dsince(r.d);
@@ -11088,10 +11098,11 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                 const wu = G.wait.filter(x => pd(x.r) === 'no'), noBill = G.unp.filter(x => !x.r.bill);
                 const kv = (ic, t, big, s, c) => `<div class="ack" style="--ct:${c}"><div class="ic">${ic}</div><div><small>${t}</small><b>${big}</b><div class="s">${s}</div></div></div>`;
                 let nb = 0; try { nb = billAll().length } catch (e) { }
+                const mvN = G.wait.filter(x => x.m === today().slice(0, 7)).length;
                 const selV = U.filter(x => AF.sel.has(x.k)), allSel = U.length > 0 && selV.length === U.length;
                 const col = (c, ic, t, A, body, tool) => `<div class="acol" style="--ct:${c}"><div class="acol-h"><div>${ic} ${t}</div><span>${A} đơn</span></div>${tool || ''}<div class="acol-b">${body}</div></div>`;
                 const em = '<div class="aem">Không có đơn nào 🎉</div>';
-                root.innerHTML = `<div class="ahd"><h3>Cần xử lý ngay</h3><div class="ahb"><button type="button" class="aredb" data-a="slip">🧾 Tạo phiếu giao nhận</button><button type="button" data-a="slips">📄 Phiếu đã lập <span class="abdg">${nb}</span></button></div></div>
+                root.innerHTML = `<div class="ahd"><h3>Cần xử lý ngay</h3><div class="ahb"><button type="button" class="aredb" data-a="slip">🧾 Tạo phiếu giao nhận</button><button type="button" data-a="slips">📄 Phiếu đã lập <span class="abdg">${nb}</span></button>${ad && mvN ? `<button type="button" class="amvall" data-a="moveall" title="Chuyển các đơn chưa giao của tháng này sang tháng sau">📅 Chuyển ${mvN} đơn chưa giao sang ${mk(nextMo(today().slice(0, 7)))}</button>` : ''}</div></div>
 <div class="acards">${kv('🚚', 'Chưa giao', sW.n + ' đơn', f(sW.kg) + ' kg · ' + f(sW.v) + ' VND', '#e08a00')}${kv('🛣️', 'Đang giao', sO.n + ' đơn', f(sO.kg) + ' kg · ' + f(sO.v) + ' VND', '#2563eb')}${kv('⏰', 'Chưa giao quá 7 ngày', od.length + ' đơn', od.length ? 'Cần giao gấp' : 'Không có đơn quá hạn', '#dc2626')}${kv('💸', 'Chưa giao & chưa thu tiền', wu.length + ' đơn', 'Cần giao rồi thu', '#7c3aed')}${kv('💰', 'Đã giao · chưa thu', sU.n + ' đơn', f(sU.v) + ' VND · ' + noBill.length + ' đơn chưa lập bill', '#12a15a')}</div>
 <div class="afb"><div class="chips"><span class="lb">👥 Khách:</span><button type="button" class="achip${AF.cust.size ? '' : ' on'}" data-a="cust" data-c="">Tất cả <small>${total}</small></button>${Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'vi')).map(c => `<button type="button" class="achip${AF.cust.has(c) ? ' on' : ''}" data-a="cust" data-c="${esc(c)}">${esc(c)} <small>${cnt[c]}</small></button>`).join('')}</div><div class="aseg"><button type="button" data-a="sort" data-o="old" class="${AF.sort === 'old' ? 'on' : ''}">Cũ nhất trước</button><button type="button" data-a="sort" data-o="cust" class="${AF.sort === 'cust' ? 'on' : ''}">Theo khách</button></div></div>
 <div class="acols">${col('#e08a00', '🚚', 'Chưa giao', W.length, W.map(x => cWait(x, ad)).join('') || em)}${col('#2563eb', '🛣️', 'Đang giao', O.length, O.map(x => cGo(x, ad)).join('') || em)}${col('#12a15a', '💰', 'Đã giao · chưa thu', U.length, U.map(cUnp).join('') || em, `<div class="acol-t"><label><input type="checkbox" data-a="all" ${allSel ? 'checked' : ''} ${U.length ? '' : 'disabled'}> Chọn hết</label><span>Tick đơn để tạo bill</span><span class="sp"></span><button type="button" data-a="bill" ${selV.length ? '' : 'disabled'}>🧾 Tạo bill${selV.length ? ' (' + selV.length + ')' : ''}</button></div>`)}</div>
@@ -11121,6 +11132,19 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                 const r = x.r; if (!await ask(`Đánh dấu đơn <b>${esc(r.k || '')}</b>${r.id ? ' (' + esc(r.id) + ')' : ''} đã giao đủ?`, 'Đã giao đủ')) return;
                 const t = today(); if (!spl(r).length && (!r.g || r.g > t)) r.g = t;
                 r.dv = dvOf(r).auto === 'yes' ? '' : 'yes'; if (AF.open === x.k) { AF.open = ''; AF.form = null } save(); all()
+            }
+            async function moveRows(xs, head) {
+                xs = xs.filter(x => x && S.months[x.m] && !isLk(x.m)); if (!xs.length) return;
+                const bad = xs.find(x => isLk(nextMo(x.m))); if (bad) { toast('err', mk(nextMo(bad.m)) + ' đã khóa sổ, không chuyển được.'); return }
+                const to = [...new Set(xs.map(x => nextMo(x.m)))], from = [...new Set(xs.map(x => x.m))], tot = xs.reduce((a, x) => a + fee(x.r), 0), part = xs.filter(x => spl(x.r).length).length;
+                if (!await ask(head + `<br>Doanh số <b>${f(tot)} VND</b> sẽ bị trừ khỏi ${from.map(mk).join(', ')} và tính vào <b>${to.map(mk).join(', ')}</b>.` + (part ? `<br><small>Có ${part} đơn đã giao một phần: toàn bộ đơn (cả doanh số) sẽ chuyển sang tháng sau.</small>` : ''), 'Chuyển tháng')) return;
+                let c = 0;
+                xs.forEach(x => {
+                    const A = S.months[x.m].rows, i = A.indexOf(x.r); if (i < 0) return; A.splice(i, 1);
+                    const t = nextMo(x.m), M = S.months[t] = S.months[t] || { rows: [], pays: [] }; M.rows = M.rows || []; M.pays = M.pays || [];
+                    M.rows.push(x.r); (x.r.mv = x.r.mv || []).push({ f: x.m, t, at: today() }); c++
+                });
+                AF.open = ''; AF.form = null; closeDetail(); save(); all(); toast('ok', 'Đã chuyển ' + c + ' đơn sang ' + to.map(mk).join(', ') + '.')
             }
             function payNow() {
                 const rows = list().filter(x => AF.sel.has(x.k) && kind(x.r) === 'unp').map(x => x.r); if (!rows.length) return;
@@ -11158,7 +11182,7 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                 let o = X('adt'); if (!o) { o = document.createElement('div'); o.id = 'adt'; o.className = 'adt'; document.body.appendChild(o) }
                 o.innerHTML = `<div class="aw" style="--ct:${col}" role="dialog" aria-modal="true"><div class="ah"><div><h3>${esc(r.k || '(chưa ghi khách)')}</h3><div class="ids">${r.id ? `<span class="tg id">${esc(r.id)}</span>` : ''}<span class="tg ${st[0]}">${st[1]}</span><span class="tg ${p === 'no' ? 'no' : p === 'yes' ? 'yes' : ''}">${PL[p]}</span>${r.bill ? `<span class="tg bl">🧾 ${esc(r.bill)}</span>` : ''}</div></div><div class="ar"><div class="am"><b>${f(fee(r))}</b><small>VND</small></div><button type="button" class="x" data-d="close" aria-label="Đóng">✕</button></div></div>
 <div class="bd2"><div class="lp"><h4>Thông tin đơn hàng</h4><div class="ig">${info}</div></div><div class="rp"><h4>🚚 Các lần giao hàng</h4>${sum}<div class="tl">${rows}</div>${none}</div></div>
-<div class="ft">${ad && (c === 'wait' || c === 'go') ? `<button type="button" class="p" data-d="open">+ Nhập SL giao</button><button type="button" class="g" data-d="done">✓ Đã giao đủ</button>` : ''}${ad && x.m === S.cur ? `<button type="button" data-d="edit">✎ Sửa đơn</button>` : ''}<button type="button" data-d="close">Đóng</button></div></div>`
+<div class="ft">${ad && (c === 'wait' || c === 'go') ? `<button type="button" class="p" data-d="open">+ Nhập SL giao</button><button type="button" class="g" data-d="done">✓ Đã giao đủ</button><button type="button" data-d="next">📅 Chuyển sang ${mk(nextMo(x.m))}</button>` : ''}${ad && x.m === S.cur ? `<button type="button" data-d="edit">✎ Sửa đơn</button>` : ''}<button type="button" data-d="close">Đóng</button></div></div>`
             }
             function openDetail(k) { DT.k = k; drawDetail() }
             document.addEventListener('click', async e => {
@@ -11169,6 +11193,7 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                 else if (!x) return;
                 else if (a === 'open') { const k = DT.k; closeDetail(); AF.open = k; AF.form = null; renderAct(true); const cd = root && root.querySelector('.aoc[data-v="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); if (cd) { cd.scrollIntoView({ block: 'center', behavior: 'smooth' }); const q = cd.querySelector('[data-f="q"]'); if (q) q.focus({ preventScroll: true }) } }
                 else if (a === 'done') markDone(x)
+                else if (a === 'next') moveRows([x], `Chuyển đơn <b>${esc(x.r.k || '')}</b>${x.r.id ? ' (' + esc(x.r.id) + ')' : ''} sang <b>${mk(nextMo(x.m))}</b>?`)
                 else if (a === 'edit') { closeDetail(); showRow(x.i) }
                 else if (a === 'del') {
                     const i = +b.dataset.i, s = (x.r.sp || [])[i]; if (!s) return;
@@ -11192,6 +11217,8 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                     else if (a === 'full') { const q = root.querySelector('.afm [data-f="q"]'); if (q) { q.value = b.dataset.v; updRem(q.closest('.afm')); q.focus() } }
                     else if (a === 'save') { const x = find(k), f = b.closest('.afm'); if (x && f) saveDel(x, f) }
                     else if (a === 'done') { const x = find(k); if (x) markDone(x) }
+                    else if (a === 'next') { const x = find(k); if (x) moveRows([x], `Chuyển đơn <b>${esc(x.r.k || '')}</b>${x.r.id ? ' (' + esc(x.r.id) + ')' : ''} sang <b>${mk(nextMo(x.m))}</b>?`) }
+                    else if (a === 'moveall') { const cm = today().slice(0, 7), xs = list().filter(x => kind(x.r) === 'wait' && x.m === cm); if (xs.length) moveRows(xs, `Chuyển <b>${xs.length}</b> đơn chưa giao của ${mk(cm)} sang <b>${mk(nextMo(cm))}</b>?`) }
                     else if (a === 'view') openDetail(k)
                     else if (a === 'bill') payNow()
                     else if (a === 'slip') { const t = X('bill'); if (t) t.click(); else billForm() }
