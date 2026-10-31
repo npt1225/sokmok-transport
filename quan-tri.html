@@ -6905,6 +6905,43 @@
   #cust tfoot td:nth-child(9){display:none!important}
 }
 </style>
+<style id="owner-tbl-css">
+#lt2,#nt2{border-collapse:separate;border-spacing:0;width:100%}
+#lt2 th,#nt2 th{padding:15px 22px;font-size:14px;text-align:right;letter-spacing:.2px}
+#lt2 th:first-child,#nt2 th:first-child{text-align:left}
+#lt2 td,#nt2 td{padding:20px 22px;font-size:17px;text-align:right;border-bottom:1px solid var(--bd)}
+#lt2 td:first-child,#nt2 td:first-child{text-align:left;font-weight:700;color:var(--nv)}
+#lt2 td:last-child,#nt2 td:last-child{font-size:21px;font-weight:800;color:var(--pr)}
+#lt2 tbody tr:hover,#nt2 tbody tr:hover{background:color-mix(in srgb,var(--pr) 5%,transparent)}
+#lt2 tfoot td,#nt2 tfoot td{font-weight:800;background:var(--in)}
+#tp-luong section,#tp-nghia section{max-width:none}
+@media(max-width:700px){#lt2 th,#nt2 th{padding:11px 12px;font-size:12px}#lt2 td,#nt2 td{padding:14px 12px;font-size:14px}#lt2 td:last-child,#nt2 td:last-child{font-size:16px}}
+</style>
+<style id="mnav-css">
+#mnav,#mmore{display:none}
+@media print{#mnav,#mmore{display:none!important}}
+@media(max-width:700px){
+ body #tabs{display:none!important}
+ body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+ #app.hid ~ #mnav,#app.hid ~ #mmore{display:none!important}
+ #mnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:12;gap:2px;background:var(--cd);border-top:1px solid var(--bd);box-shadow:0 -8px 24px rgba(15,23,42,.14);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+ #mnav button{flex:1 1 0;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:54px;padding:6px 2px;border:0;border-radius:12px;background:transparent;color:var(--mu);font:inherit;font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap}
+ #mnav button i{font-style:normal;font-size:21px;line-height:1}
+ #mnav button.on{color:var(--pr);background:color-mix(in srgb,var(--pr) 10%,transparent)}
+ #mnav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--pr)}
+ #mnav .mb{position:absolute;top:2px;left:calc(50% + 6px);background:var(--pr);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:0 5px;line-height:16px;min-width:16px;text-align:center}
+ #mmore.open{display:block;position:fixed;inset:0;z-index:11;background:rgba(10,15,25,.45)}
+ #mmore .pn{position:absolute;left:8px;right:8px;bottom:calc(72px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px;background:var(--cd);border:1px solid var(--bd);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+ #mmore .pn button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:76px;padding:8px 4px;border:1px solid var(--bd);border-radius:14px;background:var(--in);color:var(--tx);font:inherit;font-size:12.5px;font-weight:700;text-align:center;line-height:1.25}
+ #mmore .pn button i{font-style:normal;font-size:24px;line-height:1}
+ #mmore .pn button.on{background:var(--hd);color:#fff;border-color:var(--hd)}
+ #fab{bottom:calc(88px + env(safe-area-inset-bottom,0px))!important}
+ #tp-triet select,#tp-triet input[type=date]{flex:1 1 130px;min-width:0}
+ #tp-triet label{flex:1 1 150px}
+ #tp-triet label input{flex:1}
+ #tp-triet button{flex:1 1 90px}
+}
+</style>
 </head>
 
 <body>
@@ -7179,7 +7216,7 @@
         <nav class="tabs" id="tabs" role="tablist">
             <button data-tab="tong" class="on">Tổng quan</button><button data-tab="don">Đơn hàng</button><button
                 data-tab="khach">Khách hàng</button><button data-tab="thang">Theo tháng</button><button
-                data-tab="thu">Chi phí đã thu</button><button data-tab="no">Công nợ</button><button data-tab="slip">Phiếu giao</button><button data-tab="luong"
+                data-tab="thu">Chi phí đã thu</button><button data-tab="no">Công nợ</button><button data-tab="slip">Phiếu giao</button><button data-tab="triet">Anh Triết</button><button data-tab="luong"
                 id="tabluong" class="hid">Lương của
                 Thịnh</button><button data-tab="nghia" id="tabnghia" class="hid">Phí anh Nghĩa</button><button
                 data-tab="ln" id="tabln" class="hid">Lợi nhuận</button><button data-tab="tk" id="tabtk" class="hid">Tài
@@ -7302,6 +7339,28 @@
                 </div>
                 <p class="note">Gồm mọi đơn đang ở trạng thái «Chưa thu» của tất cả các tháng. Số ngày tính từ ngày
                     giao. Bấm «Sao chép nhắc nợ» để lấy sẵn tin nhắn gửi khách qua Zalo.</p>
+            </section>
+        </div>
+        <div class="tp hid" id="tp-triet">
+            <section>
+                <h2>Hàng của anh Triết (anh Nghĩa + anh Trọng + Duy + anh Triết)</h2>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+                    <select id="trf" aria-label="Lọc theo loại ngày"><option value="d">Theo ngày hàng về</option><option value="g">Theo ngày giao</option></select>
+                    <label style="display:flex;align-items:center;gap:6px;font-weight:600">Từ <input type="date" id="trd1"></label>
+                    <label style="display:flex;align-items:center;gap:6px;font-weight:600">đến <input type="date" id="trd2"></label>
+                    <select id="trp" aria-label="Lọc theo người"></select>
+                    <button type="button" id="trthis">Tháng này</button>
+                    <button type="button" id="trall">Tất cả</button>
+                </div>
+                <div class="cards" id="trcards"></div>
+                <div class="wrap">
+                    <table id="trt"></table>
+                </div>
+                <h2 style="margin-top:22px">Chi tiết từng đơn <span id="trn" style="font-weight:600;font-size:14px;color:var(--mu)"></span></h2>
+                <div class="wrap">
+                    <table id="trl"></table>
+                </div>
+                <p class="note">Gồm đơn của khách có tên Nghĩa, Trọng, Triết và khách tên đúng là «Duy» (khách «Anh Duy» không tính), tất cả các tháng. Để trống ngày = lấy hết. Khi chọn khoảng ngày, đơn chưa có ngày đó (ví dụ chưa giao thì chưa có ngày giao) sẽ không hiện. Số đơn = số dòng đơn hàng. Khối lượng tính theo kg (đơn tính theo khối chỉ cộng m³, không cộng kg). Trạng thái giống mục «Cần xử lý ngay»: Đã giao, Đang giao (giao một phần), Chưa giao.</p>
             </section>
         </div>
         <div class="tp hid" id="tp-slip">
@@ -9508,7 +9567,7 @@ ${t}`
         function renderExtra() {
             const own = !!me && me.r === 'owner'; $('tabln').classList.toggle('hid', !own);
             if (!own) { if (tab === 'ln') showTab('tong') } else lnRender();
-            renderStrip(); try { renderDebtTab() } catch (e) { console.error(e) }
+            renderStrip(); try { renderDebtTab() } catch (e) { console.error(e) } try { renderTrietTab() } catch (e) { console.error(e) }
         }
         function lnRender() {
             const x = lnData(), M = S.months[S.cur], inp = (k, v) => `<input data-pf="${k}" inputmode="numeric" value="${v ? vn(v) : ''}" placeholder="0">`, row = (l, v, c) => `<div class="lnr ${c || ''}"><span>${l}</span><span>${v}</span></div>`;
@@ -9589,6 +9648,56 @@ ${t}`
             (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('ok', 'Đã sao chép nhắc nợ ' + o.k + '.'), () => prompt('Sao chép tin nhắn:', t))
         });
 
+
+        /* ---- Tab Anh Triết: tổng kg + m³ của Nghĩa, Trọng, Duy, Triết theo trạng thái giao, lọc theo khoảng ngày, xem từng đơn ---- */
+        const TR_P = [['Anh Nghĩa', 'nghia'], ['Anh Trọng', 'trong'], ['Duy', 'duy'], ['Anh Triết', 'triet']];
+        const trNorm = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+        const trWho = k => { const z = trNorm(k).trim().replace(/\s+/g, ' '); if (z === 'duy') return 'Duy'; const t = z.split(/[^a-z0-9]+/); const p = TR_P.find(x => x[1] !== 'duy' && t.includes(x[1])); return p ? p[0] : null };
+        const trState = r => {
+            const d = dvOf(r); if (d.v === 'yes') return 'yes';
+            const S2 = spl(r); if (!S2.length) return 'no';
+            for (const k of ['q', 'kg', 'm3']) { if (n(r[k]) > 0) return S2.reduce((a, s) => a + n(s[k]), 0) > 0 ? 'go' : 'no' }
+            return S2.some(s => s.g) ? 'go' : 'no'
+        };
+        const TR = { f: 'd', d1: '', d2: '', p: '' };
+        const trDate = (r, f) => { if (f === 'd') return r.d || ''; const a = spl(r).map(s => s.g).filter(Boolean).sort(); return r.g || (a.length ? a[a.length - 1] : '') };
+        function trietRows() {
+            const out = [];
+            Object.keys(S.months).sort().forEach(m => (S.months[m].rows || []).forEach(r => {
+                const w = trWho(r.k); if (!w) return; if (TR.p && w !== TR.p) return;
+                const dt = trDate(r, TR.f);
+                if (TR.d1 || TR.d2) { if (!dt) return; if (TR.d1 && dt < TR.d1) return; if (TR.d2 && dt > TR.d2) return }
+                out.push({ r, m, w, st: trState(r), dt, t: kgT(r), v: n(r.m3) })
+            }));
+            return out.sort((a, b) => (b.dt || '').localeCompare(a.dt || ''))
+        }
+        function renderTrietTab() {
+            const el = $('trt'); if (!el) return; const sp = $('trp');
+            if (!sp.options.length) sp.innerHTML = '<option value="">Cả 4 người</option>' + TR_P.map(p => `<option value="${p[0]}">${p[0]}</option>`).join('');
+            const L = trietRows(), mk0 = () => ({ n: 0, t: 0, v: 0 }), G = {}; TR_P.forEach(p => G[p[0]] = { yes: mk0(), go: mk0(), no: mk0() });
+            L.forEach(x => { const o = G[x.w][x.st]; o.n++; o.t += x.t; o.v += x.v });
+            const ST = ['yes', 'go', 'no'], LB = { yes: 'Đã giao', go: 'Đang giao', no: 'Chưa giao' }, CL = { yes: 'ok', go: '', no: 'neg' };
+            const t3 = v => n(v).toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+            const add = (a, o) => ({ n: a.n + o.n, t: a.t + o.t, v: a.v + o.v });
+            const TOT = {}; ST.forEach(s => TOT[s] = TR_P.reduce((a, p) => add(a, G[p[0]][s]), mk0()));
+            const ALL = ST.reduce((a, s) => add(a, TOT[s]), mk0());
+            const card = (t, o, c, big) => `<div class="k ${big || ''}"><small>${t}</small><b>${t3(o.t)} kg</b><div class="s"><span class="${c || ''}">${f2(o.v)} m³</span> · ${o.n} đơn</div></div>`;
+            $('trcards').innerHTML = card('Tổng cộng', ALL, '', 'big') + ST.map(s => card(LB[s], TOT[s], CL[s])).join('');
+            const cell = (o, b) => `<td class="num">${o.t ? (b ? '<b>' + t3(o.t) + '</b>' : t3(o.t)) : '–'}</td><td class="num">${o.v ? (b ? '<b>' + f2(o.v) + '</b>' : f2(o.v)) : '–'}</td>`;
+            const row = (name, g, b) => { const A = ST.reduce((a, s) => add(a, g[s]), mk0()); return `<td>${b ? name : '<b>' + esc(name) + '</b>'}</td><td class="num">${A.n}</td>` + ST.map(s => cell(g[s], b)).join('') + cell(A, 1) };
+            el.innerHTML = '<thead><tr><th rowspan="2">Người</th><th rowspan="2">Số đơn</th>' + ST.map(s => `<th colspan="2" style="text-align:center">${LB[s]}</th>`).join('') + '<th colspan="2" style="text-align:center">Tổng</th></tr><tr>' + '<th>Kg</th><th>m³</th>'.repeat(4) + '</tr></thead><tbody>' +
+                TR_P.map(p => `<tr>${row(p[0], G[p[0]])}</tr>`).join('') + '</tbody><tfoot><tr>' + row('Tổng anh Triết', TOT, 1) + '</tr></tfoot>';
+            $('trn').textContent = '· ' + L.length + ' đơn';
+            $('trl').innerHTML = '<thead><tr><th>#</th><th>Người</th><th>Khách (tên ghi trên đơn)</th><th>Hàng về</th><th>Ngày giao</th><th>Số lượng</th><th>Kg</th><th>m³</th><th>Trạng thái</th><th>Thu tiền</th></tr></thead><tbody>' +
+                (L.map((x, i) => { const r = x.r; return `<tr><td>${i + 1}</td><td><b>${esc(x.w)}</b></td><td>${esc(r.k || '')}<div style="font-size:11px;color:var(--mu)">${mk(x.m)}${r.id ? ' · ' + esc(r.id) : ''}</div></td><td>${fd(r.d) || '–'}</td><td>${fd(trDate(r, 'g')) || '–'}</td><td class="num">${f2(n(r.q))} ${esc(r.u || '')}</td><td class="num">${x.t ? t3(x.t) : '–'}</td><td class="num">${x.v ? f2(x.v) : '–'}</td><td><span class="${CL[x.st]}"><b>${LB[x.st]}</b></span></td><td>${PL[pd(r)]}</td></tr>` }).join('') || '<tr><td colspan="10" style="padding:14px;color:var(--mu)">Không có đơn nào trong khoảng này.</td></tr>') + '</tbody>'
+        }
+        (function () {
+            const ev = (id, t, fn) => { const e = $(id); if (e) e.addEventListener(t, fn) }, go = () => { try { renderTrietTab() } catch (x) { console.error(x) } };
+            ev('trf', 'change', e => { TR.f = e.target.value; go() }); ev('trp', 'change', e => { TR.p = e.target.value; go() });
+            ev('trd1', 'change', e => { TR.d1 = e.target.value; go() }); ev('trd2', 'change', e => { TR.d2 = e.target.value; go() });
+            ev('trall', 'click', () => { TR.d1 = TR.d2 = ''; $('trd1').value = $('trd2').value = ''; go() });
+            ev('trthis', 'click', () => { const t = new Date(), y = t.getFullYear(), m = t.getMonth(), p = v => String(v).padStart(2, '0'); TR.d1 = y + '-' + p(m + 1) + '-01'; TR.d2 = y + '-' + p(m + 1) + '-' + p(new Date(y, m + 1, 0).getDate()); $('trd1').value = TR.d1; $('trd2').value = TR.d2; go() })
+        })();
 
         /* ---- Chi phí chuyển hàng: 10.000 đ/kg, 90 USD/khối, 20 USD/kiện nhỏ ---- */
         function shipCost(M) {
@@ -11684,6 +11793,38 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
   }
   function go() { IDS.forEach(watch) }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
+</script>
+<script>
+(function () {
+    const P = ['tong', 'don', 'khach', 'no'];
+    const IC = { tong: '📊', don: '📦', khach: '👥', thang: '📅', thu: '💵', no: '💰', slip: '🧾', triet: '🚚', luong: '👤', nghia: '💼', ln: '📈', tk: '⚙️' };
+    const LB = { tong: 'Tổng quan', don: 'Đơn hàng', khach: 'Khách', thang: 'Theo tháng', thu: 'Đã thu', no: 'Công nợ', slip: 'Phiếu giao', triet: 'Anh Triết', luong: 'Lương Thịnh', nghia: 'Phí Nghĩa', ln: 'Lợi nhuận', tk: 'Tài khoản' };
+    const nav = document.createElement('nav'); nav.id = 'mnav'; nav.setAttribute('aria-label', 'Điều hướng chính');
+    const more = document.createElement('div'); more.id = 'mmore'; more.innerHTML = '<div class="pn"></div>';
+    document.body.append(nav, more);
+    const tabBtn = t => document.querySelector('#tabs button[data-tab="' + t + '"]');
+    const lab = b => LB[b.dataset.tab] || b.textContent.replace(/\s+/g, ' ').trim();
+    const ic = b => IC[b.dataset.tab] || '•';
+    const close = () => { more.classList.remove('open'); render() };
+    function go(t) { const b = tabBtn(t); more.classList.remove('open'); if (b) { b.click(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }
+    let pend = 0;
+    function render() {
+        const on = document.querySelector('#tabs button.on'), c = on ? on.dataset.tab : 'tong';
+        const vis = [...document.querySelectorAll('#tabs button[data-tab]')].filter(b => !b.classList.contains('hid'));
+        const rest = vis.filter(b => !P.includes(b.dataset.tab)), isOpen = more.classList.contains('open');
+        const ovn = document.getElementById('ovn'), bd = ovn && !ovn.hidden && ovn.textContent.trim() && ovn.textContent.trim() !== '0' ? ovn.textContent.trim() : '';
+        nav.innerHTML = P.map(t => { const b = tabBtn(t); if (!b) return ''; return '<button type="button" data-g="' + t + '" class="' + (c === t && !isOpen ? 'on' : '') + '"><i>' + ic(b) + '</i>' + lab(b) + (t === 'tong' && bd ? '<span class="mb">' + bd + '</span>' : '') + '</button>' }).join('') +
+            (rest.length ? '<button type="button" data-more="1" class="' + (isOpen || rest.some(b => b.dataset.tab === c) ? 'on' : '') + '"><i>☰</i>Thêm</button>' : '');
+        more.firstChild.innerHTML = rest.map(b => '<button type="button" data-g="' + b.dataset.tab + '" class="' + (b.dataset.tab === c ? 'on' : '') + '"><i>' + ic(b) + '</i>' + lab(b) + '</button>').join('');
+    }
+    const sched = () => { if (!pend) pend = requestAnimationFrame(() => { pend = 0; render() }) };
+    nav.addEventListener('click', e => { const g = e.target.closest('[data-g]'), m = e.target.closest('[data-more]'); if (g) go(g.dataset.g); else if (m) { more.classList.toggle('open'); render() } });
+    more.addEventListener('click', e => { if (e.target === more) close(); const g = e.target.closest('[data-g]'); if (g) go(g.dataset.g) });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && more.classList.contains('open')) close() });
+    const tb = document.getElementById('tabs'); if (tb) new MutationObserver(sched).observe(tb, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    const ov = document.getElementById('ovn'); if (ov) new MutationObserver(sched).observe(ov, { attributes: true, characterData: true, childList: true, subtree: true });
+    render();
 })();
 </script>
 </body>
