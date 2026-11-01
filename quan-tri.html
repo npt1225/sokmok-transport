@@ -8592,8 +8592,9 @@ html:root:root body #ld::before{content:none !important}
                 }
             }
         }
-        function billForm(edit) {
+        function billForm(edit, pre) {
             const C = cfg(), A = bRows(); C.bills = C.bills || [];
+            const PRE = pre && pre.length ? new Set(A.map((x, j) => pre.includes(x.r) ? j : -1).filter(j => j >= 0)) : null;
             const names = [...new Set([...A.map(x => (x.r.k || '').trim()).filter(Boolean), ...Object.keys(C.ct)])].sort();
             const L = (id, l, v, w, ex) => `<label class="f${w ? ' w' : ''}">${l}<input id="${id}" value="${esc(v)}" ${ex || ''}></label>`;
             const E = edit || null, es = E ? E.s || {} : {}, er = E ? E.r || {} : {}; BRATE = E && n(E.rate) ? n(E.rate) : 0; BOVR = E && n(E.ro) ? n(E.ro) : 0; const RM0 = E && E.rm ? +E.rm : 0;
@@ -8625,7 +8626,7 @@ html:root:root body #ld::before{content:none !important}
             /* thứ tự: đơn của phiếu đang sửa → chưa thu & chưa lập phiếu → chưa thu & đã lập phiếu → không thu → đã thu; trong mỗi nhóm đơn cũ (hàng về sớm) lên trên */
             const rnk = x => (E && x.r.bill === E.no) ? -1 : pd(x.r) === 'no' ? (x.r.bill ? 1 : 0) : pd(x.r) === 'free' ? 2 : 3, dk0 = x => x.r.d || '9999-99-99';
             const ago = d => { const t = Date.parse((d || '') + 'T00:00:00'); if (!isFinite(t)) return ''; const k = Math.floor((Date.now() - t) / 864e5); return k >= 1 ? `<i class="bago${k >= 10 ? ' old' : ''}">nợ ${k} ngày</i>` : '' };
-            const rows = () => { const ks = keys(); return MO ? [] : A.map((x, j) => ({ ...x, j })).filter(x => x.m === $('bmo').value && ks.includes((x.r.k || '').trim())).sort((a, b) => rnk(a) - rnk(b) || dk0(a).localeCompare(dk0(b)) || ks.indexOf((a.r.k || '').trim()) - ks.indexOf((b.r.k || '').trim()) || a.j - b.j) };
+            const rows = () => { const ks = keys(); return MO ? [] : A.map((x, j) => ({ ...x, j })).filter(x => (PRE && PRE.has(x.j)) || (E && x.r.bill === E.no) || (x.m === $('bmo').value && ks.includes((x.r.k || '').trim()))).sort((a, b) => rnk(a) - rnk(b) || dk0(a).localeCompare(dk0(b)) || ks.indexOf((a.r.k || '').trim()) - ks.indexOf((b.r.k || '').trim()) || a.j - b.j) };
             const boxes = () => [...box.querySelectorAll('input[type=checkbox]')];
             const picked = () => rows().filter(x => { const i = box.querySelector(`input[value="${x.j}"]`); return i && i.checked });
             const mEls = () => MO ? [...mb.querySelectorAll('.bmr')] : [];
@@ -8687,7 +8688,7 @@ html:root:root body #ld::before{content:none !important}
                 let c5 = mEls().length;
                 box.innerHTML = rows().map(x => {
                     const r = x.r, w = n(r.kg) ? f2(r.kg) + ' kg' : n(r.m3) ? f2(r.m3) + ' m³' : '–', us = bUsd(r), mine = !!E && r.bill === E.no, lk = pd(r) === 'yes' && !mine;
-                    const on = (first && E ? mine : !r.bill && !lk) && c5 < MAX; if (on) c5++;
+                    const on = (PRE && first ? PRE.has(x.j) : (first && E ? mine : !r.bill && !lk)) && c5 < MAX; if (on) c5++;
                     return `<label class="bi"><input type="checkbox" value="${x.j}" ${on ? 'checked' : ''} ${lk ? 'disabled data-lk="1"' : ''}>
                         <span class="bd1"><small>Hàng về</small><b>${fd(r.d) || '–'}</b>${pd(r) === 'no' ? ago(r.d) : ''}</span>
                         <span class="bd2"><small>Số lượng</small><b>${f2(r.q)} ${esc(r.u)}</b></span>
@@ -8701,7 +8702,7 @@ html:root:root body #ld::before{content:none !important}
             };
             const TM = today().slice(0, 7), months = [...new Set([...Object.keys(S.months), S.cur, TM])].sort().reverse();
             const lm = E ? A.find(x => x.r.bill === E.no) : null;
-            $('bmo').innerHTML = months.map(m => `<option value="${m}">${esc(mk(m))}</option>`).join(''); $('bmo').value = lm ? lm.m : TM;
+            $('bmo').innerHTML = months.map(m => `<option value="${m}">${esc(mk(m))}</option>`).join(''); $('bmo').value = lm ? lm.m : (PRE && PRE.size ? A[Math.max(...PRE)].m : TM);
             const paintChips = () => { sel.querySelectorAll('.schip').forEach(b => b.classList.toggle('on', SEL.has(b.dataset.k))); $('bsc').textContent = SEL.size ? 'Đã chọn ' + SEL.size + ' người' : '' };
             const fillNames = pref => {
                 const mo = $('bmo').value, cnt = {};
@@ -8714,7 +8715,8 @@ html:root:root body #ld::before{content:none !important}
             };
             sel.onclick = e => { const b = e.target.closest('.schip'); if (!b) return; const k = b.dataset.k; SEL.has(k) ? SEL.delete(k) : SEL.add(k); paintChips(); load(0) };
             if (E && !MO) (E.ks && E.ks.length ? E.ks : [E.k]).forEach(k => k && SEL.add(k));
-            fillNames(E && !MO ? [...SEL] : []);
+            if (PRE) PRE.forEach(j => { const k = (A[j].r.k || '').trim(); if (k) SEL.add(k) });
+            fillNames((E && !MO) || PRE ? [...SEL] : []);
             const mode = () => {
                 $('bml').style.display = $('bsl1').style.display = MO ? 'none' : ''; $('bsl2').style.display = MO ? '' : 'none'; $('bpk').style.display = MO ? 'none' : ''; $('bmw').style.display = MO ? '' : 'none'; md.querySelectorAll('.btabs button').forEach(b => b.classList.toggle('on', +b.dataset.m === MO)); if (MO && !mb.children.length) addM()
             };
@@ -8732,6 +8734,7 @@ html:root:root body #ld::before{content:none !important}
             $('bdlh').onclick = () => { HQ = !HQ; dlSync() };
             $('bdlt').onclick = () => { DL = !DL; dlSync(); vehAuto(); vehHint() }; dlSync();
             mode(); load(0);
+            if (PRE) $('bw').textContent = 'Đã chọn sẵn ' + Math.min(PRE.size, MAX) + ' đơn từ bill thanh toán (có thể khác tháng).' + (PRE.size > MAX ? ' Phiếu chỉ có 8 dòng nên ' + (PRE.size - MAX) + ' đơn chưa được tick, hãy tạo thêm phiếu khác cho các đơn đó.' : '');
             if (E) { const lc = A.filter(x => x.r.bill === E.no).length, mc = (E.man || []).length; if (lc + mc < E.rows.length) $('bw').textContent = `Lưu ý: phiếu này có ${E.rows.length} dòng nhưng chỉ tìm thấy ${lc} đơn hàng liên kết và ${mc} dòng nhập tay. Bấm «Lưu thay đổi» sẽ thay các dòng theo lựa chọn hiện tại.` }
             md.querySelector('form').onsubmit = e => {
                 e.preventDefault(); const P = picked(), M = manual();
@@ -9035,7 +9038,7 @@ html:root:root body #ld::before{content:none !important}
             o.dataset.no = d.no; $('bmsg').textContent = saved ? '✓ Đã lưu phiếu ' + d.no + '. Xem lại bất cứ lúc nào ở nút «Phiếu đã lập».' : 'Phiếu ' + d.no; o.classList.remove('hid'); document.body.classList.add('pb');
             o._dv = d.dl && d.dl.groups && d.dl.groups.length ? 1 : 0; $('bdv').hidden = !(d.dl && d.dl.groups && d.dl.groups.length); $('bdv').textContent = o._dv ? 'Xem phiếu gốc' : 'Xem phiếu chi tiết giao'; o._hq = !!(d.dl && d.dl.hq); $('bhq').hidden = !d.dl; $('bhq').textContent = o._hq ? '👁 Hiện số lượng giao' : '🙈 Ẩn số lượng giao'; o._rd = draw; $('bsty').value = BST(); if (bImg) draw(); else { bImg = new Image(); bImg.onload = draw; bImg.src = BILLBG }
         }
-        $('bill').onclick = () => billForm(); $('bills').onclick = () => billList(); billBadge();
+        $('bill').onclick = () => billForm(); window.__slipFrom = rows => billForm(null, rows); $('bills').onclick = () => billList(); billBadge();
         /* Mã QR ngân hàng để khách chuyển khoản (chọn khi lập bill). Muốn thêm/đổi tài khoản: sửa mảng này.
            k = tên ngân hàng, t = chủ tài khoản, s = số tài khoản, bin = mã ngân hàng 6 số theo NAPAS (TPBank 970423, Vikki 970406),
            img = ảnh QR tĩnh của ngân hàng. Có bin + s thì bill tự tạo mã VietQR ĐIỀN SẴN số tiền + nội dung; thiếu bin thì dùng ảnh img (không có số tiền). */
@@ -11089,7 +11092,7 @@ ${bankH}${qrH}<p style="text-align:center;font-size:12px;color:#98a2b3;margin:14
                     + '</div><div class="bright"><div id="ttb"></div><div class="noprt bact bpay"><span style="width:100%;text-align:center;color:#fff;font-size:12.5px;font-weight:600">Khách đã trả? Đánh dấu «Đã thu» cho các đơn đang chọn:</span><button type="button" id="ttk1">💵 Đã thu · Tiền mặt</button><button type="button" id="ttk2">🏦 Đã thu · Chuyển khoản</button></div><div class="noprt bact"><button type="button" class="p" id="ttp">🖨 In / Lưu PDF</button><button type="button" id="ttd">🖼 Tải ảnh PNG</button><button type="button" id="ttc">🔗 Sao chép link bill</button></div></div></div>'; document.body.appendChild(o);
                 const det = o.querySelector('.bsel'), bsl = o.querySelector('.bsl');
                 /* tab «Phiếu giao nhận»: mở đúng form «Tạo phiếu giao nhận» bên Đơn hàng */
-                o.querySelectorAll('.pmt .btabs button').forEach(b => b.onclick = () => { if (!+b.dataset.m) return; o.remove(); const t = document.getElementById('bill'); if (t) t.click(); else toast('err', 'Chưa mở được form phiếu giao nhận, hãy tải lại trang.') });
+                o.querySelectorAll('.pmt .btabs button').forEach(b => b.onclick = () => { if (!+b.dataset.m) return; const pk = ALL.filter(r => vis(r) && sel.has(r.id)); o.remove(); if (typeof window.__slipFrom === 'function') window.__slipFrom(pk); else { const t = document.getElementById('bill'); if (t) t.click(); else toast('err', 'Chưa mở được form phiếu giao nhận, hãy tải lại trang.') } });
                 const drawList = () => {
                     const RK = { no: 0, free: 1, yes: 2 }, vs = ALL.filter(vis).sort((a, b) => (forced.has(a.id) ? -1 : (RK[pd(a)] ?? 0)) - (forced.has(b.id) ? -1 : (RK[pd(b)] ?? 0)) || String(a.d || '9999').localeCompare(String(b.d || '9999'))); bsl.innerHTML = vs.length ? vs.map(rowH).join('') : '<p style="text-align:center;color:#667085;font-size:13px;padding:14px 0 8px;margin:0">' + (QS ? 'Không tìm thấy đơn nào khớp.' : 'Tháng này không còn đơn chưa thu nào của người gửi đã chọn.') + '</p>';
                     { const ol = ALL.filter(r => SND.has(key(r.k)) && pd(r) === 'no' && !inCur(r)).length, oe = o.querySelector('#ttold'); if (oe) oe.textContent = !QS && ol ? 'Đang ẩn ' + ol + ' đơn chưa thu của tháng cũ. Gõ vào ô tìm kiếm để xem.' : '' }
